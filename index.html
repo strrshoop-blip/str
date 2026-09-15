@@ -213,6 +213,7 @@
 
   /* ---------- Modal ---------- */
   .modal-backdrop{position:fixed;inset:0;background:rgba(10,8,10,0.6);display:flex;align-items:flex-start;justify-content:center;z-index:500;overflow-y:auto;padding:5vh 14px;}
+  #confirmRoot .modal-backdrop{z-index:600;}
   .modal{background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);width:100%;max-width:520px;box-shadow:var(--shadow);}
   .modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
   .modal-head h3{font-family:'Cairo',sans-serif;font-size:19px;}
@@ -304,6 +305,7 @@
 <nav class="mobile-nav" id="mobileNav"></nav>
 
 <div id="modalRoot"></div>
+<div id="confirmRoot"></div>
 <div id="toastRoot"></div>
 
 <script>
@@ -317,6 +319,8 @@ function defaultState(){
   return {
     settings:{ shopName:'ستر', pin:null },
     expenses:[], tailors:[], tailorWork:[], tailorPayments:[],
+    cutters:[], cutterWork:[], cutterPayments:[],
+    hoodaris:[], hoodariWork:[], hoodariPayments:[],
     models:[], sales:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
     pageManagers:[{id:'seed-ahmed', name:'سيد أحمد', notes:'مدير صفحة التواصل الاجتماعي'}],
     pageManagerFees:[], pageManagerPayments:[]
@@ -361,6 +365,7 @@ function money(n){
 }
 function num(v){ const n = Number(v); return isNaN(n) ? 0 : n; }
 function esc(s){ return (s===undefined||s===null) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function encName(s){ return encodeURIComponent(s==null?'':s).replace(/'/g,'%27'); }
 function inMonth(dateStr, ym){ if(!ym) return true; return (dateStr||'').slice(0,7) === ym; }
 function inRange(dateStr, from, to){ if(from && dateStr < from) return false; if(to && dateStr > to) return false; return true; }
 
@@ -371,7 +376,30 @@ function toast(msg){
   root.appendChild(el);
   setTimeout(()=>el.remove(), 2600);
 }
-function confirmDelete(msg){ return confirm(msg || 'هل أنت متأكد من الحذف؟ لا يمكن التراجع.'); }
+function confirmDelete(msg, onYes){
+  return askConfirm(msg || 'هل أنت متأكد من الحذف؟ لا يمكن التراجع.', onYes);
+}
+function askConfirm(msg, onYes, opts){
+  opts = opts || {};
+  const root = document.getElementById('confirmRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop" onclick="if(event.target===this) closeConfirm()">
+      <div class="modal" style="max-width:420px;">
+        <div class="modal-head"><h3>${esc(opts.title||'تأكيد')}</h3><button type="button" onclick="closeConfirm()">×</button></div>
+        <div class="modal-body"><div style="font-size:14.5px;line-height:1.7;">${esc(msg)}</div></div>
+        <div class="modal-foot">
+          <button type="button" class="btn ghost" onclick="closeConfirm()">إلغاء</button>
+          <button type="button" class="btn danger" id="confirmYesBtn">${esc(opts.yesLabel||'حذف')}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('confirmYesBtn').onclick = function(){
+    closeConfirm();
+    if(typeof onYes === 'function') onYes();
+  };
+  return false;
+}
+function closeConfirm(){ const r = document.getElementById('confirmRoot'); if(r) r.innerHTML=''; }
 
 function downloadBlob(content, filename, type){
   const blob = new Blob([content], {type});
@@ -405,6 +433,28 @@ function tailorTotals(tailorId){
   const paid = state.tailorPayments.filter(p=>p.tailorId===tailorId)
     .reduce((s,p)=> s + num(p.amount), 0);
   return {due, paid, remaining: due - paid};
+}
+function cutterById(id){ return state.cutters.find(c=>c.id===id); }
+function cutterTotals(cutterId){
+  const due = state.cutterWork.filter(w=>w.cutterId===cutterId)
+    .reduce((s,w)=> s + num(w.pieceCount)*num(w.pricePerPiece), 0);
+  const paid = state.cutterPayments.filter(p=>p.cutterId===cutterId)
+    .reduce((s,p)=> s + num(p.amount), 0);
+  return {due, paid, remaining: due - paid};
+}
+function cutterDuesOutstandingTotal(){
+  return state.cutters.reduce((s,c)=> s + cutterTotals(c.id).remaining, 0);
+}
+function hoodariById(id){ return state.hoodaris.find(h=>h.id===id); }
+function hoodariTotals(hoodariId){
+  const due = state.hoodariWork.filter(w=>w.hoodariId===hoodariId)
+    .reduce((s,w)=> s + num(w.pieceCount)*num(w.pricePerPiece), 0);
+  const paid = state.hoodariPayments.filter(p=>p.hoodariId===hoodariId)
+    .reduce((s,p)=> s + num(p.amount), 0);
+  return {due, paid, remaining: due - paid};
+}
+function hoodariDuesOutstandingTotal(){
+  return state.hoodaris.reduce((s,h)=> s + hoodariTotals(h.id).remaining, 0);
 }
 
 function debtById(id){ return state.debts.find(d=>d.id===id); }
@@ -440,14 +490,21 @@ function periodTotals(from, to){
   const sales = state.sales.filter(s=>inRange(s.date, from, to));
   const expenses = state.expenses.filter(e=>inRange(e.date, from, to));
   const work = state.tailorWork.filter(w=>inRange(w.date, from, to));
+  const cutWork = state.cutterWork.filter(w=>inRange(w.date, from, to));
+  const hoodWork = state.hoodariWork.filter(w=>inRange(w.date, from, to));
   const revenue = sales.reduce((s,x)=>s+saleRevenue(x),0);
   const cogs = sales.reduce((s,x)=>s+saleCost(x),0);
   const expTotal = expenses.reduce((s,x)=>s+num(x.amount),0);
-  const piecesProduced = work.reduce((s,x)=>s+num(x.pieceCount),0);
+  const sewnPieces = work.reduce((s,x)=>s+num(x.pieceCount),0);
+  const cutPieces = cutWork.reduce((s,x)=>s+num(x.pieceCount),0);
+  const hoodPieces = hoodWork.reduce((s,x)=>s+num(x.pieceCount),0);
+  const piecesProduced = sewnPieces + cutPieces + hoodPieces;
   const piecesSold = sales.reduce((s,x)=>s+num(x.quantity),0);
   const sewingCostPeriod = work.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
+  const cuttingCostPeriod = cutWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
+  const hoodariCostPeriod = hoodWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
   const netProfit = revenue - cogs - expTotal;
-  return {revenue,cogs,expTotal,piecesProduced,piecesSold,sewingCostPeriod,netProfit,salesCount:sales.length};
+  return {revenue,cogs,expTotal,piecesProduced,sewnPieces,cutPieces,hoodPieces,piecesSold,sewingCostPeriod,cuttingCostPeriod,hoodariCostPeriod,netProfit,salesCount:sales.length};
 }
 function tailorDuesOutstandingTotal(){
   return state.tailors.reduce((s,t)=> s + tailorTotals(t.id).remaining, 0);
@@ -470,6 +527,8 @@ const PAGES = [
   {id:'sales', label:'الوارد / المبيعات', icon:'📦'},
   {id:'models', label:'الموديلات', icon:'👗'},
   {id:'tailors', label:'الخياطين', icon:'🧵'},
+  {id:'cutters', label:'الفصالين', icon:'✂️'},
+  {id:'hoodaris', label:'الهودارية', icon:'🪡'},
   {id:'expenses', label:'المصاريف', icon:'💸'},
   {id:'debts', label:'ديون علينا', icon:'📒'},
   {id:'customerdebts', label:'ديون الزبائن', icon:'🧾'},
@@ -504,10 +563,12 @@ function render(){
   if(currentPage==='dashboard') main.innerHTML = renderDashboard();
   else if(currentPage==='expenses') main.innerHTML = renderExpenses();
   else if(currentPage==='tailors') main.innerHTML = currentDetail ? renderTailorDetail(currentDetail) : renderTailors();
+  else if(currentPage==='cutters') main.innerHTML = currentDetail ? renderCutterDetail(currentDetail) : renderCutters();
+  else if(currentPage==='hoodaris') main.innerHTML = currentDetail ? renderHoodariDetail(currentDetail) : renderHoodaris();
   else if(currentPage==='models') main.innerHTML = currentDetail ? renderModelDetail(currentDetail) : renderModels();
   else if(currentPage==='sales') main.innerHTML = renderSales();
   else if(currentPage==='debts') main.innerHTML = renderDebts();
-  else if(currentPage==='customerdebts') main.innerHTML = renderCustomerDebts();
+  else if(currentPage==='customerdebts') main.innerHTML = currentDetail ? renderCustomerDetail(currentDetail) : renderCustomerDebts();
   else if(currentPage==='social') main.innerHTML = currentDetail ? renderPageManagerDetail(currentDetail) : renderSocialPage();
   else if(currentPage==='reports') main.innerHTML = renderReports();
   else if(currentPage==='settings') main.innerHTML = renderSettings();
@@ -524,6 +585,8 @@ function renderDashboard(){
   const to = all ? null : dashboardMonth+'-31';
   const t = periodTotals(from, to);
   const duesTotal = tailorDuesOutstandingTotal();
+  const cutterDuesTotal = cutterDuesOutstandingTotal();
+  const hoodariDuesTotal = hoodariDuesOutstandingTotal();
 
   const months = [];
   const base = new Date();
@@ -559,9 +622,11 @@ function renderDashboard(){
     ${statCard('إجمالي الوارد', money(t.revenue), 'accent', `${t.salesCount} عملية بيع`)}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg')}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
-    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '')}
+    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', `فصل: ${t.cutPieces.toLocaleString('en-US')} · خياطة: ${t.sewnPieces.toLocaleString('en-US')} · هودارية: ${t.hoodPieces.toLocaleString('en-US')}`)}
     ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '')}
     ${statCard('مستحقات الخياطين (الكلي)', money(duesTotal), duesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
+    ${statCard('مستحقات الفصالين (الكلي)', money(cutterDuesTotal), cutterDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
+    ${statCard('مستحقات الهودارية (الكلي)', money(hoodariDuesTotal), hoodariDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
     ${statCard('ديون علينا (الكلي)', money(debtsOutstandingTotal()), debtsOutstandingTotal()>0?'neg':'pos', 'رصيد تراكمي — للموردين وغيرهم')}
     ${statCard('ديون الزبائن لنا (الكلي)', money(customerDebtsOutstandingTotal()), customerDebtsOutstandingTotal()>0?'pos':'', 'رصيد تراكمي — جملة ومفرد')}
   </div>
@@ -714,9 +779,10 @@ function openExpenseModal(id, presetChannel){
   });
 }
 function deleteExpense(id){
-  if(!confirmDelete()) return;
-  state.expenses = state.expenses.filter(e=>e.id!==id);
-  saveState(); render(); toast('تم الحذف');
+  confirmDelete(null, ()=>{
+    state.expenses = state.expenses.filter(e=>e.id!==id);
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 
 /* =========================================================
@@ -770,13 +836,16 @@ function openTailorModal(id){
 }
 function deleteTailor(id){
   const tot = tailorTotals(id);
-  if(tot.due>0 || tot.paid>0){
-    if(!confirm('لهذا الخياط سجلات شغل أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟')) return;
-  } else if(!confirmDelete()) return;
-  state.tailors = state.tailors.filter(t=>t.id!==id);
-  state.tailorWork = state.tailorWork.filter(w=>w.tailorId!==id);
-  state.tailorPayments = state.tailorPayments.filter(p=>p.tailorId!==id);
-  saveState(); render(); toast('تم الحذف');
+  const msg = (tot.due>0 || tot.paid>0)
+    ? 'لهذا الخياط سجلات شغل أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟'
+    : null;
+  confirmDelete(msg, ()=>{
+    state.tailors = state.tailors.filter(t=>t.id!==id);
+    state.tailorWork = state.tailorWork.filter(w=>w.tailorId!==id);
+    state.tailorPayments = state.tailorPayments.filter(p=>p.tailorId!==id);
+    currentDetail = null;
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 function openTailorDetail(id){ currentDetail = id; render(); }
 
@@ -884,7 +953,7 @@ function openTailorWorkModal(tailorId, workId){
     }
   });
 }
-function deleteTailorWork(id){ if(!confirmDelete()) return; state.tailorWork = state.tailorWork.filter(w=>w.id!==id); saveState(); render(); toast('تم الحذف'); }
+function deleteTailorWork(id){ confirmDelete(null, ()=>{ state.tailorWork = state.tailorWork.filter(w=>w.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 function openTailorPaymentModal(tailorId, payId){
   const item = payId ? state.tailorPayments.find(p=>p.id===payId) : null;
@@ -907,7 +976,393 @@ function openTailorPaymentModal(tailorId, payId){
     }
   });
 }
-function deleteTailorPayment(id){ if(!confirmDelete()) return; state.tailorPayments = state.tailorPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }
+function deleteTailorPayment(id){ confirmDelete(null, ()=>{ state.tailorPayments = state.tailorPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+
+/* =========================================================
+   CUTTERS (الفصالين)
+========================================================= */
+function renderCutters(){
+  const rows = state.cutters.map(c=>({c, tot:cutterTotals(c.id)}));
+  return `
+  <div class="page-head">
+    <div><h1>الفصالين</h1><div class="desc">إدارة من يفصّل القماش، القطع المفصولة لكل موديل، والمستحقات</div></div>
+    <button class="btn primary" onclick="openCutterModal()">+ إضافة فصّال</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>اسم الفصّال</th><th>المستحق الكلي</th><th>المدفوع</th><th>المتبقي</th><th></th></tr></thead>
+      <tbody>
+        ${rows.length? rows.map(({c,tot})=>`
+          <tr style="cursor:pointer" onclick="openCutterDetail('${c.id}')">
+            <td><b>${esc(c.name)}</b></td>
+            <td class="num">${money(tot.due)}</td>
+            <td class="num pos">${money(tot.paid)}</td>
+            <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
+            <td onclick="event.stopPropagation()">
+              <div class="btn-row">
+                <button class="btn sm ghost" onclick="openCutterModal('${c.id}')">تعديل</button>
+                <button class="btn sm danger" onclick="deleteCutter('${c.id}')">حذف</button>
+              </div>
+            </td>
+          </tr>`).join('') : `<tr class="empty-row"><td colspan="5">لا يوجد فصالين مسجلين بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function openCutterModal(id){
+  const item = id ? cutterById(id) : null;
+  openModal({
+    title: item?'تعديل اسم الفصّال':'إضافة فصّال',
+    bodyHtml:`
+      <div class="form-row"><label>اسم الفصّال</label><input type="text" id="f_name" value="${esc(item?.name||'')}" placeholder="مثال: كريم"></div>
+      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const name = document.getElementById('f_name').value.trim();
+      if(!name) return toast('الرجاء إدخال اسم الفصّال');
+      const data = { name, notes: document.getElementById('f_notes').value.trim() };
+      if(item) Object.assign(item, data);
+      else state.cutters.push({id:uid(), ...data});
+      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteCutter(id){
+  const tot = cutterTotals(id);
+  const msg = (tot.due>0 || tot.paid>0)
+    ? 'لهذا الفصّال سجلات شغل أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟'
+    : null;
+  confirmDelete(msg, ()=>{
+    state.cutters = state.cutters.filter(c=>c.id!==id);
+    state.cutterWork = state.cutterWork.filter(w=>w.cutterId!==id);
+    state.cutterPayments = state.cutterPayments.filter(p=>p.cutterId!==id);
+    currentDetail = null;
+    saveState(); render(); toast('تم الحذف');
+  });
+}
+function openCutterDetail(id){ currentDetail = id; render(); }
+
+function renderCutterDetail(id){
+  const c = cutterById(id);
+  if(!c){ currentDetail=null; return renderCutters(); }
+  const tot = cutterTotals(id);
+  const work = state.cutterWork.filter(w=>w.cutterId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const payments = state.cutterPayments.filter(p=>p.cutterId===id).sort((a,b)=>b.date.localeCompare(a.date));
+
+  return `
+  <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الفصالين</button>
+  <div class="detail-head">
+    <div class="titles"><h1>${esc(c.name)}</h1></div>
+    <div class="btn-row">
+      <button class="btn" onclick="openCutterWorkModal('${id}')">+ تسجيل شغل</button>
+      <button class="btn primary" onclick="openCutterPaymentModal('${id}')">+ تسديد مبلغ</button>
+    </div>
+  </div>
+  <div class="grid stats">
+    ${statCard('إجمالي المستحق', money(tot.due),'')}
+    ${statCard('إجمالي المدفوع', money(tot.paid),'pos')}
+    ${statCard('المتبقي', money(tot.remaining), tot.remaining>0?'neg':'pos')}
+  </div>
+
+  <div class="section-title"><span class="ic">✂️</span> سجل الشغل — كل القطع اللي فصّلها ${esc(c.name)}</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>الموديل</th><th>عدد القطع</th><th>سعر القطعة</th><th>الإجمالي</th><th>ملاحظات</th><th></th></tr></thead>
+      <tbody>
+      ${work.length? work.map(w=>`
+        <tr>
+          <td class="muted">${esc(w.date)}</td>
+          <td>${w.modelId? esc(modelById(w.modelId)?.name||'—') : '<span class="muted">بدون تحديد</span>'}</td>
+          <td class="num">${w.pieceCount}</td>
+          <td class="num">${money(w.pricePerPiece)}</td>
+          <td class="num">${money(num(w.pieceCount)*num(w.pricePerPiece))}</td>
+          <td class="muted">${esc(w.notes||'—')}</td>
+          <td><div class="btn-row">
+            <button class="btn sm ghost" onclick="openCutterWorkModal('${id}','${w.id}')">تعديل</button>
+            <button class="btn sm danger" onclick="deleteCutterWork('${w.id}')">حذف</button>
+          </div></td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="7">لا يوجد سجل شغل بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="ic">💵</span> سجل التسديدات</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead>
+      <tbody>
+      ${payments.length? payments.map(p=>`
+        <tr>
+          <td class="muted">${esc(p.date)}</td>
+          <td class="num pos">${money(p.amount)}</td>
+          <td class="muted">${esc(p.notes||'—')}</td>
+          <td><div class="btn-row">
+            <button class="btn sm ghost" onclick="openCutterPaymentModal('${id}','${p.id}')">تعديل</button>
+            <button class="btn sm danger" onclick="deleteCutterPayment('${p.id}')">حذف</button>
+          </div></td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="4">لا توجد تسديدات بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function openCutterWorkModal(cutterId, workId){
+  const item = workId ? state.cutterWork.find(w=>w.id===workId) : null;
+  const currentCutterId = item ? item.cutterId : cutterId;
+  openModal({
+    title: item?'تعديل سجل شغل':'تسجيل شغل جديد',
+    bodyHtml:`
+      <div class="form-row"><label>الفصّال</label>
+        <select id="f_cutter">
+          ${state.cutters.map(c=>`<option value="${c.id}" ${currentCutterId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+        </select>
+        <div class="hint">لو تريد تنقل هذا السجل لفصّال ثاني، بدله من هنا.</div>
+      </div>
+      <div class="form-row"><label>الموديل</label>
+        <select id="f_model"><option value="">بدون تحديد موديل معين</option>
+          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-grid2">
+        <div class="form-row"><label>عدد القطع</label><input type="number" id="f_count" value="${item?.pieceCount||''}"></div>
+        <div class="form-row"><label>سعر فصل القطعة الواحدة</label><input type="number" id="f_price" value="${item?.pricePerPiece||''}"></div>
+      </div>
+      <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
+      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const chosenCutterId = document.getElementById('f_cutter').value;
+      if(!chosenCutterId) return toast('الرجاء إضافة فصّال أولاً');
+      const data = {
+        cutterId: chosenCutterId, date: document.getElementById('f_date').value || todayISO(),
+        modelId: document.getElementById('f_model').value || null,
+        pieceCount: num(document.getElementById('f_count').value),
+        pricePerPiece: num(document.getElementById('f_price').value),
+        notes: document.getElementById('f_notes').value.trim()
+      };
+      if(item) Object.assign(item, data);
+      else state.cutterWork.push({id:uid(), ...data});
+      saveState(); closeModal();
+      currentDetail = chosenCutterId; render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteCutterWork(id){ confirmDelete(null, ()=>{ state.cutterWork = state.cutterWork.filter(w=>w.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+
+function openCutterPaymentModal(cutterId, payId){
+  const item = payId ? state.cutterPayments.find(p=>p.id===payId) : null;
+  openModal({
+    title: item?'تعديل تسديد':'تسديد مبلغ للفصّال',
+    bodyHtml:`
+      <div class="form-grid2">
+        <div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${item?.amount||''}"></div>
+        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
+      </div>
+      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const data = { cutterId, amount:num(document.getElementById('f_amount').value),
+        date: document.getElementById('f_date').value || todayISO(),
+        notes: document.getElementById('f_notes').value.trim() };
+      if(item) Object.assign(item, data);
+      else state.cutterPayments.push({id:uid(), ...data});
+      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteCutterPayment(id){ confirmDelete(null, ()=>{ state.cutterPayments = state.cutterPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+
+/* =========================================================
+   HOODARIS (الهودارية)
+========================================================= */
+function renderHoodaris(){
+  const rows = state.hoodaris.map(h=>({h, tot:hoodariTotals(h.id)}));
+  return `
+  <div class="page-head">
+    <div><h1>الهودارية</h1><div class="desc">إدارة الهودارية بالمعمل، القطع المنجزة لكل موديل، والمستحقات</div></div>
+    <button class="btn primary" onclick="openHoodariModal()">+ إضافة هوداري</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الاسم</th><th>المستحق الكلي</th><th>المدفوع</th><th>المتبقي</th><th></th></tr></thead>
+      <tbody>
+        ${rows.length? rows.map(({h,tot})=>`
+          <tr style="cursor:pointer" onclick="openHoodariDetail('${h.id}')">
+            <td><b>${esc(h.name)}</b></td>
+            <td class="num">${money(tot.due)}</td>
+            <td class="num pos">${money(tot.paid)}</td>
+            <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
+            <td onclick="event.stopPropagation()">
+              <div class="btn-row">
+                <button class="btn sm ghost" onclick="openHoodariModal('${h.id}')">تعديل</button>
+                <button class="btn sm danger" onclick="deleteHoodari('${h.id}')">حذف</button>
+              </div>
+            </td>
+          </tr>`).join('') : `<tr class="empty-row"><td colspan="5">لا يوجد هودارية مسجلين بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function openHoodariModal(id){
+  const item = id ? hoodariById(id) : null;
+  openModal({
+    title: item?'تعديل الاسم':'إضافة هوداري',
+    bodyHtml:`
+      <div class="form-row"><label>الاسم</label><input type="text" id="f_name" value="${esc(item?.name||'')}" placeholder="مثال: علي"></div>
+      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const name = document.getElementById('f_name').value.trim();
+      if(!name) return toast('الرجاء إدخال الاسم');
+      const data = { name, notes: document.getElementById('f_notes').value.trim() };
+      if(item) Object.assign(item, data);
+      else state.hoodaris.push({id:uid(), ...data});
+      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteHoodari(id){
+  const tot = hoodariTotals(id);
+  const msg = (tot.due>0 || tot.paid>0)
+    ? 'لهذا الشخص سجلات شغل أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟'
+    : null;
+  confirmDelete(msg, ()=>{
+    state.hoodaris = state.hoodaris.filter(h=>h.id!==id);
+    state.hoodariWork = state.hoodariWork.filter(w=>w.hoodariId!==id);
+    state.hoodariPayments = state.hoodariPayments.filter(p=>p.hoodariId!==id);
+    currentDetail = null;
+    saveState(); render(); toast('تم الحذف');
+  });
+}
+function openHoodariDetail(id){ currentDetail = id; render(); }
+
+function renderHoodariDetail(id){
+  const h = hoodariById(id);
+  if(!h){ currentDetail=null; return renderHoodaris(); }
+  const tot = hoodariTotals(id);
+  const work = state.hoodariWork.filter(w=>w.hoodariId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const payments = state.hoodariPayments.filter(p=>p.hoodariId===id).sort((a,b)=>b.date.localeCompare(a.date));
+
+  return `
+  <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الهودارية</button>
+  <div class="detail-head">
+    <div class="titles"><h1>${esc(h.name)}</h1></div>
+    <div class="btn-row">
+      <button class="btn" onclick="openHoodariWorkModal('${id}')">+ تسجيل شغل</button>
+      <button class="btn primary" onclick="openHoodariPaymentModal('${id}')">+ تسديد مبلغ</button>
+    </div>
+  </div>
+  <div class="grid stats">
+    ${statCard('إجمالي المستحق', money(tot.due),'')}
+    ${statCard('إجمالي المدفوع', money(tot.paid),'pos')}
+    ${statCard('المتبقي', money(tot.remaining), tot.remaining>0?'neg':'pos')}
+  </div>
+
+  <div class="section-title"><span class="ic">🪡</span> سجل الشغل — كل القطع اللي سوّاها ${esc(h.name)}</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>الموديل</th><th>عدد القطع</th><th>سعر القطعة</th><th>الإجمالي</th><th>ملاحظات</th><th></th></tr></thead>
+      <tbody>
+      ${work.length? work.map(w=>`
+        <tr>
+          <td class="muted">${esc(w.date)}</td>
+          <td>${w.modelId? esc(modelById(w.modelId)?.name||'—') : '<span class="muted">بدون تحديد</span>'}</td>
+          <td class="num">${w.pieceCount}</td>
+          <td class="num">${money(w.pricePerPiece)}</td>
+          <td class="num">${money(num(w.pieceCount)*num(w.pricePerPiece))}</td>
+          <td class="muted">${esc(w.notes||'—')}</td>
+          <td><div class="btn-row">
+            <button class="btn sm ghost" onclick="openHoodariWorkModal('${id}','${w.id}')">تعديل</button>
+            <button class="btn sm danger" onclick="deleteHoodariWork('${w.id}')">حذف</button>
+          </div></td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="7">لا يوجد سجل شغل بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="ic">💵</span> سجل التسديدات</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead>
+      <tbody>
+      ${payments.length? payments.map(p=>`
+        <tr>
+          <td class="muted">${esc(p.date)}</td>
+          <td class="num pos">${money(p.amount)}</td>
+          <td class="muted">${esc(p.notes||'—')}</td>
+          <td><div class="btn-row">
+            <button class="btn sm ghost" onclick="openHoodariPaymentModal('${id}','${p.id}')">تعديل</button>
+            <button class="btn sm danger" onclick="deleteHoodariPayment('${p.id}')">حذف</button>
+          </div></td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="4">لا توجد تسديدات بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function openHoodariWorkModal(hoodariId, workId){
+  const item = workId ? state.hoodariWork.find(w=>w.id===workId) : null;
+  const currentHoodariId = item ? item.hoodariId : hoodariId;
+  openModal({
+    title: item?'تعديل سجل شغل':'تسجيل شغل جديد',
+    bodyHtml:`
+      <div class="form-row"><label>الهوداري</label>
+        <select id="f_hoodari">
+          ${state.hoodaris.map(h=>`<option value="${h.id}" ${currentHoodariId===h.id?'selected':''}>${esc(h.name)}</option>`).join('')}
+        </select>
+        <div class="hint">لو تريد تنقل هذا السجل لشخص ثاني، بدله من هنا.</div>
+      </div>
+      <div class="form-row"><label>الموديل</label>
+        <select id="f_model"><option value="">بدون تحديد موديل معين</option>
+          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-grid2">
+        <div class="form-row"><label>عدد القطع</label><input type="number" id="f_count" value="${item?.pieceCount||''}"></div>
+        <div class="form-row"><label>سعر القطعة الواحدة</label><input type="number" id="f_price" value="${item?.pricePerPiece||''}"></div>
+      </div>
+      <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
+      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const chosenId = document.getElementById('f_hoodari').value;
+      if(!chosenId) return toast('الرجاء إضافة هوداري أولاً');
+      const data = {
+        hoodariId: chosenId, date: document.getElementById('f_date').value || todayISO(),
+        modelId: document.getElementById('f_model').value || null,
+        pieceCount: num(document.getElementById('f_count').value),
+        pricePerPiece: num(document.getElementById('f_price').value),
+        notes: document.getElementById('f_notes').value.trim()
+      };
+      if(item) Object.assign(item, data);
+      else state.hoodariWork.push({id:uid(), ...data});
+      saveState(); closeModal();
+      currentDetail = chosenId; render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteHoodariWork(id){ confirmDelete(null, ()=>{ state.hoodariWork = state.hoodariWork.filter(w=>w.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+
+function openHoodariPaymentModal(hoodariId, payId){
+  const item = payId ? state.hoodariPayments.find(p=>p.id===payId) : null;
+  openModal({
+    title: item?'تعديل تسديد':'تسديد مبلغ',
+    bodyHtml:`
+      <div class="form-grid2">
+        <div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${item?.amount||''}"></div>
+        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
+      </div>
+      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+    `,
+    onSave(){
+      const data = { hoodariId, amount:num(document.getElementById('f_amount').value),
+        date: document.getElementById('f_date').value || todayISO(),
+        notes: document.getElementById('f_notes').value.trim() };
+      if(item) Object.assign(item, data);
+      else state.hoodariPayments.push({id:uid(), ...data});
+      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
+    }
+  });
+}
+function deleteHoodariPayment(id){ confirmDelete(null, ()=>{ state.hoodariPayments = state.hoodariPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 /* =========================================================
    MODELS
@@ -1022,12 +1477,14 @@ function updateModelCompute(){
 }
 function deleteModel(id){
   const usedInSales = state.sales.some(s=>s.modelId===id);
-  const usedInWork = state.tailorWork.some(w=>w.modelId===id);
-  if(usedInSales||usedInWork){
-    if(!confirm('هذا الموديل مرتبط بمبيعات أو سجلات شغل خياطين. حذفه لن يحذف تلك السجلات لكنها ستفقد رابط الموديل. متابعة؟')) return;
-  } else if(!confirmDelete()) return;
-  state.models = state.models.filter(m=>m.id!==id);
-  saveState(); currentDetail=null; render(); toast('تم الحذف');
+  const usedInWork = state.tailorWork.some(w=>w.modelId===id) || state.cutterWork.some(w=>w.modelId===id) || state.hoodariWork.some(w=>w.modelId===id);
+  const msg = (usedInSales||usedInWork)
+    ? 'هذا الموديل مرتبط بمبيعات أو سجلات شغل خياطين/فصالين. حذفه لن يحذف تلك السجلات لكنها ستفقد رابط الموديل. متابعة؟'
+    : null;
+  confirmDelete(msg, ()=>{
+    state.models = state.models.filter(m=>m.id!==id);
+    saveState(); currentDetail=null; render(); toast('تم الحذف');
+  });
 }
 
 function renderModelDetail(id){
@@ -1041,6 +1498,12 @@ function renderModelDetail(id){
   const work = state.tailorWork.filter(w=>w.modelId===id).sort((a,b)=>b.date.localeCompare(a.date));
   const workPieces = work.reduce((s,w)=>s+num(w.pieceCount),0);
   const workCost = work.reduce((s,w)=>s+num(w.pieceCount)*num(w.pricePerPiece),0);
+  const cutWork = state.cutterWork.filter(w=>w.modelId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const cutWorkPieces = cutWork.reduce((s,w)=>s+num(w.pieceCount),0);
+  const cutWorkCost = cutWork.reduce((s,w)=>s+num(w.pieceCount)*num(w.pricePerPiece),0);
+  const hoodWork = state.hoodariWork.filter(w=>w.modelId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const hoodWorkPieces = hoodWork.reduce((s,w)=>s+num(w.pieceCount),0);
+  const hoodWorkCost = hoodWork.reduce((s,w)=>s+num(w.pieceCount)*num(w.pricePerPiece),0);
 
   return `
   <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الموديلات</button>
@@ -1069,6 +1532,28 @@ function renderModelDetail(id){
       <tbody>
       ${work.length? work.map(w=>`<tr><td class="muted">${esc(w.date)}</td><td>${esc(tailorById(w.tailorId)?.name||'—')}</td><td class="num">${w.pieceCount}</td><td class="num">${money(w.pricePerPiece)}</td><td class="num">${money(num(w.pieceCount)*num(w.pricePerPiece))}</td></tr>`).join('')
         : `<tr class="empty-row"><td colspan="5">لا يوجد شغل خياطة مرتبط بهذا الموديل</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="ic">✂️</span> الفصل المرتبط بهذا الموديل (${cutWorkPieces} قطعة، ${money(cutWorkCost)})</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>الفصّال</th><th>القطع</th><th>سعر القطعة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+      ${cutWork.length? cutWork.map(w=>`<tr><td class="muted">${esc(w.date)}</td><td>${esc(cutterById(w.cutterId)?.name||'—')}</td><td class="num">${w.pieceCount}</td><td class="num">${money(w.pricePerPiece)}</td><td class="num">${money(num(w.pieceCount)*num(w.pricePerPiece))}</td></tr>`).join('')
+        : `<tr class="empty-row"><td colspan="5">لا يوجد شغل فصل مرتبط بهذا الموديل</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="ic">🪡</span> شغل الهودارية المرتبط بهذا الموديل (${hoodWorkPieces} قطعة، ${money(hoodWorkCost)})</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>التاريخ</th><th>الاسم</th><th>القطع</th><th>سعر القطعة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+      ${hoodWork.length? hoodWork.map(w=>`<tr><td class="muted">${esc(w.date)}</td><td>${esc(hoodariById(w.hoodariId)?.name||'—')}</td><td class="num">${w.pieceCount}</td><td class="num">${money(w.pricePerPiece)}</td><td class="num">${money(num(w.pieceCount)*num(w.pricePerPiece))}</td></tr>`).join('')
+        : `<tr class="empty-row"><td colspan="5">لا يوجد شغل هودارية مرتبط بهذا الموديل</td></tr>`}
       </tbody>
     </table>
   </div>
@@ -1369,13 +1854,15 @@ function onSaleAmountsRecalc(source){
 }
 function deleteSale(id){
   const sale = state.sales.find(x=>x.id===id);
-  if(!confirmDelete(sale && sale.linkedDebtId ? 'هذه العملية مرتبطة بدين على زبون — حذفها راح يحذف الدين المرتبط بيه أيضاً. متابعة؟' : undefined)) return;
-  if(sale && sale.linkedDebtId){
-    state.customerDebts = state.customerDebts.filter(d=>d.id!==sale.linkedDebtId);
-    state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.customerDebtId!==sale.linkedDebtId);
-  }
-  state.sales = state.sales.filter(s=>s.id!==id);
-  saveState(); render(); toast('تم الحذف');
+  const msg = (sale && sale.linkedDebtId) ? 'هذه العملية مرتبطة بدين على زبون — حذفها راح يحذف الدين المرتبط بيه أيضاً. متابعة؟' : null;
+  confirmDelete(msg, ()=>{
+    if(sale && sale.linkedDebtId){
+      state.customerDebts = state.customerDebts.filter(d=>d.id!==sale.linkedDebtId);
+      state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.customerDebtId!==sale.linkedDebtId);
+    }
+    state.sales = state.sales.filter(s=>s.id!==id);
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 
 /* =========================================================
@@ -1491,10 +1978,11 @@ function openDebtModal(id){
   });
 }
 function deleteDebt(id){
-  if(!confirmDelete('سيتم حذف الدين وكل سجل التسديدات المرتبطة به. متابعة؟')) return;
-  state.debts = state.debts.filter(d=>d.id!==id);
-  state.debtPayments = state.debtPayments.filter(p=>p.debtId!==id);
-  saveState(); render(); toast('تم الحذف');
+  confirmDelete('سيتم حذف الدين وكل سجل التسديدات المرتبطة به. متابعة؟', ()=>{
+    state.debts = state.debts.filter(d=>d.id!==id);
+    state.debtPayments = state.debtPayments.filter(p=>p.debtId!==id);
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 function openDebtRepayModal(id){
   const debt = debtById(id);
@@ -1546,26 +2034,44 @@ function openDebtHistoryModal(id){
   document.getElementById('modalSaveBtn').textContent = 'إغلاق';
 }
 function deleteDebtPayment(paymentId, debtId){
-  if(!confirmDelete()) return;
-  state.debtPayments = state.debtPayments.filter(p=>p.id!==paymentId);
-  saveState(); closeModal(); render(); toast('تم حذف التسديد'); openDebtHistoryModal(debtId);
+  confirmDelete(null, ()=>{
+    state.debtPayments = state.debtPayments.filter(p=>p.id!==paymentId);
+    saveState(); closeModal(); render(); toast('تم حذف التسديد');
+    if(debtById(debtId)) openDebtHistoryModal(debtId);
+  });
 }
 
 /* =========================================================
    CUSTOMER DEBTS (ديون الزبائن — جملة ومفرد يشترون بالدين)
 ========================================================= */
 let customerDebtsFilter = {q:''};
+function groupCustomerDebts(){
+  const groups = {};
+  state.customerDebts.forEach(d=>{
+    const key = (d.customerName||'').trim() || 'بدون اسم';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+  return groups;
+}
+function customerDebtGroupTotals(debts){
+  return debts.reduce((acc,d)=>{
+    const t = customerDebtTotals(d.id);
+    acc.due += t.due; acc.paid += t.paid; acc.remaining += t.remaining;
+    return acc;
+  }, {due:0,paid:0,remaining:0});
+}
 function renderCustomerDebts(){
-  const active = state.customerDebts.filter(d=> customerDebtTotals(d.id).remaining > 0)
-    .filter(d=> !customerDebtsFilter.q || (d.customerName+' '+(d.notes||'')).toLowerCase().includes(customerDebtsFilter.q.toLowerCase()))
-    .sort((a,b)=> b.date.localeCompare(a.date));
-  const paid = state.customerDebts.filter(d=> customerDebtTotals(d.id).remaining <= 0 && state.customerDebtPayments.some(p=>p.customerDebtId===d.id))
-    .sort((a,b)=>{
-      const la = state.customerDebtPayments.filter(p=>p.customerDebtId===a.id).map(p=>p.date).sort().pop()||a.date;
-      const lb = state.customerDebtPayments.filter(p=>p.customerDebtId===b.id).map(p=>p.date).sort().pop()||b.date;
-      return lb.localeCompare(la);
-    });
-  const totalRemaining = active.reduce((s,d)=>s+customerDebtTotals(d.id).remaining,0);
+  const groups = groupCustomerDebts();
+  const rows = Object.entries(groups).map(([name, debts])=>{
+    const totals = customerDebtGroupTotals(debts);
+    const hasPayment = debts.some(d=>state.customerDebtPayments.some(p=>p.customerDebtId===d.id));
+    return {name, debts, totals, hasPayment};
+  }).filter(r=> !customerDebtsFilter.q || r.name.toLowerCase().includes(customerDebtsFilter.q.toLowerCase()));
+
+  const active = rows.filter(r=>r.totals.remaining>0).sort((a,b)=>b.totals.remaining-a.totals.remaining);
+  const settled = rows.filter(r=>r.totals.remaining<=0 && r.hasPayment).sort((a,b)=>a.name.localeCompare(b.name));
+  const totalRemaining = active.reduce((s,r)=>s+r.totals.remaining,0);
 
   return `
   <div class="page-head">
@@ -1575,68 +2081,99 @@ function renderCustomerDebts(){
   <div class="toolbar">
     <div class="filters">
       <div class="field-inline"><label>بحث</label>
-        <input type="text" class="search-box" placeholder="اسم الزبون أو ملاحظة" value="${esc(customerDebtsFilter.q)}" oninput="customerDebtsFilter.q=this.value;render();">
+        <input type="text" class="search-box" placeholder="اسم الزبون" value="${esc(customerDebtsFilter.q)}" oninput="customerDebtsFilter.q=this.value;render();">
       </div>
     </div>
   </div>
 
-  <div class="section-title"><span class="ic">🧾</span> الديون الحالية على الزبائن</div>
+  <div class="section-title"><span class="ic">🧾</span> زبائن عليهم ديون حالية</div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>الزبون</th><th>النوع</th><th>الموديل</th><th>المبلغ الكلي</th><th>المسدد</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
+      <thead><tr><th>الزبون</th><th>عدد الطلبات</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th></tr></thead>
       <tbody>
-      ${active.length? active.map(d=>{
+      ${active.length? active.map(r=>`
+        <tr style="cursor:pointer" onclick="openCustomerDetail('${encName(r.name)}')">
+          <td><b>${esc(r.name)}</b></td>
+          <td class="num muted">${r.debts.length}</td>
+          <td class="num">${money(r.totals.due)}</td>
+          <td class="num pos">${money(r.totals.paid)}</td>
+          <td class="num accent">${money(r.totals.remaining)}</td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="5">لا توجد ديون حالية على الزبائن</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="ic">✅</span> زبائن سددوا بالكامل</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الزبون</th><th>عدد الطلبات</th><th>إجمالي ما دفعوه</th></tr></thead>
+      <tbody>
+      ${settled.length? settled.map(r=>`
+        <tr style="cursor:pointer" onclick="openCustomerDetail('${encName(r.name)}')">
+          <td>${esc(r.name)}</td>
+          <td class="num muted">${r.debts.length}</td>
+          <td class="num pos">${money(r.totals.due)}</td>
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="3">لا توجد ديون محصّلة بعد</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function openCustomerDetail(encodedName){ currentDetail = encodedName; render(); }
+function renderCustomerDetail(encodedName){
+  const customerName = decodeURIComponent(encodedName);
+  const debts = state.customerDebts.filter(d=>(d.customerName||'').trim()===customerName).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!debts.length){ currentDetail=null; return renderCustomerDebts(); }
+  const totals = customerDebtGroupTotals(debts);
+
+  return `
+  <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة ديون الزبائن</button>
+  <div class="detail-head">
+    <div class="titles"><h1>${esc(customerName)}</h1></div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="openCustomerDebtModal()">+ إضافة دين جديد</button>
+    </div>
+  </div>
+  <div class="grid stats">
+    ${statCard('إجمالي كل الديون', money(totals.due),'')}
+    ${statCard('إجمالي المسدد', money(totals.paid),'pos')}
+    ${statCard('إجمالي المتبقي', money(totals.remaining), totals.remaining>0?'accent':'pos')}
+  </div>
+
+  <div class="section-title"><span class="ic">🧾</span> كل طلب/دين منفصل لهذا الزبون</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الموديل</th><th>النوع</th><th>المبلغ الكلي</th><th>المسدد</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
+      <tbody>
+      ${debts.map(d=>{
         const tot = customerDebtTotals(d.id);
         return `<tr>
-          <td><b>${esc(d.customerName)}</b></td>
+          <td>${d.modelId? esc(modelById(d.modelId)?.name||'—') : '<span class="muted">بدون تحديد</span>'}</td>
           <td><span class="pill ${d.customerType==='wholesale'?'wholesale':'retail'}">${d.customerType==='wholesale'?'جملة':'مفرد'}</span></td>
-          <td class="muted">${d.modelId? esc(modelById(d.modelId)?.name||'—') : '—'}</td>
           <td class="num">${money(tot.due)}</td>
           <td class="num pos">${money(tot.paid)}</td>
-          <td class="num accent">${money(tot.remaining)}</td>
+          <td class="num ${tot.remaining>0?'accent':'pos'}">${tot.remaining>0?money(tot.remaining):'مسدد بالكامل'}</td>
           <td class="muted">${esc(d.date)}</td>
           <td><div class="btn-row">
-            <button class="btn sm primary" onclick="openCustomerDebtRepayModal('${d.id}')">تحصيل</button>
+            ${tot.remaining>0?`<button class="btn sm primary" onclick="openCustomerDebtRepayModal('${d.id}')">تحصيل</button>`:''}
             <button class="btn sm ghost" onclick="openCustomerDebtHistoryModal('${d.id}')">السجل</button>
             <button class="btn sm ghost" onclick="openCustomerDebtModal('${d.id}')">تعديل</button>
             <button class="btn sm danger" onclick="deleteCustomerDebt('${d.id}')">حذف</button>
           </div></td>
         </tr>`;
-      }).join('') : `<tr class="empty-row"><td colspan="8">لا توجد ديون حالية على الزبائن</td></tr>`}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section-title"><span class="ic">✅</span> تم تحصيلها بالكامل</div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>الزبون</th><th>النوع</th><th>المبلغ الكلي</th><th>تاريخ آخر تحصيل</th><th></th></tr></thead>
-      <tbody>
-      ${paid.length? paid.map(d=>{
-        const tot = customerDebtTotals(d.id);
-        const lastDate = state.customerDebtPayments.filter(p=>p.customerDebtId===d.id).map(p=>p.date).sort().pop();
-        return `<tr>
-          <td>${esc(d.customerName)}</td>
-          <td><span class="pill ${d.customerType==='wholesale'?'wholesale':'retail'}">${d.customerType==='wholesale'?'جملة':'مفرد'}</span></td>
-          <td class="num pos">${money(tot.due)}</td>
-          <td class="muted">${esc(lastDate||'—')}</td>
-          <td><div class="btn-row">
-            <button class="btn sm ghost" onclick="openCustomerDebtHistoryModal('${d.id}')">السجل</button>
-            <button class="btn sm danger" onclick="deleteCustomerDebt('${d.id}')">حذف</button>
-          </div></td>
-        </tr>`;
-      }).join('') : `<tr class="empty-row"><td colspan="5">لا توجد ديون محصّلة بعد</td></tr>`}
+      }).join('')}
       </tbody>
     </table>
   </div>`;
 }
 function openCustomerDebtModal(id){
   const item = id ? customerDebtById(id) : null;
+  const contextName = (!item && currentPage==='customerdebts' && currentDetail) ? decodeURIComponent(currentDetail) : null;
+  const initName = item?.customerName || contextName || '';
   openModal({
     title: item?'تعديل دين الزبون':'إضافة دين زبون جديد',
     bodyHtml:`
       <div class="form-grid2">
-        <div class="form-row"><label>اسم الزبون / التاجر</label><input type="text" id="f_customer" value="${esc(item?.customerName||'')}"></div>
+        <div class="form-row"><label>اسم الزبون / التاجر</label><input type="text" id="f_customer" value="${esc(initName)}"></div>
         <div class="form-row"><label>نوع الزبون</label>
           <select id="f_type">
             <option value="wholesale" ${item?.customerType==='wholesale'?'selected':''}>جملة</option>
@@ -1669,16 +2206,23 @@ function openCustomerDebtModal(id){
       };
       if(item) Object.assign(item, data);
       else state.customerDebts.push({id:uid(), ...data});
-      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
+      saveState(); closeModal();
+      if(currentPage==='customerdebts' && currentDetail){ currentDetail = encName(customerName); }
+      render(); toast('تم الحفظ بنجاح');
     }
   });
 }
 function deleteCustomerDebt(id){
-  if(!confirmDelete('سيتم حذف الدين وكل سجل التحصيلات المرتبطة به. متابعة؟')) return;
-  state.customerDebts = state.customerDebts.filter(d=>d.id!==id);
-  state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.customerDebtId!==id);
-  state.sales.forEach(s=>{ if(s.linkedDebtId===id) s.linkedDebtId = null; });
-  saveState(); render(); toast('تم الحذف');
+  confirmDelete('سيتم حذف الدين وكل سجل التحصيلات المرتبطة به. متابعة؟', ()=>{
+    state.customerDebts = state.customerDebts.filter(d=>d.id!==id);
+    state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.customerDebtId!==id);
+    state.sales.forEach(s=>{ if(s.linkedDebtId===id) s.linkedDebtId = null; });
+    if(currentPage==='customerdebts' && currentDetail){
+      const nm = decodeURIComponent(currentDetail);
+      if(!state.customerDebts.some(d=>(d.customerName||'').trim()===nm)) currentDetail = null;
+    }
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 function openCustomerDebtRepayModal(id){
   const d = customerDebtById(id);
@@ -1730,9 +2274,11 @@ function openCustomerDebtHistoryModal(id){
   document.getElementById('modalSaveBtn').textContent = 'إغلاق';
 }
 function deleteCustomerDebtPayment(paymentId, debtId){
-  if(!confirmDelete()) return;
-  state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.id!==paymentId);
-  saveState(); closeModal(); render(); toast('تم حذف التحصيل'); openCustomerDebtHistoryModal(debtId);
+  confirmDelete(null, ()=>{
+    state.customerDebtPayments = state.customerDebtPayments.filter(p=>p.id!==paymentId);
+    saveState(); closeModal(); render(); toast('تم حذف التحصيل');
+    if(customerDebtById(debtId)) openCustomerDebtHistoryModal(debtId);
+  });
 }
 
 /* =========================================================
@@ -1852,13 +2398,16 @@ function openPageManagerModal(id){
 }
 function deletePageManager(id){
   const tot = pageManagerTotals(id);
-  if(tot.due>0 || tot.paid>0){
-    if(!confirm('لهذا الشخص مستحقات أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟')) return;
-  } else if(!confirmDelete()) return;
-  state.pageManagers = state.pageManagers.filter(m=>m.id!==id);
-  state.pageManagerFees = state.pageManagerFees.filter(f=>f.managerId!==id);
-  state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.managerId!==id);
-  saveState(); render(); toast('تم الحذف');
+  const msg = (tot.due>0 || tot.paid>0)
+    ? 'لهذا الشخص مستحقات أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟'
+    : null;
+  confirmDelete(msg, ()=>{
+    state.pageManagers = state.pageManagers.filter(m=>m.id!==id);
+    state.pageManagerFees = state.pageManagerFees.filter(f=>f.managerId!==id);
+    state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.managerId!==id);
+    currentDetail = null;
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 function openPageManagerDetail(id){ currentDetail = id; render(); }
 function renderPageManagerDetail(id){
@@ -1948,7 +2497,7 @@ function openPageManagerFeeModal(managerId, feeId){
     }
   });
 }
-function deletePageManagerFee(id){ if(!confirmDelete()) return; state.pageManagerFees = state.pageManagerFees.filter(f=>f.id!==id); saveState(); render(); toast('تم الحذف'); }
+function deletePageManagerFee(id){ confirmDelete(null, ()=>{ state.pageManagerFees = state.pageManagerFees.filter(f=>f.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 function openPageManagerPaymentModal(managerId, payId){
   const item = payId ? state.pageManagerPayments.find(p=>p.id===payId) : null;
   openModal({
@@ -1970,7 +2519,7 @@ function openPageManagerPaymentModal(managerId, payId){
     }
   });
 }
-function deletePageManagerPayment(id){ if(!confirmDelete()) return; state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }
+function deletePageManagerPayment(id){ confirmDelete(null, ()=>{ state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 /* =========================================================
    REPORTS
@@ -1981,6 +2530,8 @@ function renderReports(){
   const sales = state.sales.filter(s=>inRange(s.date,from,to));
   const expenses = state.expenses.filter(e=>inRange(e.date,from,to));
   const work = state.tailorWork.filter(w=>inRange(w.date,from,to));
+  const cutWork = state.cutterWork.filter(w=>inRange(w.date,from,to));
+  const hoodWork = state.hoodariWork.filter(w=>inRange(w.date,from,to));
 
   // profit by month
   const byMonth = {};
@@ -2001,6 +2552,16 @@ function renderReports(){
   const byTailor = {};
   work.forEach(w=>{ byTailor[w.tailorId]=byTailor[w.tailorId]||{pieces:0,cost:0}; byTailor[w.tailorId].pieces+=num(w.pieceCount); byTailor[w.tailorId].cost+=num(w.pieceCount)*num(w.pricePerPiece); });
   const tailorRows = Object.entries(byTailor).map(([id,v])=>({tailor:tailorById(id), ...v, ...(function(){const t=tailorTotals(id);return {remaining:t.remaining};})()})).filter(x=>x.tailor);
+
+  // cutter production
+  const byCutter = {};
+  cutWork.forEach(w=>{ byCutter[w.cutterId]=byCutter[w.cutterId]||{pieces:0,cost:0}; byCutter[w.cutterId].pieces+=num(w.pieceCount); byCutter[w.cutterId].cost+=num(w.pieceCount)*num(w.pricePerPiece); });
+  const cutterRows = Object.entries(byCutter).map(([id,v])=>({cutter:cutterById(id), ...v, ...(function(){const t=cutterTotals(id);return {remaining:t.remaining};})()})).filter(x=>x.cutter);
+
+  // hoodari production
+  const byHoodari = {};
+  hoodWork.forEach(w=>{ byHoodari[w.hoodariId]=byHoodari[w.hoodariId]||{pieces:0,cost:0}; byHoodari[w.hoodariId].pieces+=num(w.pieceCount); byHoodari[w.hoodariId].cost+=num(w.pieceCount)*num(w.pricePerPiece); });
+  const hoodariRows = Object.entries(byHoodari).map(([id,v])=>({hoodari:hoodariById(id), ...v, ...(function(){const t=hoodariTotals(id);return {remaining:t.remaining};})()})).filter(x=>x.hoodari);
 
   return `
   <div class="page-head">
@@ -2056,6 +2617,28 @@ function renderReports(){
       <thead><tr><th>الخياط</th><th>القطع المنتجة</th><th>تكلفة الخياطة</th><th>المتبقي له (كلي)</th></tr></thead>
       <tbody>
       ${tailorRows.length? tailorRows.map(r=>`<tr><td>${esc(r.tailor.name)}</td><td class="num">${r.pieces}</td><td class="num">${money(r.cost)}</td><td class="num ${r.remaining>0?'neg':'pos'}">${money(r.remaining)}</td></tr>`).join('')
+        : `<tr class="empty-row"><td colspan="4">لا توجد بيانات</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">✂️ إنتاج كل فصّال والمستحقات</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الفصّال</th><th>القطع المفصولة</th><th>تكلفة الفصل</th><th>المتبقي له (كلي)</th></tr></thead>
+      <tbody>
+      ${cutterRows.length? cutterRows.map(r=>`<tr><td>${esc(r.cutter.name)}</td><td class="num">${r.pieces}</td><td class="num">${money(r.cost)}</td><td class="num ${r.remaining>0?'neg':'pos'}">${money(r.remaining)}</td></tr>`).join('')
+        : `<tr class="empty-row"><td colspan="4">لا توجد بيانات</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">🪡 إنتاج كل هوداري والمستحقات</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الاسم</th><th>القطع المنجزة</th><th>التكلفة</th><th>المتبقي له (كلي)</th></tr></thead>
+      <tbody>
+      ${hoodariRows.length? hoodariRows.map(r=>`<tr><td>${esc(r.hoodari.name)}</td><td class="num">${r.pieces}</td><td class="num">${money(r.cost)}</td><td class="num ${r.remaining>0?'neg':'pos'}">${money(r.remaining)}</td></tr>`).join('')
         : `<tr class="empty-row"><td colspan="4">لا توجد بيانات</td></tr>`}
       </tbody>
     </table>
@@ -2154,7 +2737,10 @@ function exportBackup(){
 }
 function importBackup(evt){
   const file = evt.target.files[0]; if(!file) return;
-  if(!confirm('سيتم استبدال جميع البيانات الحالية بالنسخة المستوردة. متابعة؟')) return;
+  askConfirm('سيتم استبدال جميع البيانات الحالية بالنسخة المستوردة. متابعة؟', ()=>doImportBackup(file), {title:'استيراد نسخة احتياطية', yesLabel:'استيراد'});
+  return;
+}
+function doImportBackup(file){
   const reader = new FileReader();
   reader.onload = e=>{
     try{
@@ -2166,10 +2752,12 @@ function importBackup(evt){
   reader.readAsText(file);
 }
 function resetAllData(){
-  if(!confirm('سيتم حذف جميع البيانات نهائياً من هذا الجهاز. هل أنت متأكد؟')) return;
-  if(!confirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟')) return;
-  state = defaultState();
-  saveState(); toast('تم حذف جميع البيانات'); navigate('dashboard');
+  askConfirm('سيتم حذف جميع البيانات نهائياً من هذا الجهاز. هل أنت متأكد؟', ()=>{
+    askConfirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟', ()=>{
+      state = defaultState();
+      saveState(); toast('تم حذف جميع البيانات'); navigate('dashboard');
+    }, {title:'تأكيد نهائي', yesLabel:'حذف نهائي'});
+  }, {title:'حذف جميع البيانات', yesLabel:'متابعة'});
 }
 
 /* =========================================================
