@@ -498,7 +498,7 @@ function periodTotals(from, to){
   const sewnPieces = work.reduce((s,x)=>s+num(x.pieceCount),0);
   const cutPieces = cutWork.reduce((s,x)=>s+num(x.pieceCount),0);
   const hoodPieces = hoodWork.reduce((s,x)=>s+num(x.pieceCount),0);
-  const piecesProduced = sewnPieces + cutPieces + hoodPieces;
+  const piecesProduced = cutPieces;
   const piecesSold = sales.reduce((s,x)=>s+num(x.quantity),0);
   const sewingCostPeriod = work.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
   const cuttingCostPeriod = cutWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
@@ -561,6 +561,7 @@ function render(){
   buildNav();
   const main = document.getElementById('mainContent');
   if(currentPage==='dashboard') main.innerHTML = renderDashboard();
+  else if(currentPage==='soldmodels') main.innerHTML = renderSoldModels();
   else if(currentPage==='expenses') main.innerHTML = renderExpenses();
   else if(currentPage==='tailors') main.innerHTML = currentDetail ? renderTailorDetail(currentDetail) : renderTailors();
   else if(currentPage==='cutters') main.innerHTML = currentDetail ? renderCutterDetail(currentDetail) : renderCutters();
@@ -622,8 +623,8 @@ function renderDashboard(){
     ${statCard('إجمالي الوارد', money(t.revenue), 'accent', `${t.salesCount} عملية بيع`)}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg')}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
-    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', `فصل: ${t.cutPieces.toLocaleString('en-US')} · خياطة: ${t.sewnPieces.toLocaleString('en-US')} · هودارية: ${t.hoodPieces.toLocaleString('en-US')}`)}
-    ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '')}
+    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', 'حسب الفصل')}
+    ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '', null, false, "navigate('soldmodels')")}
     ${statCard('مستحقات الخياطين (الكلي)', money(duesTotal), duesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
     ${statCard('مستحقات الفصالين (الكلي)', money(cutterDuesTotal), cutterDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
     ${statCard('مستحقات الهودارية (الكلي)', money(hoodariDuesTotal), hoodariDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
@@ -661,8 +662,108 @@ function renderDashboard(){
   </div>
   `;
 }
-function statCard(label, value, cls, sub, hero){
-  return `<div class="card stat-card${hero?' hero':''}"><div class="label">${label}</div><div class="value ${cls||''}">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+function statCard(label, value, cls, sub, hero, onClick){
+  const clickAttrs = onClick ? ` style="cursor:pointer" onclick="${onClick}"` : '';
+  const hint = onClick ? `<div class="sub" style="color:var(--accent-soft)">اضغط للتفاصيل ←</div>` : '';
+  return `<div class="card stat-card${hero?' hero':''}"${clickAttrs}><div class="label">${label}</div><div class="value ${cls||''}">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}${hint}</div>`;
+}
+let soldModelsMonth = 'ALL';
+function renderSoldModels(){
+  const all = soldModelsMonth === 'ALL';
+  const from = all ? null : soldModelsMonth+'-01';
+  const to = all ? null : soldModelsMonth+'-31';
+  const sales = state.sales.filter(s=>inRange(s.date, from, to));
+
+  const agg = {};
+  sales.forEach(s=>{
+    const key = s.modelId || ('free::' + (s.productLabel||'بيع بدون موديل'));
+    if(!agg[key]) agg[key] = {modelId:s.modelId||null, label:saleProductLabel(s), qty:0, revenue:0, cost:0, profit:0, count:0};
+    const a = agg[key];
+    a.qty += num(s.quantity);
+    a.revenue += saleRevenue(s);
+    a.cost += saleCost(s);
+    a.profit += saleProfit(s);
+    a.count += 1;
+  });
+  const rows = Object.values(agg).sort((a,b)=>b.qty-a.qty);
+
+  const totalQty = rows.reduce((s,r)=>s+r.qty,0);
+  const totalRevenue = rows.reduce((s,r)=>s+r.revenue,0);
+  const totalCost = rows.reduce((s,r)=>s+r.cost,0);
+  const totalProfit = rows.reduce((s,r)=>s+r.profit,0);
+  const best = rows[0];
+
+  return `
+  <button class="detail-back" onclick="navigate('dashboard')">→ رجوع للرئيسية</button>
+  <div class="page-head">
+    <div><h1>تفاصيل القطع المباعة</h1><div class="desc">كل موديل انباع، بصورته وسعره وتكلفته وربحه</div></div>
+    <div class="toolbar" style="margin:0;">
+      <div class="field-inline">
+        <label>الفترة</label>
+        <select onchange="soldModelsMonth=this.value;render();">
+          <option value="ALL" ${all?'selected':''}>كل الفترات</option>
+          ${monthOptionsList(soldModelsMonth)}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid stats">
+    ${statCard('إجمالي الربح', money(totalProfit), totalProfit>=0?'pos':'neg', null, true)}
+    ${statCard('القطع المباعة', totalQty.toLocaleString('en-US'), '')}
+    ${statCard('إجمالي الوارد', money(totalRevenue), 'accent')}
+    ${statCard('إجمالي التكلفة', money(totalCost), '')}
+    ${best? statCard('الأكثر مبيعاً', esc(best.label), 'accent', `${best.qty} قطعة`) : ''}
+  </div>
+
+  <div class="section-title"><span class="ic">👗</span> تفاصيل كل موديل</div>
+  ${rows.length ? `
+  <div class="model-grid">
+    ${rows.map(r=>{
+      const m = r.modelId ? modelById(r.modelId) : null;
+      const img = (m && m.images && m.images[0]) ? `<img src="${m.images[0]}">` : 'لا توجد صورة';
+      const avgPrice = r.qty ? r.revenue/r.qty : 0;
+      const avgCost = r.qty ? r.cost/r.qty : 0;
+      const avgProfit = r.qty ? r.profit/r.qty : 0;
+      const margin = r.revenue ? Math.round((r.profit/r.revenue)*100) : 0;
+      return `
+      <div class="model-card" ${m?`onclick="currentPage='models';currentDetail='${m.id}';render();window.scrollTo(0,0);"`:''}>
+        <div class="thumb">${img}</div>
+        <div class="info">
+          ${m?`<div class="code">${esc(m.code)}</div>`:'<div class="code">بدون موديل</div>'}
+          <div class="name">${esc(r.label)}</div>
+          <div class="row"><span>القطع المباعة</span><span class="num"><b>${r.qty}</b></span></div>
+          <div class="row"><span>متوسط سعر البيع</span><span class="num">${money(avgPrice)}</span></div>
+          <div class="row"><span>متوسط التكلفة</span><span class="num">${money(avgCost)}</span></div>
+          <div class="row"><span>الربح/قطعة</span><span class="num ${avgProfit>=0?'pos':'neg'}">${money(avgProfit)}</span></div>
+          <div class="row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;"><span>إجمالي الوارد</span><span class="num accent">${money(r.revenue)}</span></div>
+          <div class="row"><span>إجمالي الربح</span><span class="num ${r.profit>=0?'pos':'neg'}"><b>${money(r.profit)}</b></span></div>
+          <div class="row"><span>نسبة الربح</span><span class="num ${margin>=0?'pos':'neg'}">${margin}%</span></div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : `<div class="card" style="text-align:center;color:var(--text-faint);padding:34px;">لا توجد مبيعات مسجلة لهذه الفترة</div>`}
+
+  <div class="section-title"><span class="ic">📊</span> جدول مقارنة</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>الموديل</th><th>القطع</th><th>عمليات البيع</th><th>الوارد</th><th>التكلفة</th><th>الربح</th><th>نسبة الربح</th></tr></thead>
+      <tbody>
+      ${rows.length? rows.map(r=>{
+        const margin = r.revenue ? Math.round((r.profit/r.revenue)*100) : 0;
+        return `<tr>
+          <td>${esc(r.label)}</td>
+          <td class="num">${r.qty}</td>
+          <td class="num muted">${r.count}</td>
+          <td class="num accent">${money(r.revenue)}</td>
+          <td class="num">${money(r.cost)}</td>
+          <td class="num ${r.profit>=0?'pos':'neg'}">${money(r.profit)}</td>
+          <td class="num ${margin>=0?'pos':'neg'}">${margin}%</td>
+        </tr>`;
+      }).join('') : `<tr class="empty-row"><td colspan="7">لا توجد بيانات</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
 }
 function monthOptionsList(selected){
   const opts = [];
@@ -912,9 +1013,74 @@ function renderTailorDetail(id){
     </table>
   </div>`;
 }
+let pendingWorkModelImages = [];
+function workModelPickerHtml(selectedModelId){
+  return `
+      <div class="form-row"><label>الموديل</label>
+        <select id="f_model" onchange="onWorkModelSelectChange()">
+          <option value="">بدون تحديد موديل معين</option>
+          <option value="__NEW__">+ إضافة موديل جديد الآن</option>
+          ${state.models.map(m=>`<option value="${m.id}" ${selectedModelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+        </select>
+      </div>
+      <div id="workNewModelFields" style="display:none;flex-direction:column;gap:13px;">
+        <div class="form-row"><label>اسم الموديل الجديد</label><input type="text" id="f_newModelName" placeholder="مثال: عباية كتف مطرزة"></div>
+        <div class="form-row"><label>صورة الموديل (اختياري)</label>
+          <input type="file" accept="image/*" multiple onchange="handleWorkModelImageUpload(event)">
+          <div class="gallery" id="workModelGalleryPreview"></div>
+          <div class="hint">تكدر تكتب الاسم بس وتترك الصورة فارغة.</div>
+        </div>
+      </div>`;
+}
+function onWorkModelSelectChange(){
+  const val = document.getElementById('f_model').value;
+  const box = document.getElementById('workNewModelFields');
+  if(box) box.style.display = (val==='__NEW__') ? 'flex' : 'none';
+}
+function workModelGalleryPreviewHtml(){
+  return pendingWorkModelImages.map((src,i)=>`<div class="thumb-x"><img src="${src}"><button type="button" onclick="removeWorkModelImage(${i})">×</button></div>`).join('');
+}
+function removeWorkModelImage(i){
+  pendingWorkModelImages.splice(i,1);
+  const el = document.getElementById('workModelGalleryPreview');
+  if(el) el.innerHTML = workModelGalleryPreviewHtml();
+}
+function handleWorkModelImageUpload(evt){
+  const files = Array.from(evt.target.files || []);
+  if(!files.length) return;
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      pendingWorkModelImages.push(e.target.result);
+      const el = document.getElementById('workModelGalleryPreview');
+      if(el) el.innerHTML = workModelGalleryPreviewHtml();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+// Returns {ok:true, modelId} or {ok:false, msg}
+function resolveWorkModelId(){
+  const val = document.getElementById('f_model').value;
+  if(val === '__NEW__'){
+    const name = document.getElementById('f_newModelName').value.trim();
+    if(!name) return {ok:false, msg:'الرجاء إدخال اسم الموديل الجديد، أو اختر "بدون تحديد"'};
+    const newModel = {
+      id: uid(), name,
+      code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
+      images: [...pendingWorkModelImages],
+      fabricCost:0, sewingCost:0, accessoriesCost:0, packagingCost:0, otherCost:0,
+      sellingPrice:0, notes:''
+    };
+    state.models.push(newModel);
+    return {ok:true, modelId:newModel.id};
+  }
+  return {ok:true, modelId: val || null};
+}
+
 function openTailorWorkModal(tailorId, workId){
   const item = workId ? state.tailorWork.find(w=>w.id===workId) : null;
   const currentTailorId = item ? item.tailorId : tailorId;
+  pendingWorkModelImages = [];
   openModal({
     title: item?'تعديل سجل شغل':'تسجيل شغل جديد',
     bodyHtml:`
@@ -924,11 +1090,7 @@ function openTailorWorkModal(tailorId, workId){
         </select>
         <div class="hint">لو تريد تنقل هذا السجل لخياط ثاني، بدله من هنا.</div>
       </div>
-      <div class="form-row"><label>الموديل</label>
-        <select id="f_model"><option value="">بدون تحديد موديل معين</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
-        </select>
-      </div>
+      ${workModelPickerHtml(item?.modelId)}
       <div class="form-grid2">
         <div class="form-row"><label>عدد القطع</label><input type="number" id="f_count" value="${item?.pieceCount||''}"></div>
         <div class="form-row"><label>سعر خياطة القطعة الواحدة</label><input type="number" id="f_price" value="${item?.pricePerPiece||''}"></div>
@@ -939,9 +1101,11 @@ function openTailorWorkModal(tailorId, workId){
     onSave(){
       const chosenTailorId = document.getElementById('f_tailor').value;
       if(!chosenTailorId) return toast('الرجاء إضافة خياط أولاً');
+      const resolved = resolveWorkModelId();
+      if(!resolved.ok) return toast(resolved.msg);
       const data = {
         tailorId: chosenTailorId, date: document.getElementById('f_date').value || todayISO(),
-        modelId: document.getElementById('f_model').value || null,
+        modelId: resolved.modelId,
         pieceCount: num(document.getElementById('f_count').value),
         pricePerPiece: num(document.getElementById('f_price').value),
         notes: document.getElementById('f_notes').value.trim()
@@ -949,7 +1113,7 @@ function openTailorWorkModal(tailorId, workId){
       if(item) Object.assign(item, data);
       else state.tailorWork.push({id:uid(), ...data});
       saveState(); closeModal();
-      currentDetail = chosenTailorId; render(); toast('تم الحفظ بنجاح');
+      currentPage='tailors'; currentDetail = chosenTailorId; render(); toast('تم الحفظ بنجاح');
     }
   });
 }
@@ -1108,6 +1272,7 @@ function renderCutterDetail(id){
 function openCutterWorkModal(cutterId, workId){
   const item = workId ? state.cutterWork.find(w=>w.id===workId) : null;
   const currentCutterId = item ? item.cutterId : cutterId;
+  pendingWorkModelImages = [];
   openModal({
     title: item?'تعديل سجل شغل':'تسجيل شغل جديد',
     bodyHtml:`
@@ -1117,11 +1282,7 @@ function openCutterWorkModal(cutterId, workId){
         </select>
         <div class="hint">لو تريد تنقل هذا السجل لفصّال ثاني، بدله من هنا.</div>
       </div>
-      <div class="form-row"><label>الموديل</label>
-        <select id="f_model"><option value="">بدون تحديد موديل معين</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
-        </select>
-      </div>
+      ${workModelPickerHtml(item?.modelId)}
       <div class="form-grid2">
         <div class="form-row"><label>عدد القطع</label><input type="number" id="f_count" value="${item?.pieceCount||''}"></div>
         <div class="form-row"><label>سعر فصل القطعة الواحدة</label><input type="number" id="f_price" value="${item?.pricePerPiece||''}"></div>
@@ -1132,9 +1293,11 @@ function openCutterWorkModal(cutterId, workId){
     onSave(){
       const chosenCutterId = document.getElementById('f_cutter').value;
       if(!chosenCutterId) return toast('الرجاء إضافة فصّال أولاً');
+      const resolved = resolveWorkModelId();
+      if(!resolved.ok) return toast(resolved.msg);
       const data = {
         cutterId: chosenCutterId, date: document.getElementById('f_date').value || todayISO(),
-        modelId: document.getElementById('f_model').value || null,
+        modelId: resolved.modelId,
         pieceCount: num(document.getElementById('f_count').value),
         pricePerPiece: num(document.getElementById('f_price').value),
         notes: document.getElementById('f_notes').value.trim()
@@ -1142,7 +1305,7 @@ function openCutterWorkModal(cutterId, workId){
       if(item) Object.assign(item, data);
       else state.cutterWork.push({id:uid(), ...data});
       saveState(); closeModal();
-      currentDetail = chosenCutterId; render(); toast('تم الحفظ بنجاح');
+      currentPage='cutters'; currentDetail = chosenCutterId; render(); toast('تم الحفظ بنجاح');
     }
   });
 }
@@ -1301,6 +1464,7 @@ function renderHoodariDetail(id){
 function openHoodariWorkModal(hoodariId, workId){
   const item = workId ? state.hoodariWork.find(w=>w.id===workId) : null;
   const currentHoodariId = item ? item.hoodariId : hoodariId;
+  pendingWorkModelImages = [];
   openModal({
     title: item?'تعديل سجل شغل':'تسجيل شغل جديد',
     bodyHtml:`
@@ -1310,11 +1474,7 @@ function openHoodariWorkModal(hoodariId, workId){
         </select>
         <div class="hint">لو تريد تنقل هذا السجل لشخص ثاني، بدله من هنا.</div>
       </div>
-      <div class="form-row"><label>الموديل</label>
-        <select id="f_model"><option value="">بدون تحديد موديل معين</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
-        </select>
-      </div>
+      ${workModelPickerHtml(item?.modelId)}
       <div class="form-grid2">
         <div class="form-row"><label>عدد القطع</label><input type="number" id="f_count" value="${item?.pieceCount||''}"></div>
         <div class="form-row"><label>سعر القطعة الواحدة</label><input type="number" id="f_price" value="${item?.pricePerPiece||''}"></div>
@@ -1325,9 +1485,11 @@ function openHoodariWorkModal(hoodariId, workId){
     onSave(){
       const chosenId = document.getElementById('f_hoodari').value;
       if(!chosenId) return toast('الرجاء إضافة هوداري أولاً');
+      const resolved = resolveWorkModelId();
+      if(!resolved.ok) return toast(resolved.msg);
       const data = {
         hoodariId: chosenId, date: document.getElementById('f_date').value || todayISO(),
-        modelId: document.getElementById('f_model').value || null,
+        modelId: resolved.modelId,
         pieceCount: num(document.getElementById('f_count').value),
         pricePerPiece: num(document.getElementById('f_price').value),
         notes: document.getElementById('f_notes').value.trim()
@@ -1335,7 +1497,7 @@ function openHoodariWorkModal(hoodariId, workId){
       if(item) Object.assign(item, data);
       else state.hoodariWork.push({id:uid(), ...data});
       saveState(); closeModal();
-      currentDetail = chosenId; render(); toast('تم الحفظ بنجاح');
+      currentPage='hoodaris'; currentDetail = chosenId; render(); toast('تم الحفظ بنجاح');
     }
   });
 }
