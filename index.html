@@ -317,7 +317,7 @@ const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage
 
 function defaultState(){
   return {
-    settings:{ shopName:'ستر', pin:null },
+    settings:{ shopName:'ستر', pin:null, capitalBase:0 },
     expenses:[], tailors:[], tailorWork:[], tailorPayments:[],
     cutters:[], cutterWork:[], cutterPayments:[],
     hoodaris:[], hoodariWork:[], hoodariPayments:[],
@@ -486,6 +486,12 @@ function saleProductLabel(s){
   return s.productLabel || 'بيع بدون موديل';
 }
 
+function capitalTotal(){
+  const totalProfit = state.sales.reduce((s,x)=> s + saleProfit(x), 0);
+  const totalExpenses = state.expenses.reduce((s,x)=> s + num(x.amount), 0);
+  const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
+  return num(state.settings.capitalBase) + totalProfit - totalExpenses - totalDebts;
+}
 function periodTotals(from, to){
   const sales = state.sales.filter(s=>inRange(s.date, from, to));
   const expenses = state.expenses.filter(e=>inRange(e.date, from, to));
@@ -620,6 +626,7 @@ function renderDashboard(){
 
   <div class="grid stats">
     ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', null, true)}
+    ${statCard('رأس المال / الميزانية', money(capitalTotal()), capitalTotal()>=0?'pos':'neg', 'اضغط لإضافة رأس مال', true, "openCapitalModal()")}
     ${statCard('إجمالي الوارد', money(t.revenue), 'accent', `${t.salesCount} عملية بيع`)}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg')}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
@@ -2880,6 +2887,23 @@ function renderSettings(){
     <button class="btn danger" onclick="resetAllData()">حذف جميع البيانات</button>
   </div>
   `;
+}
+function openCapitalModal(){
+  openModal({
+    title: 'رأس المال / الميزانية',
+    bodyHtml: `
+      <div class="compute-box"><span>رأس المال الحالي</span><span><b class="${capitalTotal()>=0?'pos':'neg'}">${money(capitalTotal())}</b></span></div>
+      <div class="desc" style="margin:10px 0;">يزيد رأس المال تلقائياً مع أرباح المبيعات، وينقص مع المصاريف والديون. تكدر تضيف مبلغ يدوياً هنا (مثال: مبلغ ضخيته من جيبك للمشروع).</div>
+      <div class="form-row"><label>إضافة إلى رأس المال (د.ع)</label><input type="number" id="f_capital_add" placeholder="أدخل المبلغ"></div>
+      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_capital_notes"></textarea></div>
+    `,
+    onSave(){
+      const amount = num(document.getElementById('f_capital_add').value);
+      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
+      state.settings.capitalBase = num(state.settings.capitalBase) + amount;
+      saveState(); closeModal(); render(); toast('تمت إضافة رأس المال بنجاح');
+    }
+  });
 }
 function saveShopName(){
   state.settings.shopName = document.getElementById('s_shopname').value.trim() || 'ستر';
