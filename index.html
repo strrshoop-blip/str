@@ -308,11 +308,40 @@
 <div id="confirmRoot"></div>
 <div id="toastRoot"></div>
 
+<!-- Firebase SDK (compat build - works with plain <script> tags, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script>
+/* =========================================================
+   FIREBASE CONFIG
+   خذي هذا الكائن من: Firebase Console → Project settings → عام (General)
+   → انزلي لقسم "Your apps" → إذا ما عندك تطبيق ويب اضغطي أيقونة </> وسوي تطبيق جديد
+   → راح يطلعلك كائن firebaseConfig انسخيه كامل وحطيه هنا.
+   ⚠️ لا تستخدمين أبداً بيانات "Service accounts / Admin SDK" (الصورة اللي عندك) هنا —
+   هذا السيرفر-سايد فقط وفيه صلاحيات كاملة، نشره بكود الموقع خطر أمني كبير.
+========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyAHsNh4VC7NZkpPJ7TbNnj_1Oz6xIFpUP0",
+  authDomain: "strr-c9883.firebaseapp.com",
+  projectId: "strr-c9883",
+  storageBucket: "strr-c9883.firebasestorage.app",
+  messagingSenderId: "99203034659",
+  appId: "1:99203034659:web:ec1bcbff3185a33dc70b96",
+  measurementId: "G-XZMYBYBS9G"
+};
+const firebaseReady = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('ضعي');
+let db = null;
+if(firebaseReady){
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}
+
 /* =========================================================
    DATA LAYER
 ========================================================= */
 const STORAGE_KEY = 'setr_erp_state_v1';
+const FIRESTORE_DOC = 'erp_state/main';
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
 
 function defaultState(){
@@ -326,7 +355,29 @@ function defaultState(){
     pageManagerFees:[], pageManagerPayments:[]
   };
 }
+let firebaseUserReady = null; // promise resolved once anonymous auth finishes (firestore mode only)
+if(firebaseReady){
+  firebaseUserReady = new Promise((resolve)=>{
+    firebase.auth().onAuthStateChanged(user=>{
+      if(user) resolve(user);
+      else firebase.auth().signInAnonymously().catch(e=>{
+        console.error('firebase auth failed', e);
+        toast('⚠️ تعذر الاتصال بـ Firebase — تحقق من إعدادات المشروع');
+        resolve(null);
+      });
+    });
+  });
+}
+
 async function loadStateAsync(){
+  if(firebaseReady){
+    try{
+      await firebaseUserReady;
+      const doc = await db.doc(FIRESTORE_DOC).get();
+      if(doc.exists) return Object.assign(defaultState(), doc.data());
+    }catch(e){ console.error('firestore load failed', e); toast('⚠️ تعذر تحميل البيانات من Firebase'); }
+    return defaultState();
+  }
   if(hasCloudStorage){
     try{
       const res = await window.storage.get(STORAGE_KEY, true); // shared=true: same data for anyone with the link
@@ -343,6 +394,13 @@ async function loadStateAsync(){
 let state = defaultState();
 let saveQueued = false;
 function saveState(){
+  if(firebaseReady){
+    saveQueued = true;
+    firebaseUserReady.then(()=> db.doc(FIRESTORE_DOC).set(JSON.parse(JSON.stringify(state))))
+      .then(()=>{ saveQueued = false; })
+      .catch(e=>{ saveQueued = false; console.error('firestore save failed', e); toast('⚠️ تعذر حفظ البيانات — تحقق من الاتصال بالإنترنت'); });
+    return;
+  }
   if(hasCloudStorage){
     saveQueued = true;
     window.storage.set(STORAGE_KEY, JSON.stringify(state), true)
@@ -351,6 +409,17 @@ function saveState(){
   } else {
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
   }
+}
+/* real-time sync across devices/tabs when using Firebase */
+function attachFirestoreSync(){
+  if(!firebaseReady) return;
+  firebaseUserReady.then(()=>{
+    db.doc(FIRESTORE_DOC).onSnapshot(doc=>{
+      if(!doc.exists || saveQueued) return; // ignore echoes of our own pending write
+      state = Object.assign(defaultState(), doc.data());
+      render();
+    });
+  });
 }
 
 /* =========================================================
@@ -2889,19 +2958,22 @@ function renderSettings(){
   `;
 }
 function openCapitalModal(){
+  const base = num(state.settings.capitalBase);
   openModal({
     title: 'رأس المال / الميزانية',
     bodyHtml: `
-      <div class="compute-box"><span>رأس المال الحالي</span><span><b class="${capitalTotal()>=0?'pos':'neg'}">${money(capitalTotal())}</b></span></div>
-      <div class="desc" style="margin:10px 0;">يزيد رأس المال تلقائياً مع أرباح المبيعات، وينقص مع المصاريف والديون. تكدر تضيف مبلغ يدوياً هنا (مثال: مبلغ ضخيته من جيبك للمشروع).</div>
-      <div class="form-row"><label>إضافة إلى رأس المال (د.ع)</label><input type="number" id="f_capital_add" placeholder="أدخل المبلغ"></div>
-      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_capital_notes"></textarea></div>
+      <div class="compute-box"><span>رأس المال الحالي (محسوب)</span><span><b class="${capitalTotal()>=0?'pos':'neg'}">${money(capitalTotal())}</b></span></div>
+      <div class="desc" style="margin:10px 0;">هذا الرقم = القيمة الأساسية أدناه + أرباح المبيعات − المصاريف − الديون. تكدرين تعدلين القيمة الأساسية مباشرة بالأسفل (زيادة أو نقصان أو تصحيح أي رقم غلط).</div>
+      <div class="form-row"><label>القيمة الأساسية لرأس المال (د.ع)</label><input type="number" id="f_capital_base" value="${base}" placeholder="أدخل المبلغ"></div>
+      <div class="form-row"><label>إضافة سريعة (اختياري، تُجمع على القيمة أعلاه)</label><input type="number" id="f_capital_add" placeholder="مثال: 50000 تُضاف للقيمة الأساسية"></div>
     `,
     onSave(){
-      const amount = num(document.getElementById('f_capital_add').value);
-      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
-      state.settings.capitalBase = num(state.settings.capitalBase) + amount;
-      saveState(); closeModal(); render(); toast('تمت إضافة رأس المال بنجاح');
+      const baseVal = document.getElementById('f_capital_base').value;
+      const addVal = num(document.getElementById('f_capital_add').value);
+      let newBase = baseVal==='' ? base : num(baseVal);
+      newBase += addVal;
+      state.settings.capitalBase = newBase;
+      saveState(); closeModal(); render(); toast('تم تحديث رأس المال بنجاح');
     }
   });
 }
@@ -2937,11 +3009,17 @@ function doImportBackup(file){
   };
   reader.readAsText(file);
 }
-function resetAllData(){
-  askConfirm('سيتم حذف جميع البيانات نهائياً من هذا الجهاز. هل أنت متأكد؟', ()=>{
-    askConfirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟', ()=>{
-      state = defaultState();
-      saveState(); toast('تم حذف جميع البيانات'); navigate('dashboard');
+async function resetAllData(){
+  askConfirm('سيتم حذف جميع البيانات نهائياً. هل أنت متأكد؟', ()=>{
+    askConfirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟', async ()=>{
+      toast('جاري حذف جميع البيانات...');
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      try{
+        if(firebaseReady){ await firebaseUserReady; await db.doc(FIRESTORE_DOC).delete(); }
+        else if(hasCloudStorage){ await window.storage.delete(STORAGE_KEY, true); }
+      }catch(e){ console.error('cloud clear failed', e); }
+      // hard reload guarantees every in-memory reference (state, caches, open modals) is wiped clean
+      setTimeout(()=> location.reload(), 300);
     }, {title:'تأكيد نهائي', yesLabel:'حذف نهائي'});
   }, {title:'حذف جميع البيانات', yesLabel:'متابعة'});
 }
@@ -3004,11 +3082,14 @@ document.addEventListener('keydown', e=>{
 (async function init(){
   state = await loadStateAsync();
   const foot = document.querySelector('.sidebar .foot');
-  if(foot) foot.textContent = hasCloudStorage
-    ? 'البيانات مشتركة ومتزامنة لكل من يفتح هذا الرابط'
-    : 'البيانات محفوظة محلياً على هذا الجهاز فقط';
+  if(foot) foot.textContent = firebaseReady
+    ? 'البيانات محفوظة على Firebase ومتزامنة على كل الأجهزة'
+    : hasCloudStorage
+      ? 'البيانات مشتركة ومتزامنة لكل من يفتح هذا الرابط'
+      : 'البيانات محفوظة محلياً على هذا الجهاز فقط';
   checkLock();
   render();
+  attachFirestoreSync();
 })();
 </script>
 </body>
