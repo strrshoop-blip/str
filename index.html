@@ -226,6 +226,17 @@
   .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .compute-box{background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;display:flex;justify-content:space-between;}
 
+  /* ---------- Debt flow indicator ---------- */
+  .flow-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .flow-chip{border-radius:var(--radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--border-strong);}
+  .flow-chip .flow-amt{font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:15px;}
+  .flow-chip .flow-dest{font-size:11px;color:var(--text-dim);}
+  .flow-chip.is-profit{background:rgba(132,163,119,0.12);border-color:rgba(132,163,119,0.4);}
+  .flow-chip.is-profit .flow-amt{color:var(--positive);}
+  .flow-chip.is-debt{background:rgba(200,161,90,0.1);border-color:rgba(200,161,90,0.35);}
+  .flow-chip.is-debt .flow-amt{color:var(--accent-soft);}
+  @media (max-width:420px){.flow-split{grid-template-columns:1fr;}}
+
   /* ---------- Toast ---------- */
   #toastRoot{position:fixed;bottom:22px;left:22px;z-index:700;display:flex;flex-direction:column;gap:8px;}
   .toast{background:var(--surface-3);border:1px solid var(--border-strong);color:var(--text);padding:11px 18px;border-radius:var(--radius-sm);box-shadow:var(--shadow);font-size:13.5px;animation:toastin .18s ease-out;}
@@ -2311,8 +2322,17 @@ function customerDebtGroupTotals(debts){
   return debts.reduce((acc,d)=>{
     const t = customerDebtTotals(d.id);
     acc.due += t.due; acc.paid += t.paid; acc.remaining += t.remaining;
+    acc.qty += num(d.quantity);
     return acc;
-  }, {due:0,paid:0,remaining:0});
+  }, {due:0,paid:0,remaining:0,qty:0});
+}
+function customerDebtGroupModelsLabel(debts){
+  const byModel = {};
+  debts.forEach(d=>{
+    const name = d.modelId ? (modelById(d.modelId)?.name || 'موديل محذوف') : 'بدون تحديد';
+    byModel[name] = (byModel[name]||0) + num(d.quantity);
+  });
+  return Object.entries(byModel).map(([name,qty])=>`${esc(name)} (${qty})`).join('، ');
 }
 function renderCustomerDebts(){
   const groups = groupCustomerDebts();
@@ -2342,16 +2362,17 @@ function renderCustomerDebts(){
   <div class="section-title"><span class="ic">🧾</span> زبائن عليهم ديون حالية</div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>الزبون</th><th>عدد الطلبات</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th></tr></thead>
+      <thead><tr><th>الزبون</th><th>الموديلات والعدد</th><th>عدد القطع الكلي</th><th>الإجمالي</th><th>المسدد</th><th>المتبقي</th></tr></thead>
       <tbody>
       ${active.length? active.map(r=>`
         <tr style="cursor:pointer" onclick="openCustomerDetail('${encName(r.name)}')">
           <td><b>${esc(r.name)}</b></td>
-          <td class="num muted">${r.debts.length}</td>
+          <td class="muted">${customerDebtGroupModelsLabel(r.debts)}</td>
+          <td class="num">${r.totals.qty}</td>
           <td class="num">${money(r.totals.due)}</td>
           <td class="num pos">${money(r.totals.paid)}</td>
           <td class="num accent">${money(r.totals.remaining)}</td>
-        </tr>`).join('') : `<tr class="empty-row"><td colspan="5">لا توجد ديون حالية على الزبائن</td></tr>`}
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="6">لا توجد ديون حالية على الزبائن</td></tr>`}
       </tbody>
     </table>
   </div>
@@ -2359,14 +2380,15 @@ function renderCustomerDebts(){
   <div class="section-title"><span class="ic">✅</span> زبائن سددوا بالكامل</div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>الزبون</th><th>عدد الطلبات</th><th>إجمالي ما دفعوه</th></tr></thead>
+      <thead><tr><th>الزبون</th><th>الموديلات والعدد</th><th>عدد القطع الكلي</th><th>إجمالي ما دفعوه</th></tr></thead>
       <tbody>
       ${settled.length? settled.map(r=>`
         <tr style="cursor:pointer" onclick="openCustomerDetail('${encName(r.name)}')">
           <td>${esc(r.name)}</td>
-          <td class="num muted">${r.debts.length}</td>
+          <td class="muted">${customerDebtGroupModelsLabel(r.debts)}</td>
+          <td class="num">${r.totals.qty}</td>
           <td class="num pos">${money(r.totals.due)}</td>
-        </tr>`).join('') : `<tr class="empty-row"><td colspan="3">لا توجد ديون محصّلة بعد</td></tr>`}
+        </tr>`).join('') : `<tr class="empty-row"><td colspan="4">لا توجد ديون محصّلة بعد</td></tr>`}
       </tbody>
     </table>
   </div>`;
@@ -2388,6 +2410,7 @@ function renderCustomerDetail(encodedName){
   </div>
   <div class="grid stats">
     ${statCard('إجمالي كل الديون', money(totals.due),'')}
+    ${statCard('إجمالي عدد القطع', totals.qty,'')}
     ${statCard('إجمالي المسدد', money(totals.paid),'pos')}
     ${statCard('إجمالي المتبقي', money(totals.remaining), totals.remaining>0?'accent':'pos')}
   </div>
@@ -2395,12 +2418,13 @@ function renderCustomerDetail(encodedName){
   <div class="section-title"><span class="ic">🧾</span> كل طلب/دين منفصل لهذا الزبون</div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>الموديل</th><th>النوع</th><th>المبلغ الكلي</th><th>المسدد</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
+      <thead><tr><th>الموديل</th><th>العدد</th><th>النوع</th><th>المبلغ الكلي</th><th>المسدد</th><th>المتبقي</th><th>التاريخ</th><th></th></tr></thead>
       <tbody>
       ${debts.map(d=>{
         const tot = customerDebtTotals(d.id);
         return `<tr>
           <td>${d.modelId? esc(modelById(d.modelId)?.name||'—') : '<span class="muted">بدون تحديد</span>'}</td>
+          <td class="num">${num(d.quantity)||'—'}</td>
           <td><span class="pill ${d.customerType==='wholesale'?'wholesale':'retail'}">${d.customerType==='wholesale'?'جملة':'مفرد'}</span></td>
           <td class="num">${money(tot.due)}</td>
           <td class="num pos">${money(tot.paid)}</td>
@@ -2469,7 +2493,10 @@ function openCustomerDebtModal(id){
         <div class="form-row"><label>المبلغ المستلم الآن</label><input type="number" id="f_received" value="${initReceived}" oninput="onDebtAmountsRecalc('received')"></div>
         <div class="form-row"><label>المتبقي (دين)</label><input type="number" id="f_remaining" value="${initRemaining}" oninput="onDebtAmountsRecalc('remaining')"></div>
       </div>
-      <div class="hint">المبلغ المستلم الآن يروح أرباح فوراً، والمتبقي يضل مسجل كدين — ولما تحصلينه بعدين راح يروح أرباح هم تلقائياً.</div>
+      <div class="flow-split">
+        <div class="flow-chip is-profit"><span class="flow-dest">يروح أرباح فوراً</span><span class="flow-amt" id="debtFlowProfit">${money(initReceived)}</span></div>
+        <div class="flow-chip is-debt"><span class="flow-dest">يضل دين، ويتحول أرباح عند التحصيل</span><span class="flow-amt" id="debtFlowRemaining">${money(initRemaining)}</span></div>
+      </div>
       `}
       <div class="form-grid2">
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
@@ -2595,6 +2622,9 @@ function onDebtAmountsRecalc(source){
     if(remaining<0){ remaining = 0; remainingEl.value = remaining; }
     receivedEl.value = Math.max(0, total-remaining);
   }
+  const flowProfit = document.getElementById('debtFlowProfit'), flowRemaining = document.getElementById('debtFlowRemaining');
+  if(flowProfit) flowProfit.textContent = money(num(receivedEl.value));
+  if(flowRemaining) flowRemaining.textContent = money(num(remainingEl.value));
 }
 function deleteCustomerDebt(id){
   confirmDelete('سيتم حذف الدين وكل سجل التحصيلات المرتبطة به. متابعة؟', ()=>{
@@ -2608,6 +2638,10 @@ function deleteCustomerDebt(id){
     saveState(); render(); toast('تم الحذف');
   });
 }
+function onDebtRepayRecalc(){
+  const amountEl = document.getElementById('f_amount'), flow = document.getElementById('repayFlowProfit');
+  if(amountEl && flow) flow.textContent = money(num(amountEl.value));
+}
 function openCustomerDebtRepayModal(id){
   const d = customerDebtById(id);
   const tot = customerDebtTotals(id);
@@ -2616,9 +2650,10 @@ function openCustomerDebtRepayModal(id){
     bodyHtml:`
       <div class="compute-box"><span>المتبقي حالياً</span><span><b class="accent">${money(tot.remaining)}</b></span></div>
       <div class="form-grid2">
-        <div class="form-row"><label>المبلغ المحصّل الآن</label><input type="number" id="f_amount" value="${tot.remaining}"></div>
+        <div class="form-row"><label>المبلغ المحصّل الآن</label><input type="number" id="f_amount" value="${tot.remaining}" oninput="onDebtRepayRecalc()"></div>
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${todayISO()}"></div>
       </div>
+      <div class="flow-chip is-profit"><span class="flow-dest">يروح أرباح فوراً عند الحفظ</span><span class="flow-amt" id="repayFlowProfit">${money(tot.remaining)}</span></div>
       <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes"></textarea></div>
     `,
     onSave(){
