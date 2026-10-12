@@ -2459,10 +2459,8 @@ function openCustomerDebtModal(id){
           <div class="gallery" id="debtModelGalleryPreview"></div>
         </div>
       </div>
-      <div class="form-grid2">
-        <div class="form-row"><label>العدد (الكمية)</label><input type="number" id="f_qty" value="${initQty}" oninput="onDebtAmountsRecalc('qty')"></div>
-        <div class="form-row"><label>سعر القطعة</label><input type="number" id="f_price" value="${initPrice}" oninput="onDebtAmountsRecalc('price')"></div>
-      </div>
+      <div class="form-row"><label>العدد (الكمية)</label><input type="number" id="f_qty" value="${initQty}" oninput="onDebtAmountsRecalc('qty')"></div>
+      <div class="form-row"><label>سعر القطعة</label><input type="number" id="f_price" value="${initPrice}" oninput="onDebtAmountsRecalc('price')"></div>
       <div class="compute-box"><span>المبلغ الكلي</span><span><b id="debtTotalDisplay">${money(initTotal)}</b></span></div>
       ${item ? `
       <div class="hint">هذا دين موجود — غيّري العدد/السعر إذا تريدين تصحيح المبلغ الكلي فقط. تسجيل فلوس جديدة مستلمة تكون من زر "تحصيل" بجدول الديون.</div>
