@@ -546,6 +546,20 @@ function customerDebtTotals(id){
 function customerDebtsOutstandingTotal(){
   return state.customerDebts.reduce((s,d)=> s + Math.max(0, customerDebtTotals(d.id).remaining), 0);
 }
+/* ---- ربح تدريجي من ديون الزبائن: كل فلوس تستلمها (وقت التسجيل أو وقت التحصيل)
+   تتحول لربح فوراً حسب هامش الربح المحفوظ على الدين وقت إنشائه ---- */
+function customerDebtPaymentsOf(id){ return state.customerDebtPayments.filter(p=>p.customerDebtId===id); }
+function allDebtCashEvents(){
+  return state.customerDebtPayments.map(p=>{
+    const d = customerDebtById(p.customerDebtId);
+    const margin = d && d.profitMargin!=null ? num(d.profitMargin) : 0;
+    const amount = num(p.amount);
+    const profit = amount*margin;
+    return {date:p.date, amount, profit, cost:amount-profit, modelId: d?d.modelId:null, debtId:p.customerDebtId};
+  });
+}
+function debtCashEventsInRange(from,to){ return allDebtCashEvents().filter(e=>inRange(e.date, from, to)); }
+function totalCustomerDebtCashProfit(){ return allDebtCashEvents().reduce((s,e)=>s+e.profit,0); }
 
 function saleRevenue(s){ return num(s.quantity)*num(s.unitPrice); }
 function saleCost(s){ return num(s.quantity)*num(s.costSnapshot!=null?s.costSnapshot:modelCost(modelById(s.modelId))); }
@@ -556,7 +570,7 @@ function saleProductLabel(s){
 }
 
 function capitalTotal(){
-  const totalProfit = state.sales.reduce((s,x)=> s + saleProfit(x), 0);
+  const totalProfit = state.sales.reduce((s,x)=> s + saleProfit(x), 0) + totalCustomerDebtCashProfit();
   const totalExpenses = state.expenses.reduce((s,x)=> s + num(x.amount), 0);
   const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
   return num(state.settings.capitalBase) + totalProfit - totalExpenses - totalDebts;
@@ -567,8 +581,9 @@ function periodTotals(from, to){
   const work = state.tailorWork.filter(w=>inRange(w.date, from, to));
   const cutWork = state.cutterWork.filter(w=>inRange(w.date, from, to));
   const hoodWork = state.hoodariWork.filter(w=>inRange(w.date, from, to));
-  const revenue = sales.reduce((s,x)=>s+saleRevenue(x),0);
-  const cogs = sales.reduce((s,x)=>s+saleCost(x),0);
+  const debtCash = debtCashEventsInRange(from, to);
+  const revenue = sales.reduce((s,x)=>s+saleRevenue(x),0) + debtCash.reduce((s,e)=>s+e.amount,0);
+  const cogs = sales.reduce((s,x)=>s+saleCost(x),0) + debtCash.reduce((s,e)=>s+e.cost,0);
   const expTotal = expenses.reduce((s,x)=>s+num(x.amount),0);
   const sewnPieces = work.reduce((s,x)=>s+num(x.pieceCount),0);
   const cutPieces = cutWork.reduce((s,x)=>s+num(x.pieceCount),0);
@@ -2403,10 +2418,21 @@ function renderCustomerDetail(encodedName){
     </table>
   </div>`;
 }
+let pendingDebtNewModelImages = [];
+let debtAmountsTouched = false;
 function openCustomerDebtModal(id){
   const item = id ? customerDebtById(id) : null;
   const contextName = (!item && currentPage==='customerdebts' && currentDetail) ? decodeURIComponent(currentDetail) : null;
   const initName = item?.customerName || contextName || '';
+  pendingDebtNewModelImages = [];
+  debtAmountsTouched = !!item;
+  const initQty = item?.quantity || 1;
+  const initPrice = item ? (item.quantity? Math.round(num(item.amount)/num(item.quantity)) : num(item.amount)) : 0;
+  const initTotal = item ? num(item.amount) : 0;
+  const initReceived = 0; // عند الإضافة الجديدة فقط — التعديل ما يغيّر الدفعات المسجلة
+  const initRemaining = initTotal;
+  const initSelectValue = item ? (item.modelId || '__NONE__') : (state.models.length ? '' : '__NONE__');
+
   openModal({
     title: item?'تعديل دين الزبون':'إضافة دين زبون جديد',
     bodyHtml:`
@@ -2419,36 +2445,156 @@ function openCustomerDebtModal(id){
           </select>
         </div>
       </div>
-      <div class="form-grid2">
-        <div class="form-row"><label>المبلغ الكلي (البضاعة)</label><input type="number" id="f_amount" value="${item?.amount||''}"></div>
-        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
-      </div>
-      <div class="form-row"><label>الموديل (اختياري)</label>
-        <select id="f_model"><option value="">بدون تحديد</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${item?.modelId===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+      <div class="form-row"><label>الموديل</label>
+        <select id="f_model" onchange="onDebtModelSelectChange()">
+          <option value="__NONE__" ${initSelectValue==='__NONE__'?'selected':''}>بدون موديل محدد</option>
+          <option value="__NEW__">+ إضافة موديل جديد الآن</option>
+          ${state.models.map(m=>`<option value="${m.id}" ${initSelectValue===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
         </select>
+      </div>
+      <div id="debtNewModelFields" style="display:${initSelectValue==='__NEW__'?'flex':'none'};flex-direction:column;gap:13px;">
+        <div class="form-row"><label>اسم الموديل الجديد</label><input type="text" id="f_newModelName" placeholder="مثال: عباية كتف مطرزة"></div>
+        <div class="form-row"><label>صورة الموديل (اختياري)</label>
+          <input type="file" accept="image/*" multiple onchange="handleDebtModelImageUpload(event)">
+          <div class="gallery" id="debtModelGalleryPreview"></div>
+        </div>
+      </div>
+      <div class="form-row"><label>العدد (الكمية)</label><input type="number" id="f_qty" value="${initQty}" oninput="onDebtAmountsRecalc('qty')"></div>
+      <div class="form-row"><label>سعر القطعة</label><input type="number" id="f_price" value="${initPrice}" oninput="onDebtAmountsRecalc('price')"></div>
+      <div class="compute-box"><span>المبلغ الكلي</span><span><b id="debtTotalDisplay">${money(initTotal)}</b></span></div>
+      ${item ? `
+      <div class="hint">هذا دين موجود — غيّري العدد/السعر إذا تريدين تصحيح المبلغ الكلي فقط. تسجيل فلوس جديدة مستلمة تكون من زر "تحصيل" بجدول الديون.</div>
+      ` : `
+      <div class="form-grid2">
+        <div class="form-row"><label>المبلغ المستلم الآن</label><input type="number" id="f_received" value="${initReceived}" oninput="onDebtAmountsRecalc('received')"></div>
+        <div class="form-row"><label>المتبقي (دين)</label><input type="number" id="f_remaining" value="${initRemaining}" oninput="onDebtAmountsRecalc('remaining')"></div>
+      </div>
+      <div class="hint">المبلغ المستلم الآن يروح أرباح فوراً، والمتبقي يضل مسجل كدين — ولما تحصلينه بعدين راح يروح أرباح هم تلقائياً.</div>
+      `}
+      <div class="form-grid2">
+        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
       </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
     `,
     onSave(){
       const customerName = document.getElementById('f_customer').value.trim();
-      const amount = num(document.getElementById('f_amount').value);
+      const selectVal = document.getElementById('f_model').value;
+      const quantity = num(document.getElementById('f_qty').value) || 1;
+      const unitPrice = num(document.getElementById('f_price').value);
+      const amount = quantity*unitPrice;
       if(!customerName) return toast('الرجاء إدخال اسم الزبون');
-      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
+      if(amount<=0) return toast('الرجاء إدخال سعر وعدد صحيحين');
+
+      let modelId = null, costSnapshot = 0;
+      if(selectVal === '__NEW__'){
+        const newName = document.getElementById('f_newModelName').value.trim();
+        if(!newName) return toast('الرجاء إدخال اسم الموديل الجديد، أو اختر "بدون موديل"');
+        const newModel = {
+          id: uid(), name: newName, code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
+          images: [...pendingDebtNewModelImages],
+          fabricCost:0, sewingCost:0, accessoriesCost:0, packagingCost:0, otherCost:0,
+          sellingPrice: unitPrice, notes:''
+        };
+        state.models.push(newModel);
+        modelId = newModel.id;
+        costSnapshot = 0;
+      } else if(selectVal === '__NONE__' || !selectVal){
+        modelId = null; costSnapshot = 0;
+      } else {
+        modelId = selectVal;
+        costSnapshot = modelCost(modelById(modelId));
+      }
+
+      const profitMargin = amount>0 ? Math.max(0, (amount - quantity*costSnapshot)) / amount : 0;
+
       const data = {
-        customerName, amount,
+        customerName, amount, quantity, unitPrice, costSnapshot, profitMargin,
         customerType: document.getElementById('f_type').value,
         date: document.getElementById('f_date').value || todayISO(),
-        modelId: document.getElementById('f_model').value || null,
+        modelId,
         notes: document.getElementById('f_notes').value.trim()
       };
-      if(item) Object.assign(item, data);
-      else state.customerDebts.push({id:uid(), ...data});
+
+      if(item){
+        Object.assign(item, data);
+      } else {
+        const newDebt = {id:uid(), ...data};
+        state.customerDebts.push(newDebt);
+        const received = num(document.getElementById('f_received').value);
+        if(received>0){
+          state.customerDebtPayments.push({
+            id:uid(), customerDebtId:newDebt.id, amount: Math.min(received, amount),
+            date: data.date, notes:'دفعة أولى وقت تسجيل الدين'
+          });
+        }
+      }
       saveState(); closeModal();
       if(currentPage==='customerdebts' && currentDetail){ currentDetail = encName(customerName); }
       render(); toast('تم الحفظ بنجاح');
     }
   });
+}
+function onDebtModelSelectChange(){
+  const val = document.getElementById('f_model').value;
+  const newFields = document.getElementById('debtNewModelFields');
+  if(newFields) newFields.style.display = (val==='__NEW__') ? 'flex' : 'none';
+  if(val!=='__NEW__' && val!=='__NONE__'){
+    const m = modelById(val);
+    if(m) document.getElementById('f_price').value = m.sellingPrice||0;
+  }
+  onDebtAmountsRecalc('price');
+}
+function debtModelGalleryPreviewHtml(){
+  return pendingDebtNewModelImages.map((src,i)=>`<div class="thumb-x"><img src="${src}"><button type="button" onclick="removeDebtModelImage(${i})">×</button></div>`).join('');
+}
+function removeDebtModelImage(i){
+  pendingDebtNewModelImages.splice(i,1);
+  const el = document.getElementById('debtModelGalleryPreview');
+  if(el) el.innerHTML = debtModelGalleryPreviewHtml();
+}
+function handleDebtModelImageUpload(evt){
+  const files = Array.from(evt.target.files || []);
+  if(!files.length) return;
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      pendingDebtNewModelImages.push(e.target.result);
+      const el = document.getElementById('debtModelGalleryPreview');
+      if(el) el.innerHTML = debtModelGalleryPreviewHtml();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function onDebtAmountsRecalc(source){
+  const qtyEl = document.getElementById('f_qty'), priceEl = document.getElementById('f_price');
+  const totalDisplay = document.getElementById('debtTotalDisplay');
+  if(!qtyEl || !priceEl || !totalDisplay) return;
+  const total = num(qtyEl.value)*num(priceEl.value);
+  totalDisplay.textContent = money(total);
+  const receivedEl = document.getElementById('f_received'), remainingEl = document.getElementById('f_remaining');
+  if(!receivedEl || !remainingEl) return;
+  if(source==='qty' || source==='price'){
+    if(!debtAmountsTouched){
+      receivedEl.value = 0;
+      remainingEl.value = total;
+    } else {
+      let received = Math.min(num(receivedEl.value), total);
+      receivedEl.value = received;
+      remainingEl.value = Math.max(0, total-received);
+    }
+  } else if(source==='received'){
+    debtAmountsTouched = true;
+    let received = num(receivedEl.value);
+    if(received>total){ received = total; receivedEl.value = received; }
+    if(received<0){ received = 0; receivedEl.value = received; }
+    remainingEl.value = Math.max(0, total-received);
+  } else if(source==='remaining'){
+    debtAmountsTouched = true;
+    let remaining = num(remainingEl.value);
+    if(remaining>total){ remaining = total; remainingEl.value = remaining; }
+    if(remaining<0){ remaining = 0; remainingEl.value = remaining; }
+    receivedEl.value = Math.max(0, total-remaining);
+  }
 }
 function deleteCustomerDebt(id){
   confirmDelete('سيتم حذف الدين وكل سجل التحصيلات المرتبطة به. متابعة؟', ()=>{
@@ -2771,15 +2917,19 @@ function renderReports(){
   const cutWork = state.cutterWork.filter(w=>inRange(w.date,from,to));
   const hoodWork = state.hoodariWork.filter(w=>inRange(w.date,from,to));
 
+  const debtCashRows = debtCashEventsInRange(from, to);
+
   // profit by month
   const byMonth = {};
   sales.forEach(s=>{ const k=s.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0}; byMonth[k].revenue+=saleRevenue(s); byMonth[k].cogs+=saleCost(s); });
+  debtCashRows.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0}; byMonth[k].revenue+=e.amount; byMonth[k].cogs+=e.cost; });
   expenses.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0,exp:0}; byMonth[k].exp=(byMonth[k].exp||0)+num(e.amount); });
   const months = Object.keys(byMonth).sort();
 
   // profit by model
   const byModel = {};
   sales.forEach(s=>{ byModel[s.modelId]=byModel[s.modelId]||{qty:0,revenue:0,profit:0}; byModel[s.modelId].qty+=num(s.quantity); byModel[s.modelId].revenue+=saleRevenue(s); byModel[s.modelId].profit+=saleProfit(s); });
+  debtCashRows.forEach(e=>{ byModel[e.modelId]=byModel[e.modelId]||{qty:0,revenue:0,profit:0}; byModel[e.modelId].revenue+=e.amount; byModel[e.modelId].profit+=e.profit; });
   const modelRows = Object.entries(byModel).map(([id,v])=>({model:modelById(id), ...v})).filter(x=>x.model).sort((a,b)=>b.qty-a.qty);
 
   // expenses by month/type
