@@ -503,9 +503,16 @@ function tailorById(id){ return state.tailors.find(t=>t.id===id); }
 
 function modelCost(m){
   if(!m) return 0;
+  if(m.unitCost!=null && m.unitCost!=='') return num(m.unitCost);
   return num(m.fabricCost)+num(m.sewingCost)+num(m.accessoriesCost)+num(m.packagingCost)+num(m.otherCost);
 }
 function modelProfitPerPiece(m){ return num(m.sellingPrice) - modelCost(m); }
+function modelWholesaleProfitPerPiece(m){ return num(m.wholesalePrice!=null && m.wholesalePrice!==''?m.wholesalePrice:m.sellingPrice) - modelCost(m); }
+function modelPriceFor(m, type){
+  if(!m) return 0;
+  if(type==='wholesale' && m.wholesalePrice!=null && m.wholesalePrice!=='' && num(m.wholesalePrice)>0) return num(m.wholesalePrice);
+  return num(m.sellingPrice);
+}
 
 function tailorTotals(tailorId){
   const due = state.tailorWork.filter(w=>w.tailorId===tailorId)
@@ -560,10 +567,21 @@ function customerDebtsOutstandingTotal(){
 /* ---- ربح تدريجي من ديون الزبائن: كل فلوس تستلمها (وقت التسجيل أو وقت التحصيل)
    تتحول لربح فوراً حسب هامش الربح المحفوظ على الدين وقت إنشائه ---- */
 function customerDebtPaymentsOf(id){ return state.customerDebtPayments.filter(p=>p.customerDebtId===id); }
+function customerDebtMargin(d){
+  if(!d) return 0;
+  if(d.profitMargin!=null && !isNaN(num(d.profitMargin))) return num(d.profitMargin);
+  // ديون قديمة مسجلة قبل ميزة الربح التلقائي: نحسب الهامش من تكلفة الموديل الحالية
+  // دين ناتج من عملية بيع: نفس هامش البيع
+  const linkedSale = state.sales.find(s=>s.linkedDebtId===d.id);
+  if(linkedSale) return saleMargin(linkedSale);
+  const amount = num(d.amount), qty = num(d.quantity) || 1;
+  const cost = d.costSnapshot!=null ? num(d.costSnapshot) : (d.modelId && modelById(d.modelId) ? modelCost(modelById(d.modelId)) : 0);
+  return amount>0 ? (amount - qty*cost)/amount : 0;
+}
 function allDebtCashEvents(){
   return state.customerDebtPayments.map(p=>{
     const d = customerDebtById(p.customerDebtId);
-    const margin = d && d.profitMargin!=null ? num(d.profitMargin) : 0;
+    const margin = customerDebtMargin(d);
     const amount = num(p.amount);
     const profit = amount*margin;
     return {date:p.date, amount, profit, cost:amount-profit, modelId: d?d.modelId:null, debtId:p.customerDebtId};
@@ -572,17 +590,29 @@ function allDebtCashEvents(){
 function debtCashEventsInRange(from,to){ return allDebtCashEvents().filter(e=>inRange(e.date, from, to)); }
 function totalCustomerDebtCashProfit(){ return allDebtCashEvents().reduce((s,e)=>s+e.profit,0); }
 
-function saleRevenue(s){ return num(s.quantity)*num(s.unitPrice); }
-function saleCost(s){ return num(s.quantity)*num(s.costSnapshot!=null?s.costSnapshot:modelCost(modelById(s.modelId))); }
+/* الأرباح تُحسب على المبلغ المستلم فعلاً: كل دفعة تأخذ نسبتها من الربح، والمتبقي ينتظر التحصيل */
+function saleUnitCost(s){ return num(s.costSnapshot!=null?s.costSnapshot:modelCost(modelById(s.modelId))); }
+function saleMargin(s){
+  const price = num(s.unitPrice);
+  return price>0 ? (price - saleUnitCost(s))/price : 0;
+}
+function saleRevenue(s){ return s.amountReceived!=null ? num(s.amountReceived) : num(s.quantity)*num(s.unitPrice); }
+function saleCost(s){ return saleRevenue(s)*(1-saleMargin(s)); }
 function saleProfit(s){ return saleRevenue(s) - saleCost(s); }
 function saleProductLabel(s){
   if(s.modelId){ const m = modelById(s.modelId); return m ? m.name : 'موديل محذوف'; }
   return s.productLabel || 'بيع بدون موديل';
 }
 
+/* مصدر المصروف: capital = يُخصم من رأس المال، profit = يُخصم من الأرباح، other = يُسجَّل فقط بدون خصم.
+   المصاريف القديمة (بدون مصدر) تُعامل كأنها من الأرباح مثل ما كانت تنحسب سابقاً */
+const EXPENSE_SOURCES = {capital:'رأس المال', profit:'الأرباح', other:'غير ذلك (بدون خصم)'};
+function expenseSource(e){ return (e && e.source && EXPENSE_SOURCES[e.source]) ? e.source : 'profit'; }
+function sumExpensesBySource(list, src){ return list.filter(e=>expenseSource(e)===src).reduce((s,x)=>s+num(x.amount),0); }
+
 function capitalTotal(){
   const totalProfit = state.sales.reduce((s,x)=> s + saleProfit(x), 0) + totalCustomerDebtCashProfit();
-  const totalExpenses = state.expenses.reduce((s,x)=> s + num(x.amount), 0);
+  const totalExpenses = sumExpensesBySource(state.expenses,'profit') + sumExpensesBySource(state.expenses,'capital');
   const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
   return num(state.settings.capitalBase) + totalProfit - totalExpenses - totalDebts;
 }
@@ -604,8 +634,11 @@ function periodTotals(from, to){
   const sewingCostPeriod = work.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
   const cuttingCostPeriod = cutWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
   const hoodariCostPeriod = hoodWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
-  const netProfit = revenue - cogs - expTotal;
-  return {revenue,cogs,expTotal,piecesProduced,sewnPieces,cutPieces,hoodPieces,piecesSold,sewingCostPeriod,cuttingCostPeriod,hoodariCostPeriod,netProfit,salesCount:sales.length};
+  const profitExpTotal = sumExpensesBySource(expenses,'profit');
+  const capitalExpTotal = sumExpensesBySource(expenses,'capital');
+  const otherExpTotal = sumExpensesBySource(expenses,'other');
+  const netProfit = revenue - cogs - profitExpTotal;
+  return {revenue,cogs,expTotal,profitExpTotal,capitalExpTotal,otherExpTotal,piecesProduced,sewnPieces,cutPieces,hoodPieces,piecesSold,sewingCostPeriod,cuttingCostPeriod,hoodariCostPeriod,netProfit,salesCount:sales.length};
 }
 function tailorDuesOutstandingTotal(){
   return state.tailors.reduce((s,t)=> s + tailorTotals(t.id).remaining, 0);
@@ -720,10 +753,10 @@ function renderDashboard(){
   </div>
 
   <div class="grid stats">
-    ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', null, true)}
+    ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', (()=>{ const dp = debtCashEventsInRange(from,to).reduce((s,e)=>s+e.profit,0); return dp>0 ? `منه ${money(dp)} ربح من تحصيل ديون الزبائن` : null; })(), true)}
     ${statCard('رأس المال / الميزانية', money(capitalTotal()), capitalTotal()>=0?'pos':'neg', 'اضغط لإضافة رأس مال', true, "openCapitalModal()")}
     ${statCard('إجمالي الوارد', money(t.revenue), 'accent', `${t.salesCount} عملية بيع`)}
-    ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg')}
+    ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg', `من الأرباح ${money(t.profitExpTotal)} · من رأس المال ${money(t.capitalExpTotal)} · أخرى ${money(t.otherExpTotal)}`, false, "expenseFilter.month=dashboardMonth;expenseFilter.channel='ALL';navigate('expenses')")}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
     ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', 'حسب الفصل')}
     ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '', null, false, "navigate('soldmodels')")}
@@ -895,7 +928,7 @@ function renderExpenses(){
 
   return `
   <div class="page-head">
-    <div><h1>المصاريف</h1><div class="desc">إجمالي الفترة المعروضة: <b>${money(total)}</b></div></div>
+    <div><h1>المصاريف</h1><div class="desc">إجمالي الفترة المعروضة: <b>${money(total)}</b> — من الأرباح: <b>${money(sumExpensesBySource(list,'profit'))}</b> · من رأس المال: <b>${money(sumExpensesBySource(list,'capital'))}</b> · غير ذلك: <b>${money(sumExpensesBySource(list,'other'))}</b></div></div>
     <button class="btn primary" onclick="openExpenseModal()">+ إضافة مصروف</button>
   </div>
   <div class="toolbar">
@@ -920,12 +953,13 @@ function renderExpenses(){
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>النوع</th><th>القناة</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead>
+      <thead><tr><th>النوع</th><th>القناة</th><th>المصدر</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead>
       <tbody>
         ${list.length ? list.map(e=>`
           <tr>
             <td>${esc(e.type)}</td>
             <td><span class="pill ${(e.channel||'shop')==='page'?'wholesale':'retail'}">${(e.channel||'shop')==='page'?'الصفحة':'معمل'}</span></td>
+            <td><span class="pill ${expenseSource(e)==='capital'?'wholesale':'retail'}">${EXPENSE_SOURCES[expenseSource(e)]}</span></td>
             <td class="num neg">${money(e.amount)}</td>
             <td class="muted">${esc(e.date)}</td>
             <td class="muted">${esc(e.notes||'—')}</td>
@@ -935,19 +969,20 @@ function renderExpenses(){
                 <button class="btn sm danger" onclick="deleteExpense('${e.id}')">حذف</button>
               </div>
             </td>
-          </tr>`).join('') : `<tr class="empty-row"><td colspan="6">لا توجد مصاريف مسجلة لهذه الفترة</td></tr>`}
+          </tr>`).join('') : `<tr class="empty-row"><td colspan="7">لا توجد مصاريف مسجلة لهذه الفترة</td></tr>`}
       </tbody>
     </table>
   </div>`;
 }
 function exportExpensesCSV(){
   const list = state.expenses.filter(e => inMonth(e.date, expenseFilter.month==='ALL'?null:expenseFilter.month));
-  const csv = toCSV(['النوع','القناة','المبلغ','التاريخ','ملاحظات'], list.map(e=>[e.type,(e.channel||'shop')==='page'?'الصفحة':'معمل',e.amount,e.date,e.notes||'']));
+  const csv = toCSV(['النوع','القناة','المصدر','المبلغ','التاريخ','ملاحظات'], list.map(e=>[e.type,(e.channel||'shop')==='page'?'الصفحة':'معمل',EXPENSE_SOURCES[expenseSource(e)],e.amount,e.date,e.notes||'']));
   downloadBlob(csv, 'المصاريف.csv','text/csv;charset=utf-8;');
 }
 function openExpenseModal(id, presetChannel){
   const item = id ? state.expenses.find(e=>e.id===id) : null;
   const initChannel = item?.channel || presetChannel || 'shop';
+  const initSource = item ? expenseSource(item) : 'profit';
   openModal({
     title: item ? 'تعديل مصروف' : 'إضافة مصروف',
     bodyHtml: `
@@ -966,6 +1001,12 @@ function openExpenseModal(id, presetChannel){
           <option value="page" ${initChannel==='page'?'selected':''}>الصفحة (سوشال ميديا)</option>
         </select>
       </div>
+      <div class="form-row"><label>هذا المصروف من</label>
+        <select id="f_source">
+          ${Object.entries(EXPENSE_SOURCES).map(([k,v])=>`<option value="${k}" ${initSource===k?'selected':''}>${v}</option>`).join('')}
+        </select>
+        <div class="hint">رأس المال: ينقص من رأس المال فقط. الأرباح: ينقص من صافي الربح (وينعكس على رأس المال). غير ذلك: يُسجَّل بدون ما ينقص من أي شي.</div>
+      </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
     `,
     onSave(){
@@ -974,9 +1015,10 @@ function openExpenseModal(id, presetChannel){
       const date = document.getElementById('f_date').value || todayISO();
       const notes = document.getElementById('f_notes').value.trim();
       const channel = document.getElementById('f_channel').value;
+      const source = document.getElementById('f_source').value;
       if(!type) return toast('الرجاء إدخال نوع المصروف');
-      if(item){ Object.assign(item, {type,amount,date,notes,channel}); }
-      else state.expenses.push({id:uid(),type,amount,date,notes,channel});
+      if(item){ Object.assign(item, {type,amount,date,notes,channel,source}); }
+      else state.expenses.push({id:uid(),type,amount,date,notes,channel,source});
       saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
     }
   });
@@ -1648,7 +1690,8 @@ function renderModels(){
           <div class="code">${esc(m.code)}</div>
           <div class="name">${esc(m.name)}</div>
           <div class="row"><span>التكلفة</span><span class="num">${money(cost)}</span></div>
-          <div class="row"><span>سعر البيع</span><span class="num">${money(m.sellingPrice)}</span></div>
+          <div class="row"><span>سعر الجملة</span><span class="num">${money(m.wholesalePrice||m.sellingPrice)}</span></div>
+          <div class="row"><span>سعر المفرد</span><span class="num">${money(m.sellingPrice)}</span></div>
           <div class="row"><span>الربح/قطعة</span><span class="num ${profit>=0?'pos':'neg'}">${money(profit)}</span></div>
         </div>
       </div>`;
@@ -1674,21 +1717,14 @@ function openModelModal(id){
         <input type="file" id="f_images" accept="image/*" multiple onchange="handleImageUpload(event)">
         <div class="gallery" id="galleryPreview">${galleryPreviewHtml()}</div>
       </div>
+      <div class="form-row"><label>كلفة إنتاج القطعة</label><input type="number" class="cost-field" id="f_unitcost" value="${item? (modelCost(item)||'') : ''}" oninput="updateModelCompute()"></div>
       <div class="form-grid2">
-        <div class="form-row"><label>تكلفة القماش</label><input type="number" class="cost-field" id="f_fabric" value="${item?.fabricCost||''}" oninput="updateModelCompute()"></div>
-        <div class="form-row"><label>تكلفة الخياطة</label><input type="number" class="cost-field" id="f_sewing" value="${item?.sewingCost||''}" oninput="updateModelCompute()"></div>
+        <div class="form-row"><label>سعر البيع بالجملة</label><input type="number" class="cost-field" id="f_wholesale" value="${item?.wholesalePrice||''}" oninput="updateModelCompute()"></div>
+        <div class="form-row"><label>سعر البيع بالمفرد</label><input type="number" class="cost-field" id="f_sell" value="${item?.sellingPrice||''}" oninput="updateModelCompute()"></div>
       </div>
-      <div class="form-grid2">
-        <div class="form-row"><label>تكلفة الإكسسوارات</label><input type="number" class="cost-field" id="f_acc" value="${item?.accessoriesCost||''}" oninput="updateModelCompute()"></div>
-        <div class="form-row"><label>تكلفة التغليف</label><input type="number" class="cost-field" id="f_pack" value="${item?.packagingCost||''}" oninput="updateModelCompute()"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-row"><label>تكاليف أخرى</label><input type="number" class="cost-field" id="f_other" value="${item?.otherCost||''}" oninput="updateModelCompute()"></div>
-        <div class="form-row"><label>سعر البيع</label><input type="number" class="cost-field" id="f_sell" value="${item?.sellingPrice||''}" oninput="updateModelCompute()"></div>
-      </div>
-      <div class="compute-box">
-        <span>التكلفة النهائية: <b id="computeCost">${money(modelCost(item||{}))}</b></span>
-        <span>الربح للقطعة: <b id="computeProfit">${money(modelProfitPerPiece(item||{}))}</b></span>
+      <div class="flow-split">
+        <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالجملة</span><span class="flow-amt" id="computeProfitWholesale">${item? money(modelWholesaleProfitPerPiece(item)) : money(0)}</span></div>
+        <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالمفرد</span><span class="flow-amt" id="computeProfit">${item? money(modelProfitPerPiece(item)) : money(0)}</span></div>
       </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
     `,
@@ -1699,11 +1735,8 @@ function openModelModal(id){
       const data = {
         name, code,
         images: pendingImages,
-        fabricCost:num(document.getElementById('f_fabric').value),
-        sewingCost:num(document.getElementById('f_sewing').value),
-        accessoriesCost:num(document.getElementById('f_acc').value),
-        packagingCost:num(document.getElementById('f_pack').value),
-        otherCost:num(document.getElementById('f_other').value),
+        unitCost:num(document.getElementById('f_unitcost').value),
+        wholesalePrice:num(document.getElementById('f_wholesale').value),
         sellingPrice:num(document.getElementById('f_sell').value),
         notes: document.getElementById('f_notes').value.trim()
       };
@@ -1731,13 +1764,11 @@ function handleImageUpload(evt){
   });
 }
 function updateModelCompute(){
-  const m = {
-    fabricCost:document.getElementById('f_fabric').value, sewingCost:document.getElementById('f_sewing').value,
-    accessoriesCost:document.getElementById('f_acc').value, packagingCost:document.getElementById('f_pack').value,
-    otherCost:document.getElementById('f_other').value, sellingPrice:document.getElementById('f_sell').value
-  };
-  document.getElementById('computeCost').textContent = money(modelCost(m));
-  document.getElementById('computeProfit').textContent = money(modelProfitPerPiece(m));
+  const cost = num(document.getElementById('f_unitcost').value);
+  const ws = num(document.getElementById('f_wholesale').value) || num(document.getElementById('f_sell').value);
+  const rt = num(document.getElementById('f_sell').value);
+  document.getElementById('computeProfitWholesale').textContent = money(ws - cost);
+  document.getElementById('computeProfit').textContent = money(rt - cost);
 }
 function deleteModel(id){
   const usedInSales = state.sales.some(s=>s.modelId===id);
@@ -1782,7 +1813,8 @@ function renderModelDetail(id){
 
   <div class="grid stats">
     ${statCard('تكلفة القطعة', money(cost),'')}
-    ${statCard('سعر البيع', money(m.sellingPrice),'')}
+    ${statCard('سعر الجملة', money(m.wholesalePrice||m.sellingPrice),'')}
+    ${statCard('سعر المفرد', money(m.sellingPrice),'')}
     ${statCard('الربح للقطعة', money(profit), profit>=0?'pos':'neg')}
     ${statCard('القطع المباعة', totalQty,'')}
     ${statCard('إجمالي الوارد من الموديل', money(totalRevenue),'accent')}
@@ -1918,7 +1950,8 @@ function openSaleModal(id, presetChannel){
   const initModel = state.models.length ? modelById(item?.modelId || state.models[0].id) : null;
   const initSelectValue = item ? (item.modelId || '__NONE__') : (state.models.length ? state.models[0].id : '__NONE__');
   const initQty = item?.quantity || 1;
-  const initPrice = item?.unitPrice ?? (initModel?.sellingPrice || 0);
+  const initType = item?.customerType || 'retail';
+  const initPrice = item?.unitPrice ?? modelPriceFor(initModel, initType);
   const initTotal = num(initQty)*num(initPrice);
   const initReceived = item ? (item.amountReceived!=null ? item.amountReceived : initTotal) : initTotal;
   const initRemaining = item ? (item.amountRemaining!=null ? item.amountRemaining : 0) : 0;
@@ -1935,6 +1968,7 @@ function openSaleModal(id, presetChannel){
       </div>
       <div id="saleNewModelFields" style="display:${initSelectValue==='__NEW__'?'flex':'none'};flex-direction:column;gap:13px;">
         <div class="form-row"><label>اسم الموديل الجديد</label><input type="text" id="f_newModelName" placeholder="مثال: عباية كتف مطرزة"></div>
+        <div class="form-row"><label>كلفة إنتاج القطعة</label><input type="number" id="f_newModelCost" oninput="updateProfitPreview()"></div>
         <div class="form-row"><label>صورة الموديل (اختياري)</label>
           <input type="file" accept="image/*" multiple onchange="handleSaleModelImageUpload(event)">
           <div class="gallery" id="saleModelGalleryPreview"></div>
@@ -1950,6 +1984,12 @@ function openSaleModal(id, presetChannel){
           <option value="page" ${initChannel==='page'?'selected':''}>الصفحة (سوشال ميديا)</option>
         </select>
       </div>
+      <div class="form-row"><label>نوع البيع</label>
+        <select id="f_stype" onchange="onSaleTypeChange()">
+          <option value="wholesale" ${initType==='wholesale'?'selected':''}>جملة</option>
+          <option value="retail" ${initType!=='wholesale'?'selected':''}>مفرد</option>
+        </select>
+      </div>
       <div class="form-grid2">
         <div class="form-row"><label>الكمية</label><input type="number" id="f_qty" value="${initQty}" oninput="onSaleAmountsRecalc('qty')"></div>
         <div class="form-row"><label>سعر الوحدة</label><input type="number" id="f_price" value="${initPrice}" oninput="onSaleAmountsRecalc('price')"></div>
@@ -1958,6 +1998,10 @@ function openSaleModal(id, presetChannel){
       <div class="form-grid2">
         <div class="form-row"><label>المبلغ المستلم</label><input type="number" id="f_received" value="${initReceived}" oninput="onSaleAmountsRecalc('received')"></div>
         <div class="form-row"><label>المبلغ المتبقي (دين)</label><input type="number" id="f_remaining" value="${initRemaining}" oninput="onSaleAmountsRecalc('remaining')"></div>
+      </div>
+      <div class="flow-split">
+        <div class="flow-chip is-profit"><span class="flow-dest">ربحك الكلي من العملية</span><span class="flow-amt" id="previewProfitTotal">${money(0)}</span></div>
+        <div class="flow-chip is-profit"><span class="flow-dest">الربح الداخل من المستلم الآن</span><span class="flow-amt" id="previewProfitNow">${money(0)}</span></div>
       </div>
       <div class="form-row">
         <label>اسم الزبون</label>
@@ -1984,12 +2028,13 @@ function openSaleModal(id, presetChannel){
         const newModel = {
           id: uid(), name: newName, code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
           images: [...pendingSaleNewModelImages],
-          fabricCost:0, sewingCost:0, accessoriesCost:0, packagingCost:0, otherCost:0,
+          unitCost: num(document.getElementById('f_newModelCost').value),
+          wholesalePrice: unitPrice,
           sellingPrice: unitPrice, notes:''
         };
         state.models.push(newModel);
         modelId = newModel.id;
-        costSnapshot = 0;
+        costSnapshot = newModel.unitCost;
       } else if(selectVal === '__NONE__'){
         modelId = null;
         productLabel = document.getElementById('f_freeDesc').value.trim() || 'بيع بدون موديل';
@@ -2012,6 +2057,7 @@ function openSaleModal(id, presetChannel){
       const channel = document.getElementById('f_channel').value;
       const data = {
         modelId, productLabel, quantity, unitPrice, date, channel,
+        customerType: document.getElementById('f_stype').value,
         paymentMethod: document.getElementById('f_pay').value,
         customerName,
         amountReceived: received,
@@ -2030,7 +2076,7 @@ function openSaleModal(id, presetChannel){
           });
         } else {
           const debt = {
-            id: uid(), customerName, amount: remaining, customerType:'retail',
+            id: uid(), customerName, amount: remaining, customerType: data.customerType,
             date, modelId, notes: 'دين ناتج من عملية بيع بتاريخ ' + date
           };
           state.customerDebts.push(debt);
@@ -2053,6 +2099,7 @@ function openSaleModal(id, presetChannel){
       toast(remaining>0 ? `تم الحفظ — سُجّل ${money(remaining)} كدين على ${customerName}` : 'تم الحفظ بنجاح');
     }
   });
+  updateProfitPreview();
 }
 function onSaleModelSelectChange(){
   const val = document.getElementById('f_model').value;
@@ -2062,7 +2109,7 @@ function onSaleModelSelectChange(){
   if(freeField) freeField.style.display = (val==='__NONE__') ? 'flex' : 'none';
   if(val!=='__NEW__' && val!=='__NONE__'){
     const m = modelById(val);
-    if(m) document.getElementById('f_price').value = m.sellingPrice||0;
+    if(m) document.getElementById('f_price').value = modelPriceFor(m, document.getElementById('f_stype').value);
   }
   onSaleAmountsRecalc('price');
 }
@@ -2086,6 +2133,32 @@ function handleSaleModelImageUpload(evt){
     };
     reader.readAsDataURL(file);
   });
+}
+function formUnitCost(){
+  const sel = document.getElementById('f_model');
+  if(!sel) return 0;
+  if(sel.value==='__NEW__') return num((document.getElementById('f_newModelCost')||{}).value);
+  if(sel.value==='__NONE__' || !sel.value) return 0;
+  return modelCost(modelById(sel.value));
+}
+function updateProfitPreview(){
+  const qtyEl = document.getElementById('f_qty'), priceEl = document.getElementById('f_price');
+  const tEl = document.getElementById('previewProfitTotal'), nEl = document.getElementById('previewProfitNow');
+  if(!qtyEl || !priceEl || !tEl || !nEl) return;
+  const qty = num(qtyEl.value), price = num(priceEl.value);
+  const total = qty*price, cost = formUnitCost();
+  const profitTotal = qty*(price-cost);
+  const margin = total>0 ? profitTotal/total : 0;
+  const recEl = document.getElementById('f_received');
+  const received = recEl ? num(recEl.value) : 0;
+  tEl.textContent = money(profitTotal);
+  nEl.textContent = money(received*margin);
+}
+function onSaleTypeChange(){
+  const m = modelById(document.getElementById('f_model').value);
+  const type = document.getElementById('f_stype').value;
+  if(m) document.getElementById('f_price').value = modelPriceFor(m, type);
+  onSaleAmountsRecalc('price');
 }
 function onSaleAmountsRecalc(source){
   const qtyEl = document.getElementById('f_qty'), priceEl = document.getElementById('f_price');
@@ -2115,6 +2188,7 @@ function onSaleAmountsRecalc(source){
     if(remaining<0) { remaining = 0; remainingEl.value = remaining; }
     receivedEl.value = Math.max(0, total-remaining);
   }
+  updateProfitPreview();
 }
 function deleteSale(id){
   const sale = state.sales.find(x=>x.id===id);
@@ -2463,7 +2537,7 @@ function openCustomerDebtModal(id){
       <div class="form-grid2">
         <div class="form-row"><label>اسم الزبون / التاجر</label><input type="text" id="f_customer" value="${esc(initName)}"></div>
         <div class="form-row"><label>نوع الزبون</label>
-          <select id="f_type">
+          <select id="f_type" onchange="onDebtTypeChange()">
             <option value="wholesale" ${item?.customerType==='wholesale'?'selected':''}>جملة</option>
             <option value="retail" ${item?.customerType!=='wholesale'?'selected':''}>مفرد</option>
           </select>
@@ -2478,6 +2552,7 @@ function openCustomerDebtModal(id){
       </div>
       <div id="debtNewModelFields" style="display:${initSelectValue==='__NEW__'?'flex':'none'};flex-direction:column;gap:13px;">
         <div class="form-row"><label>اسم الموديل الجديد</label><input type="text" id="f_newModelName" placeholder="مثال: عباية كتف مطرزة"></div>
+        <div class="form-row"><label>كلفة إنتاج القطعة</label><input type="number" id="f_newModelCost" oninput="updateProfitPreview()"></div>
         <div class="form-row"><label>صورة الموديل (اختياري)</label>
           <input type="file" accept="image/*" multiple onchange="handleDebtModelImageUpload(event)">
           <div class="gallery" id="debtModelGalleryPreview"></div>
@@ -2494,8 +2569,12 @@ function openCustomerDebtModal(id){
         <div class="form-row"><label>المتبقي (دين)</label><input type="number" id="f_remaining" value="${initRemaining}" oninput="onDebtAmountsRecalc('remaining')"></div>
       </div>
       <div class="flow-split">
-        <div class="flow-chip is-profit"><span class="flow-dest">يروح أرباح فوراً</span><span class="flow-amt" id="debtFlowProfit">${money(initReceived)}</span></div>
-        <div class="flow-chip is-debt"><span class="flow-dest">يضل دين، ويتحول أرباح عند التحصيل</span><span class="flow-amt" id="debtFlowRemaining">${money(initRemaining)}</span></div>
+        <div class="flow-chip"><span class="flow-dest">يدخل الوارد الآن</span><span class="flow-amt" id="debtFlowProfit">${money(initReceived)}</span></div>
+        <div class="flow-chip is-debt"><span class="flow-dest">يضل دين على الزبون</span><span class="flow-amt" id="debtFlowRemaining">${money(initRemaining)}</span></div>
+      </div>
+      <div class="flow-split">
+        <div class="flow-chip is-profit"><span class="flow-dest">ربحك الكلي من الطلب</span><span class="flow-amt" id="previewProfitTotal">${money(0)}</span></div>
+        <div class="flow-chip is-profit"><span class="flow-dest">الربح الداخل من المستلم الآن</span><span class="flow-amt" id="previewProfitNow">${money(0)}</span></div>
       </div>
       `}
       <div class="form-grid2">
@@ -2519,12 +2598,13 @@ function openCustomerDebtModal(id){
         const newModel = {
           id: uid(), name: newName, code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
           images: [...pendingDebtNewModelImages],
-          fabricCost:0, sewingCost:0, accessoriesCost:0, packagingCost:0, otherCost:0,
+          unitCost: num(document.getElementById('f_newModelCost').value),
+          wholesalePrice: unitPrice,
           sellingPrice: unitPrice, notes:''
         };
         state.models.push(newModel);
         modelId = newModel.id;
-        costSnapshot = 0;
+        costSnapshot = newModel.unitCost;
       } else if(selectVal === '__NONE__' || !selectVal){
         modelId = null; costSnapshot = 0;
       } else {
@@ -2532,7 +2612,7 @@ function openCustomerDebtModal(id){
         costSnapshot = modelCost(modelById(modelId));
       }
 
-      const profitMargin = amount>0 ? Math.max(0, (amount - quantity*costSnapshot)) / amount : 0;
+      const profitMargin = amount>0 ? (amount - quantity*costSnapshot) / amount : 0;
 
       const data = {
         customerName, amount, quantity, unitPrice, costSnapshot, profitMargin,
@@ -2560,6 +2640,7 @@ function openCustomerDebtModal(id){
       render(); toast('تم الحفظ بنجاح');
     }
   });
+  updateProfitPreview();
 }
 function onDebtModelSelectChange(){
   const val = document.getElementById('f_model').value;
@@ -2567,8 +2648,13 @@ function onDebtModelSelectChange(){
   if(newFields) newFields.style.display = (val==='__NEW__') ? 'flex' : 'none';
   if(val!=='__NEW__' && val!=='__NONE__'){
     const m = modelById(val);
-    if(m) document.getElementById('f_price').value = m.sellingPrice||0;
+    if(m) document.getElementById('f_price').value = modelPriceFor(m, document.getElementById('f_type').value);
   }
+  onDebtAmountsRecalc('price');
+}
+function onDebtTypeChange(){
+  const m = modelById(document.getElementById('f_model').value);
+  if(m) document.getElementById('f_price').value = modelPriceFor(m, document.getElementById('f_type').value);
   onDebtAmountsRecalc('price');
 }
 function debtModelGalleryPreviewHtml(){
@@ -2625,6 +2711,7 @@ function onDebtAmountsRecalc(source){
   const flowProfit = document.getElementById('debtFlowProfit'), flowRemaining = document.getElementById('debtFlowRemaining');
   if(flowProfit) flowProfit.textContent = money(num(receivedEl.value));
   if(flowRemaining) flowRemaining.textContent = money(num(remainingEl.value));
+  updateProfitPreview();
 }
 function deleteCustomerDebt(id){
   confirmDelete('سيتم حذف الدين وكل سجل التحصيلات المرتبطة به. متابعة؟', ()=>{
@@ -2640,10 +2727,11 @@ function deleteCustomerDebt(id){
 }
 function onDebtRepayRecalc(){
   const amountEl = document.getElementById('f_amount'), flow = document.getElementById('repayFlowProfit');
-  if(amountEl && flow) flow.textContent = money(num(amountEl.value));
+  if(amountEl && flow) flow.textContent = money(num(amountEl.value) * (window._repayMargin||0));
 }
 function openCustomerDebtRepayModal(id){
   const d = customerDebtById(id);
+  window._repayMargin = customerDebtMargin(d);
   const tot = customerDebtTotals(id);
   openModal({
     title: 'تحصيل من: ' + d.customerName,
@@ -2653,7 +2741,7 @@ function openCustomerDebtRepayModal(id){
         <div class="form-row"><label>المبلغ المحصّل الآن</label><input type="number" id="f_amount" value="${tot.remaining}" oninput="onDebtRepayRecalc()"></div>
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${todayISO()}"></div>
       </div>
-      <div class="flow-chip is-profit"><span class="flow-dest">يروح أرباح فوراً عند الحفظ</span><span class="flow-amt" id="repayFlowProfit">${money(tot.remaining)}</span></div>
+      <div class="flow-chip is-profit"><span class="flow-dest">الربح الداخل من هذا التحصيل (والمبلغ كله يدخل الوارد)</span><span class="flow-amt" id="repayFlowProfit">${money(tot.remaining*customerDebtMargin(d))}</span></div>
       <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes"></textarea></div>
     `,
     onSave(){
@@ -2715,7 +2803,7 @@ function renderSocialPage(){
   const profit = pageSales.reduce((s,x)=>s+saleProfit(x),0);
   const expTotal = pageExpenses.reduce((s,x)=>s+num(x.amount),0);
   const adsTotal = pageExpenses.filter(e=>e.type==='إعلانات').reduce((s,x)=>s+num(x.amount),0);
-  const net = profit - expTotal;
+  const net = profit - sumExpensesBySource(pageExpenses,'profit');
   const managersDue = pageManagerDuesOutstandingTotal();
 
   const salesRows = pageSales.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
@@ -2958,7 +3046,7 @@ function renderReports(){
   const byMonth = {};
   sales.forEach(s=>{ const k=s.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0}; byMonth[k].revenue+=saleRevenue(s); byMonth[k].cogs+=saleCost(s); });
   debtCashRows.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0}; byMonth[k].revenue+=e.amount; byMonth[k].cogs+=e.cost; });
-  expenses.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0,exp:0}; byMonth[k].exp=(byMonth[k].exp||0)+num(e.amount); });
+  expenses.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{revenue:0,cogs:0,exp:0}; byMonth[k].exp=(byMonth[k].exp||0)+(expenseSource(e)==='profit'?num(e.amount):0); });
   const months = Object.keys(byMonth).sort();
 
   // profit by model
