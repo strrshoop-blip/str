@@ -385,7 +385,7 @@ async function loadStateAsync(){
     try{
       await firebaseUserReady;
       const doc = await db.doc(FIRESTORE_DOC).get();
-      if(doc.exists) return Object.assign(defaultState(), doc.data());
+      if(doc.exists) return await resolveCloudImages(Object.assign(defaultState(), doc.data()));
     }catch(e){ console.error('firestore load failed', e); toast('⚠️ تعذر تحميل البيانات من Firebase'); }
     return defaultState();
   }
@@ -404,10 +404,64 @@ async function loadStateAsync(){
 }
 let state = defaultState();
 let saveQueued = false;
+/* ---- الصور: كل صورة تُضغط وتنحفظ بمستند Firestore مستقل، لأن المستند الواحد حده 1MB ---- */
+function compressImageInto(file, reader){
+  const fr = new FileReader();
+  fr.onload = ev=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const MAX = 900;
+      const k = Math.min(1, MAX/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      reader.onload({target:{result: c.toDataURL('image/jpeg', 0.7)}});
+    };
+    img.onerror = ()=> toast('تعذر قراءة الصورة');
+    img.src = ev.target.result;
+  };
+  fr.readAsDataURL(file);
+}
+function imgHashId(s){
+  let a = 5381, b = 52711;
+  for(let i=0;i<s.length;i++){ const c = s.charCodeAt(i); a = ((a<<5)+a) ^ c; b = ((b<<5)+b+i) ^ c; }
+  return (a>>>0).toString(36)+(b>>>0).toString(36)+s.length.toString(36);
+}
+const uploadedImgIds = new Set();
+async function packStateForCloud(){
+  const copy = JSON.parse(JSON.stringify(state));
+  const jobs = [];
+  (copy.models||[]).forEach(m=>{
+    m.images = (m.images||[]).map(src=>{
+      if(typeof src==='string' && src.startsWith('data:')){
+        const id = imgHashId(src);
+        if(!uploadedImgIds.has(id)){
+          jobs.push(db.doc('erp_state/img_'+id).set({data:src}).then(()=>uploadedImgIds.add(id)));
+        }
+        return 'fsimg:'+id;
+      }
+      return src;
+    });
+  });
+  await Promise.all(jobs);
+  return copy;
+}
+async function resolveCloudImages(st){
+  const ids = new Set();
+  (st.models||[]).forEach(m=>(m.images||[]).forEach(s=>{ if(typeof s==='string' && s.startsWith('fsimg:')) ids.add(s.slice(6)); }));
+  const map = {};
+  await Promise.all([...ids].map(async id=>{
+    try{ const d = await db.doc('erp_state/img_'+id).get(); if(d.exists){ map[id] = d.data().data; uploadedImgIds.add(id); } }catch(e){ console.error('image load failed', e); }
+  }));
+  (st.models||[]).forEach(m=>{
+    m.images = (m.images||[]).map(s=> (typeof s==='string' && s.startsWith('fsimg:')) ? (map[s.slice(6)]||'') : s).filter(Boolean);
+  });
+  return st;
+}
 function saveState(){
   if(firebaseReady){
     saveQueued = true;
-    firebaseUserReady.then(()=> db.doc(FIRESTORE_DOC).set(JSON.parse(JSON.stringify(state))))
+    firebaseUserReady.then(()=> packStateForCloud()).then(packed=> db.doc(FIRESTORE_DOC).set(packed))
       .then(()=>{ saveQueued = false; })
       .catch(e=>{ saveQueued = false; console.error('firestore save failed', e); toast('⚠️ تعذر حفظ البيانات — تحقق من الاتصال بالإنترنت'); });
     return;
@@ -425,9 +479,11 @@ function saveState(){
 function attachFirestoreSync(){
   if(!firebaseReady) return;
   firebaseUserReady.then(()=>{
-    db.doc(FIRESTORE_DOC).onSnapshot(doc=>{
+    db.doc(FIRESTORE_DOC).onSnapshot(async doc=>{
       if(!doc.exists || saveQueued) return; // ignore echoes of our own pending write
-      state = Object.assign(defaultState(), doc.data());
+      const next = await resolveCloudImages(Object.assign(defaultState(), doc.data()));
+      if(saveQueued) return;
+      state = next;
       render();
     });
   });
@@ -611,10 +667,11 @@ function expenseSource(e){ return (e && e.source && EXPENSE_SOURCES[e.source]) ?
 function sumExpensesBySource(list, src){ return list.filter(e=>expenseSource(e)===src).reduce((s,x)=>s+num(x.amount),0); }
 
 function capitalTotal(){
-  const totalProfit = state.sales.reduce((s,x)=> s + saleProfit(x), 0) + totalCustomerDebtCashProfit();
+  // كل مبلغ يوصلك (بيع أو تحصيل دين) يدخل رأس المال كاملاً، وحصته من الربح تدخل صافي الربح
+  const totalReceived = state.sales.reduce((s,x)=> s + saleRevenue(x), 0) + allDebtCashEvents().reduce((s,e)=> s + e.amount, 0);
   const totalExpenses = sumExpensesBySource(state.expenses,'profit') + sumExpensesBySource(state.expenses,'capital');
   const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
-  return num(state.settings.capitalBase) + totalProfit - totalExpenses - totalDebts;
+  return num(state.settings.capitalBase) + totalReceived - totalExpenses - totalDebts;
 }
 function periodTotals(from, to){
   const sales = state.sales.filter(s=>inRange(s.date, from, to));
@@ -629,7 +686,7 @@ function periodTotals(from, to){
   const sewnPieces = work.reduce((s,x)=>s+num(x.pieceCount),0);
   const cutPieces = cutWork.reduce((s,x)=>s+num(x.pieceCount),0);
   const hoodPieces = hoodWork.reduce((s,x)=>s+num(x.pieceCount),0);
-  const piecesProduced = cutPieces;
+  const piecesProduced = sewnPieces;
   const piecesSold = sales.reduce((s,x)=>s+num(x.quantity),0);
   const sewingCostPeriod = work.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
   const cuttingCostPeriod = cutWork.reduce((s,x)=>s+num(x.pieceCount)*num(x.pricePerPiece),0);
@@ -755,10 +812,9 @@ function renderDashboard(){
   <div class="grid stats">
     ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', (()=>{ const dp = debtCashEventsInRange(from,to).reduce((s,e)=>s+e.profit,0); return dp>0 ? `منه ${money(dp)} ربح من تحصيل ديون الزبائن` : null; })(), true)}
     ${statCard('رأس المال / الميزانية', money(capitalTotal()), capitalTotal()>=0?'pos':'neg', 'اضغط لإضافة رأس مال', true, "openCapitalModal()")}
-    ${statCard('إجمالي الوارد', money(t.revenue), 'accent', `${t.salesCount} عملية بيع`)}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg', `من الأرباح ${money(t.profitExpTotal)} · من رأس المال ${money(t.capitalExpTotal)} · أخرى ${money(t.otherExpTotal)}`, false, "expenseFilter.month=dashboardMonth;expenseFilter.channel='ALL';navigate('expenses')")}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
-    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', 'حسب الفصل')}
+    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', 'حسب الخياطين')}
     ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '', null, false, "navigate('soldmodels')")}
     ${statCard('مستحقات الخياطين (الكلي)', money(duesTotal), duesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
     ${statCard('مستحقات الفصالين (الكلي)', money(cutterDuesTotal), cutterDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
@@ -846,7 +902,6 @@ function renderSoldModels(){
   <div class="grid stats">
     ${statCard('إجمالي الربح', money(totalProfit), totalProfit>=0?'pos':'neg', null, true)}
     ${statCard('القطع المباعة', totalQty.toLocaleString('en-US'), '')}
-    ${statCard('إجمالي الوارد', money(totalRevenue), 'accent')}
     ${statCard('إجمالي التكلفة', money(totalCost), '')}
     ${best? statCard('الأكثر مبيعاً', esc(best.label), 'accent', `${best.qty} قطعة`) : ''}
   </div>
@@ -1199,7 +1254,7 @@ function handleWorkModelImageUpload(evt){
       const el = document.getElementById('workModelGalleryPreview');
       if(el) el.innerHTML = workModelGalleryPreviewHtml();
     };
-    reader.readAsDataURL(file);
+    compressImageInto(file, reader);
   });
 }
 // Returns {ok:true, modelId} or {ok:false, msg}
@@ -1760,7 +1815,7 @@ function handleImageUpload(evt){
       pendingImages.push(e.target.result);
       document.getElementById('galleryPreview').innerHTML = galleryPreviewHtml();
     };
-    reader.readAsDataURL(file);
+    compressImageInto(file, reader);
   });
 }
 function updateModelCompute(){
@@ -2131,7 +2186,7 @@ function handleSaleModelImageUpload(evt){
       const el = document.getElementById('saleModelGalleryPreview');
       if(el) el.innerHTML = saleModelGalleryPreviewHtml();
     };
-    reader.readAsDataURL(file);
+    compressImageInto(file, reader);
   });
 }
 function formUnitCost(){
@@ -2675,7 +2730,7 @@ function handleDebtModelImageUpload(evt){
       const el = document.getElementById('debtModelGalleryPreview');
       if(el) el.innerHTML = debtModelGalleryPreviewHtml();
     };
-    reader.readAsDataURL(file);
+    compressImageInto(file, reader);
   });
 }
 function onDebtAmountsRecalc(source){
