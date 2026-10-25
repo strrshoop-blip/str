@@ -831,7 +831,6 @@ function renderDashboard(){
     ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', (()=>{ const dp = debtCashEventsInRange(from,to).reduce((s,e)=>s+e.profit,0); return dp>0 ? `منه ${money(dp)} ربح من تحصيل ديون الزبائن` : null; })(), true, "openProfitModal()")}
     ${statCard('رأس المال / الميزانية', money(capitalTotal()), capitalTotal()>=0?'pos':'neg', 'اضغط لإضافة رأس مال', true, "openCapitalModal()")}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg', `من الأرباح ${money(t.profitExpTotal)} · من رأس المال ${money(t.capitalExpTotal)} · أخرى ${money(t.otherExpTotal)}`, false, "expenseFilter.month=dashboardMonth;expenseFilter.channel='ALL';navigate('expenses')")}
-    ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
     ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', 'حسب الخياطين')}
     ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '', null, false, "navigate('soldmodels')")}
     ${statCard('مستحقات الخياطين (الكلي)', money(duesTotal), duesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
