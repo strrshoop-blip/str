@@ -364,7 +364,7 @@ function defaultState(){
     expenses:[], tailors:[], tailorWork:[], tailorPayments:[],
     cutters:[], cutterWork:[], cutterPayments:[],
     hoodaris:[], hoodariWork:[], hoodariPayments:[],
-    models:[], sales:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
+    models:[], sales:[], profitAdjustments:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
     pageManagers:[{id:'seed-ahmed', name:'سيد أحمد', notes:'مدير صفحة التواصل الاجتماعي'}],
     pageManagerFees:[], pageManagerPayments:[]
   };
@@ -711,8 +711,9 @@ function periodTotals(from, to){
   const profitExpTotal = sumExpensesBySource(expenses,'profit');
   const capitalExpTotal = sumExpensesBySource(expenses,'capital');
   const otherExpTotal = sumExpensesBySource(expenses,'other');
-  const netProfit = revenue - cogs - profitExpTotal;
-  return {revenue,cogs,expTotal,profitExpTotal,capitalExpTotal,otherExpTotal,piecesProduced,sewnPieces,cutPieces,hoodPieces,piecesSold,sewingCostPeriod,cuttingCostPeriod,hoodariCostPeriod,netProfit,salesCount:sales.length};
+  const profitAdj = (state.profitAdjustments||[]).filter(a=>inRange(a.date, from, to)).reduce((s,a)=>s+num(a.amount),0);
+  const netProfit = revenue - cogs - profitExpTotal + profitAdj;
+  return {revenue,cogs,expTotal,profitAdj,profitExpTotal,capitalExpTotal,otherExpTotal,piecesProduced,sewnPieces,cutPieces,hoodPieces,piecesSold,sewingCostPeriod,cuttingCostPeriod,hoodariCostPeriod,netProfit,salesCount:sales.length};
 }
 function tailorDuesOutstandingTotal(){
   return state.tailors.reduce((s,t)=> s + tailorTotals(t.id).remaining, 0);
@@ -827,7 +828,7 @@ function renderDashboard(){
   </div>
 
   <div class="grid stats">
-    ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', (()=>{ const dp = debtCashEventsInRange(from,to).reduce((s,e)=>s+e.profit,0); return dp>0 ? `منه ${money(dp)} ربح من تحصيل ديون الزبائن` : null; })(), true)}
+    ${statCard('صافي الربح', money(t.netProfit), t.netProfit>=0?'pos':'neg', (()=>{ const dp = debtCashEventsInRange(from,to).reduce((s,e)=>s+e.profit,0); return dp>0 ? `منه ${money(dp)} ربح من تحصيل ديون الزبائن` : null; })(), true, "openProfitModal()")}
     ${statCard('رأس المال / الميزانية', money(capitalTotal()), capitalTotal()>=0?'pos':'neg', 'اضغط لإضافة رأس مال', true, "openCapitalModal()")}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg', `من الأرباح ${money(t.profitExpTotal)} · من رأس المال ${money(t.capitalExpTotal)} · أخرى ${money(t.otherExpTotal)}`, false, "expenseFilter.month=dashboardMonth;expenseFilter.channel='ALL';navigate('expenses')")}
     ${statCard('تكلفة الإنتاج المباع', money(t.cogs), '')}
@@ -3331,6 +3332,44 @@ function downloadDesktopShortcut(){
     '::URL<', url, '>URL::', ''].join('\r\n');
   downloadBlob(bat, 'STR-desktop-shortcut.bat', 'application/octet-stream');
   toast('نزل الملف — دوسي عليه مرتين لإنشاء الاختصار');
+}
+function openProfitModal(){
+  const all = dashboardMonth==='ALL';
+  const from = all ? null : dashboardMonth+'-01', to = all ? null : dashboardMonth+'-31';
+  const t = periodTotals(from, to);
+  const adjs = (state.profitAdjustments||[]).filter(a=>inRange(a.date, from, to)).sort((a,b)=>b.date.localeCompare(a.date));
+  openModal({
+    title: 'صافي الربح — ' + (all ? 'كل الفترات' : dashboardMonth),
+    bodyHtml: `
+      <div class="compute-box"><span>صافي الربح الحالي</span><span><b class="${t.netProfit>=0?'pos':'neg'}">${money(t.netProfit)}</b></span></div>
+      <div class="desc" style="margin:10px 0;">الربح المحسوب من المبيعات والتحصيلات والمصاريف: ${money(t.netProfit - t.profitAdj)}${t.profitAdj? ' — تعديلاتك اليدوية: '+money(t.profitAdj):''}. التعديل ما يحذف مبيعات ولا موديلات، يضيف سطر تصحيح فقط.</div>
+      <div class="form-row"><label>اجعل صافي الربح يساوي (د.ع)</label><input type="number" id="f_profit_target" placeholder="مثال: 0 للتصفير"></div>
+      <div class="form-grid2">
+        <div class="form-row"><label>أضف مبلغ</label><input type="number" id="f_profit_add" placeholder="0"></div>
+        <div class="form-row"><label>انقص مبلغ</label><input type="number" id="f_profit_sub" placeholder="0"></div>
+      </div>
+      <div class="form-row"><label>سبب التعديل (اختياري)</label><input type="text" id="f_profit_note" placeholder="مثال: تصحيح خطأ"></div>
+      ${adjs.length ? `<div class="section-title" style="margin-top:6px;">تعديلات هذه الفترة</div>
+      ${adjs.map(a=>`<div class="compute-box"><span>${esc(a.date)} — ${esc(a.note||'تعديل يدوي')}</span><span><b class="${num(a.amount)>=0?'pos':'neg'}">${money(a.amount)}</b> <button class="btn sm danger" type="button" onclick="deleteProfitAdjustment('${a.id}')">حذف</button></span></div>`).join('')}` : ''}
+    `,
+    onSave(){
+      const tv = document.getElementById('f_profit_target').value;
+      const add = num(document.getElementById('f_profit_add').value);
+      const sub = num(document.getElementById('f_profit_sub').value);
+      let delta = add - sub;
+      if(tv!=='') delta = (num(tv) - t.netProfit) + delta;
+      if(!delta){ closeModal(); return; }
+      const today = todayISO();
+      const date = (all || today.slice(0,7)===dashboardMonth) ? today : dashboardMonth+'-15';
+      state.profitAdjustments = state.profitAdjustments || [];
+      state.profitAdjustments.push({id:uid(), amount:delta, date, note:document.getElementById('f_profit_note').value.trim()});
+      saveState(); closeModal(); render(); toast('تم تحديث صافي الربح');
+    }
+  });
+}
+function deleteProfitAdjustment(id){
+  state.profitAdjustments = (state.profitAdjustments||[]).filter(a=>a.id!==id);
+  saveState(); closeModal(); render(); openProfitModal();
 }
 function openCapitalModal(){
   const cur = capitalTotal();
