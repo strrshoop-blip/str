@@ -2551,6 +2551,7 @@ function renderCustomerDetail(encodedName){
   <div class="detail-head">
     <div class="titles"><h1>${esc(customerName)}</h1></div>
     <div class="btn-row">
+      ${totals.remaining>0?`<button class="btn primary" onclick="openCustomerBulkRepayModal('${encodedName}')">💰 تحصيل</button>`:''}
       <button class="btn primary" onclick="openCustomerDebtModal()">+ إضافة دين جديد</button>
     </div>
   </div>
@@ -2825,6 +2826,86 @@ function openCustomerDebtRepayModal(id){
       saveState(); closeModal(); render();
       const remaining = customerDebtTotals(id).remaining;
       toast(remaining<=0 ? 'تم تحصيل الدين بالكامل ✅' : 'تم تسجيل التحصيل، المتبقي: '+money(remaining));
+    }
+  });
+}
+/* ---- تحصيل شامل من زبون: المبلغ يتوزع تلقائياً على ديونه من الأقدم للأحدث ---- */
+function customerBulkAllocation(customerName, amount){
+  const debts = state.customerDebts
+    .filter(d=>(d.customerName||'').trim()===customerName)
+    .sort((a,b)=> (a.date||'').localeCompare(b.date||''))
+    .map(d=>({d, remaining: customerDebtTotals(d.id).remaining}))
+    .filter(x=>x.remaining>0);
+  let left = amount;
+  const alloc = [];
+  debts.forEach(x=>{
+    if(left<=0) return;
+    const take = Math.min(left, x.remaining);
+    alloc.push({debt:x.d, take, before:x.remaining, after:x.remaining-take});
+    left -= take;
+  });
+  return alloc;
+}
+function onBulkRepayRecalc(){
+  const name = window._bulkCustomer;
+  const el = document.getElementById('f_amount');
+  const box = document.getElementById('bulkAllocBox');
+  if(!el || !box) return;
+  const totalRemaining = customerDebtGroupTotals(state.customerDebts.filter(d=>(d.customerName||'').trim()===name)).remaining;
+  let amount = num(el.value);
+  if(amount>totalRemaining){ amount = totalRemaining; el.value = amount; }
+  const alloc = customerBulkAllocation(name, amount);
+  const after = totalRemaining - amount;
+  const afterEl = document.getElementById('bulkAfter');
+  if(afterEl) afterEl.textContent = money(Math.max(0, after));
+  box.innerHTML = alloc.length ? alloc.map(a=>`
+    <tr>
+      <td>${a.debt.modelId? esc(modelById(a.debt.modelId)?.name||'—') : 'بدون تحديد'} <span class="muted">(${esc(a.debt.date)})</span></td>
+      <td class="num">${money(a.before)}</td>
+      <td class="num pos">− ${money(a.take)}</td>
+      <td class="num ${a.after>0?'accent':'pos'}">${a.after>0?money(a.after):'مسدد ✅'}</td>
+    </tr>`).join('') : `<tr class="empty-row"><td colspan="4">اكتب المبلغ لتشوف التوزيع</td></tr>`;
+}
+function openCustomerBulkRepayModal(encodedName){
+  const customerName = decodeURIComponent(encodedName);
+  window._bulkCustomer = customerName;
+  const debts = state.customerDebts.filter(d=>(d.customerName||'').trim()===customerName);
+  const totals = customerDebtGroupTotals(debts);
+  if(totals.remaining<=0) return toast('ما عليه ديون متبقية');
+  openModal({
+    title: 'تحصيل من: ' + customerName,
+    bodyHtml:`
+      <div class="compute-box"><span>إجمالي المتبقي عليه</span><span><b class="accent">${money(totals.remaining)}</b></span></div>
+      <div class="form-grid2">
+        <div class="form-row"><label>المبلغ المحصّل الآن</label><input type="number" id="f_amount" value="" placeholder="مثال: 300000" oninput="onBulkRepayRecalc()"></div>
+        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${todayISO()}"></div>
+      </div>
+      <div class="hint">المبلغ يُخصم تلقائياً من ديونه من الأقدم للأحدث.</div>
+      <div class="table-wrap" style="border:none;">
+        <table>
+          <thead><tr><th>الدين</th><th>قبل</th><th>يُخصم</th><th>بعد</th></tr></thead>
+          <tbody id="bulkAllocBox"><tr class="empty-row"><td colspan="4">اكتب المبلغ لتشوف التوزيع</td></tr></tbody>
+        </table>
+      </div>
+      <div class="compute-box"><span>المتبقي عليه بعد التحصيل</span><span><b id="bulkAfter" class="accent">${money(totals.remaining)}</b></span></div>
+      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes"></textarea></div>
+    `,
+    onSave(){
+      const amount = num(document.getElementById('f_amount').value);
+      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
+      if(amount>totals.remaining) return toast('المبلغ أكبر من إجمالي المتبقي على الزبون');
+      const date = document.getElementById('f_date').value || todayISO();
+      const userNotes = document.getElementById('f_notes').value.trim();
+      const alloc = customerBulkAllocation(customerName, amount);
+      alloc.forEach(a=>{
+        state.customerDebtPayments.push({
+          id:uid(), customerDebtId:a.debt.id, amount:a.take, date,
+          notes: 'تحصيل شامل ' + money(amount) + (userNotes ? ' — '+userNotes : '')
+        });
+      });
+      saveState(); closeModal(); render();
+      const left = totals.remaining - amount;
+      toast(left<=0 ? 'تم تحصيل كل ديون الزبون ✅' : 'تم التحصيل، المتبقي عليه: '+money(left));
     }
   });
 }
