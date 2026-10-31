@@ -767,6 +767,8 @@ const PAGES = [
   {id:'debts', label:'ديون علينا', icon:'📒'},
   {id:'customerdebts', label:'ديون الزبائن', icon:'🧾'},
   {id:'social', label:'الصفحة', icon:'📱'},
+  {id:'ledger', label:'الحركات المالية', icon:'💱'},
+  {id:'notes', label:'الملاحظات', icon:'📝'},
   {id:'reports', label:'التقارير', icon:'📊'},
   {id:'settings', label:'الإعدادات', icon:'⚙️'},
 ];
@@ -806,6 +808,8 @@ function render(){
   else if(currentPage==='customerdebts') main.innerHTML = currentDetail ? renderCustomerDetail(currentDetail) : renderCustomerDebts();
   else if(currentPage==='social') main.innerHTML = currentDetail ? renderPageManagerDetail(currentDetail) : renderSocialPage();
   else if(currentPage==='reports') main.innerHTML = renderReports();
+  else if(currentPage==='ledger') main.innerHTML = renderLedger();
+  else if(currentPage==='notes') main.innerHTML = renderNotesPage();
   else if(currentPage==='settings') main.innerHTML = renderSettings();
   attachDeferredCharts();
 }
@@ -3435,6 +3439,76 @@ function deleteNote(id){
     saveState(); render(); toast('تم الحذف');
   });
 }
+
+/* =========================================================
+   NOTES PAGE (صفحة الملاحظات بالشريط الجانبي)
+========================================================= */
+function renderNotesPage(){
+  return `
+  <div class="page-head"><div><h1>الملاحظات</h1><div class="desc">سجّل أكثر من ملاحظة، وتكدر تعدّل أو تحذف أي وحدة منهن</div></div></div>
+  ${renderNotesBar()}`;
+}
+
+/* =========================================================
+   LEDGER (الحركات المالية) — كل داخل وخارج على رأس المال
+========================================================= */
+let ledgerFilter = {month:'ALL', type:'all', q:''};
+function ledgerEntries(){
+  const out = [];
+  state.sales.forEach(s=> out.push({date:s.date, kind:'in', label:'وارد بيع', who:saleProductLabel(s), amount:num(saleRevenue(s)), eff:num(saleRevenue(s)), tag:'sale'}));
+  allDebtCashEvents().forEach(e=>{ const d = customerDebtById(e.debtId); out.push({date:e.date, kind:'in', label:'تحصيل دين زبون', who:(d&&d.customerName)||'زبون', amount:e.amount, eff:e.amount, tag:'cdebt'}); });
+  state.expenses.forEach(e=>{ const src = expenseSource(e); out.push({date:e.date, kind:'out', label:'مصروف — '+e.type, who:EXPENSE_SOURCES[src], amount:num(e.amount), eff: src==='other'?0:-num(e.amount), tag:'exp', note:e.notes}); });
+  state.debts.forEach(d=> out.push({date:d.date, kind:'out', label:'دين علينا', who:d.creditor, amount:num(d.amount), eff:-num(d.amount), tag:'debt', note:d.reason}));
+  const wk = (list, byId, title)=> (list||[]).forEach(p=>{ const w = byId(p[title.key]); out.push({date:p.date, kind:'out', label:'تسديد '+title.name, who:w?w.name:'محذوف', amount:num(p.amount), eff:p.fromCapital?-num(p.amount):0, tag:'worker', note:p.fromCapital?'من رأس المال':'لم يُخصم من رأس المال', note2:p.notes}); });
+  wk(state.tailorPayments, tailorById, {key:'tailorId', name:'خياط'});
+  wk(state.cutterPayments, cutterById, {key:'cutterId', name:'فصال'});
+  wk(state.hoodariPayments, hoodariById, {key:'hoodariId', name:'هودارية'});
+  out.sort((a,b)=> String(a.date).localeCompare(String(b.date)));
+  // الرصيد التراكمي
+  let bal = num(state.settings.capitalBase);
+  out.forEach(r=>{ bal += r.eff; r.balance = bal; });
+  return out;
+}
+function renderLedger(){
+  const all = ledgerEntries();
+  const f = ledgerFilter;
+  const rows = all.filter(r=> (f.month==='ALL' || inMonth(r.date,f.month)) && (f.type==='all' || r.kind===f.type) && (!f.q || (r.label+' '+r.who+' '+(r.note||'')+' '+(r.note2||'')).toLowerCase().includes(f.q.toLowerCase()))).reverse();
+  const totIn = rows.filter(r=>r.eff>0).reduce((s,r)=>s+r.eff,0);
+  const totOut = rows.filter(r=>r.eff<0).reduce((s,r)=>s-r.eff,0);
+  return `
+  <div class="page-head">
+    <div><h1>الحركات المالية</h1><div class="desc">كل مبلغ دخل أو طلع من رأس المال بالترتيب مع الرصيد بعد كل حركة</div></div>
+    <div class="toolbar" style="margin:0;">
+      <div class="field-inline"><label>الفترة</label>
+        <select onchange="ledgerFilter.month=this.value;render();">${monthOptionsList(f.month==='ALL'?'':f.month)}<option value="ALL" ${f.month==='ALL'?'selected':''}>كل الفترات</option></select></div>
+      <div class="field-inline"><label>النوع</label>
+        <select onchange="ledgerFilter.type=this.value;render();">
+          <option value="all" ${f.type==='all'?'selected':''}>الكل</option>
+          <option value="in" ${f.type==='in'?'selected':''}>الداخل</option>
+          <option value="out" ${f.type==='out'?'selected':''}>الخارج</option></select></div>
+      <input type="text" class="search-box" placeholder="بحث بالاسم أو النوع" value="${esc(f.q)}" oninput="ledgerFilter.q=this.value;render();">
+    </div>
+  </div>
+  <div class="grid stats">
+    ${statCard('داخل على رأس المال', money(totIn), 'pos')}
+    ${statCard('خارج من رأس المال', money(totOut), 'neg')}
+    ${statCard('رأس المال الحالي', money(capitalTotal()), capitalTotal()>=0?'pos':'neg')}
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>التاريخ</th><th>الحركة</th><th>الجهة</th><th>المبلغ</th><th>الرصيد بعدها</th><th>ملاحظات</th></tr></thead>
+    <tbody>
+    ${rows.length ? rows.map(r=>`<tr>
+      <td class="muted">${esc(r.date)}</td>
+      <td><span class="pill ${r.kind}">${r.kind==='in'?'داخل':'خارج'}</span> ${esc(r.label)}</td>
+      <td>${esc(r.who)}</td>
+      <td class="num ${r.eff>0?'pos':(r.eff<0?'neg':'muted')}">${r.eff>0?'+':(r.eff<0?'−':'')}${money(r.amount)}</td>
+      <td class="num">${money(r.balance)}</td>
+      <td class="muted">${esc([r.note,r.note2].filter(Boolean).join(' · ')||'—')}</td>
+    </tr>`).join('') : `<tr class="empty-row"><td colspan="6">لا توجد حركات</td></tr>`}
+    </tbody></table></div>
+  <div class="hint" style="margin-top:10px;">المبالغ الرمادية (بدون + أو −) سُجّلت لكنها ما أثرت على رأس المال، مثل المصروف "غير ذلك" أو تسديد عامل بدون علامة "من رأس المال". الرصيد التراكمي يبدأ من القيمة الأساسية لرأس المال.</div>`;
+}
+
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
   const sales = state.sales.filter(s=>inRange(s.date,from,to));
