@@ -262,6 +262,15 @@
   .detail-head .titles .code{color:var(--accent-soft);font-size:12.5px;font-weight:700;}
   .detail-head .titles h1{margin-top:3px;}
 
+  .notes-add{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+  .notes-add textarea{min-height:84px;}
+  .notes-add .btn{align-self:flex-start;}
+  .note-item{border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;}
+  .note-item:last-child{margin-bottom:0;}
+  .note-text{white-space:pre-wrap;line-height:1.85;font-size:14px;word-break:break-word;}
+  .note-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px;font-size:12px;color:var(--text-faint);}
+  .notes-empty{text-align:center;color:var(--text-faint);padding:18px 0;font-size:13.5px;}
+
   @media print{
     .sidebar,.mobile-nav,.toolbar .btn,.no-print,.modal-backdrop,#toastRoot{display:none !important;}
     body{background:#fff;color:#000;}
@@ -366,7 +375,8 @@ function defaultState(){
     hoodaris:[], hoodariWork:[], hoodariPayments:[],
     models:[], sales:[], profitAdjustments:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
     pageManagers:[{id:'seed-ahmed', name:'سيد أحمد', notes:'مدير صفحة التواصل الاجتماعي'}],
-    pageManagerFees:[], pageManagerPayments:[]
+    pageManagerFees:[], pageManagerPayments:[],
+    notes:[]
   };
 }
 let firebaseUserReady = null; // promise resolved once anonymous auth finishes (firestore mode only)
@@ -683,12 +693,27 @@ const EXPENSE_SOURCES = {capital:'رأس المال', profit:'الأرباح', o
 function expenseSource(e){ return (e && e.source && EXPENSE_SOURCES[e.source]) ? e.source : 'profit'; }
 function sumExpensesBySource(list, src){ return list.filter(e=>expenseSource(e)===src).reduce((s,x)=>s+num(x.amount),0); }
 
+/* دفعات الخياطين والفصالين والهودارية: إذا الدفعة معلّمة "من رأس المال" تنخصم من رأس المال.
+   الدفعات القديمة (بدون علامة) ما تنخصم حتى ما يتغير رأس المال المسجل سابقاً */
+function workerPaymentsFromCapital(){
+  const sum = list => (list||[]).filter(p=>p.fromCapital).reduce((s,p)=>s+num(p.amount),0);
+  return sum(state.tailorPayments) + sum(state.cutterPayments) + sum(state.hoodariPayments);
+}
+function fromCapitalFieldHtml(item){
+  const checked = item ? !!item.fromCapital : true;
+  return `
+      <label style="display:flex;gap:9px;align-items:center;cursor:pointer;font-size:13.5px;">
+        <input type="checkbox" id="f_fromCapital" ${checked?'checked':''} style="width:auto;margin:0;">
+        <span>خصم هذا المبلغ من رأس المال</span>
+      </label>
+      <div class="hint">${item && !item.fromCapital ? 'هذي دفعة قديمة ما انخصمت من رأس المال سابقاً. فعّل الخيار إذا تريد تنخصم هسه. ' : ''}إذا حذفت الدفعة يرجع المبلغ لرأس المال تلقائياً. لا تسجل نفس الدفعة كمصروف حتى ما تنخصم مرتين.</div>`;
+}
 function capitalTotal(){
   // كل مبلغ يوصلك (بيع أو تحصيل دين) يدخل رأس المال كاملاً، وحصته من الربح تدخل صافي الربح
   const totalReceived = state.sales.reduce((s,x)=> s + saleRevenue(x), 0) + allDebtCashEvents().reduce((s,e)=> s + e.amount, 0);
   const totalExpenses = sumExpensesBySource(state.expenses,'profit') + sumExpensesBySource(state.expenses,'capital');
   const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
-  return num(state.settings.capitalBase) + totalReceived - totalExpenses - totalDebts;
+  return num(state.settings.capitalBase) + totalReceived - totalExpenses - totalDebts - workerPaymentsFromCapital();
 }
 function periodTotals(from, to){
   const sales = state.sales.filter(s=>inRange(s.date, from, to));
@@ -1219,7 +1244,7 @@ function renderTailorDetail(id){
         <tr>
           <td class="muted">${esc(p.date)}</td>
           <td class="num pos">${money(p.amount)}</td>
-          <td class="muted">${esc(p.notes||'—')}</td>
+          <td class="muted">${p.fromCapital?'<span class="pill wholesale">من رأس المال</span> ':''}${esc(p.notes||'—')}</td>
           <td><div class="btn-row">
             <button class="btn sm ghost" onclick="openTailorPaymentModal('${id}','${p.id}')">تعديل</button>
             <button class="btn sm danger" onclick="deleteTailorPayment('${p.id}')">حذف</button>
@@ -1345,11 +1370,13 @@ function openTailorPaymentModal(tailorId, payId){
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
       </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+      ${fromCapitalFieldHtml(item)}
     `,
     onSave(){
       const data = { tailorId, amount:num(document.getElementById('f_amount').value),
         date: document.getElementById('f_date').value || todayISO(),
-        notes: document.getElementById('f_notes').value.trim() };
+        notes: document.getElementById('f_notes').value.trim(),
+        fromCapital: document.getElementById('f_fromCapital').checked };
       if(item) Object.assign(item, data);
       else state.tailorPayments.push({id:uid(), ...data});
       saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
@@ -1475,7 +1502,7 @@ function renderCutterDetail(id){
         <tr>
           <td class="muted">${esc(p.date)}</td>
           <td class="num pos">${money(p.amount)}</td>
-          <td class="muted">${esc(p.notes||'—')}</td>
+          <td class="muted">${p.fromCapital?'<span class="pill wholesale">من رأس المال</span> ':''}${esc(p.notes||'—')}</td>
           <td><div class="btn-row">
             <button class="btn sm ghost" onclick="openCutterPaymentModal('${id}','${p.id}')">تعديل</button>
             <button class="btn sm danger" onclick="deleteCutterPayment('${p.id}')">حذف</button>
@@ -1537,11 +1564,13 @@ function openCutterPaymentModal(cutterId, payId){
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
       </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+      ${fromCapitalFieldHtml(item)}
     `,
     onSave(){
       const data = { cutterId, amount:num(document.getElementById('f_amount').value),
         date: document.getElementById('f_date').value || todayISO(),
-        notes: document.getElementById('f_notes').value.trim() };
+        notes: document.getElementById('f_notes').value.trim(),
+        fromCapital: document.getElementById('f_fromCapital').checked };
       if(item) Object.assign(item, data);
       else state.cutterPayments.push({id:uid(), ...data});
       saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
@@ -1667,7 +1696,7 @@ function renderHoodariDetail(id){
         <tr>
           <td class="muted">${esc(p.date)}</td>
           <td class="num pos">${money(p.amount)}</td>
-          <td class="muted">${esc(p.notes||'—')}</td>
+          <td class="muted">${p.fromCapital?'<span class="pill wholesale">من رأس المال</span> ':''}${esc(p.notes||'—')}</td>
           <td><div class="btn-row">
             <button class="btn sm ghost" onclick="openHoodariPaymentModal('${id}','${p.id}')">تعديل</button>
             <button class="btn sm danger" onclick="deleteHoodariPayment('${p.id}')">حذف</button>
@@ -1729,11 +1758,13 @@ function openHoodariPaymentModal(hoodariId, payId){
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
       </div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
+      ${fromCapitalFieldHtml(item)}
     `,
     onSave(){
       const data = { hoodariId, amount:num(document.getElementById('f_amount').value),
         date: document.getElementById('f_date').value || todayISO(),
-        notes: document.getElementById('f_notes').value.trim() };
+        notes: document.getElementById('f_notes').value.trim(),
+        fromCapital: document.getElementById('f_fromCapital').checked };
       if(item) Object.assign(item, data);
       else state.hoodariPayments.push({id:uid(), ...data});
       saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
@@ -3335,7 +3366,74 @@ function renderReports(){
       </tbody>
     </table>
   </div>
+
+  ${renderNotesBar()}
   `;
+}
+
+/* =========================================================
+   NOTES (الملاحظات) — شريط أسفل التقارير
+========================================================= */
+let noteDraft = '';
+function noteStamp(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return String(iso).slice(0,10);
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} - ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function renderNotesBar(){
+  const list = (state.notes||[]).slice().sort((a,b)=> String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  return `
+  <div class="section-title"><span class="ic">📝</span> الملاحظات</div>
+  <div class="card">
+    <div class="notes-add no-print">
+      <textarea id="noteInput" placeholder="اكتب ملاحظة جديدة... (Ctrl + Enter للإضافة السريعة)" oninput="noteDraft=this.value" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){addNote();}">${esc(noteDraft)}</textarea>
+      <button class="btn primary" onclick="addNote()">+ إضافة ملاحظة</button>
+    </div>
+    ${list.length ? list.map(n=>`
+      <div class="note-item">
+        <div class="note-text">${esc(n.text)}</div>
+        <div class="note-meta">
+          <span>${esc(noteStamp(n.createdAt))}${n.updatedAt && n.updatedAt!==n.createdAt ? ' · معدّلة '+esc(noteStamp(n.updatedAt)) : ''}</span>
+          <span class="btn-row no-print">
+            <button class="btn sm ghost" onclick="openNoteModal('${n.id}')">تعديل</button>
+            <button class="btn sm danger" onclick="deleteNote('${n.id}')">حذف</button>
+          </span>
+        </div>
+      </div>`).join('') : `<div class="notes-empty">لا توجد ملاحظات بعد</div>`}
+  </div>`;
+}
+function addNote(){
+  const el = document.getElementById('noteInput');
+  const text = (el ? el.value : noteDraft).trim();
+  if(!text) return toast('اكتب الملاحظة أولاً');
+  if(!state.notes) state.notes = [];
+  const now = new Date().toISOString();
+  state.notes.push({id:uid(), text, createdAt:now, updatedAt:now});
+  noteDraft = '';
+  saveState(); render(); toast('تمت إضافة الملاحظة');
+}
+function openNoteModal(id){
+  const item = (state.notes||[]).find(n=>n.id===id);
+  if(!item) return;
+  openModal({
+    title: 'تعديل الملاحظة',
+    bodyHtml: `<div class="form-row"><label>الملاحظة</label><textarea id="f_note_text" style="min-height:140px;">${esc(item.text)}</textarea></div>`,
+    onSave(){
+      const text = document.getElementById('f_note_text').value.trim();
+      if(!text) return toast('الملاحظة فارغة، استخدم حذف إذا تريد تشيلها');
+      item.text = text;
+      item.updatedAt = new Date().toISOString();
+      saveState(); closeModal(); render(); toast('تم تعديل الملاحظة');
+    }
+  });
+}
+function deleteNote(id){
+  confirmDelete('حذف هذي الملاحظة؟ لا يمكن التراجع.', ()=>{
+    state.notes = (state.notes||[]).filter(n=>n.id!==id);
+    saveState(); render(); toast('تم الحذف');
+  });
 }
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
@@ -3458,7 +3556,8 @@ function openCapitalModal(){
     title: 'رأس المال / الميزانية',
     bodyHtml: `
       <div class="compute-box"><span>رأس المال الحالي</span><span><b class="${cur>=0?'pos':'neg'}">${money(cur)}</b></span></div>
-      <div class="desc" style="margin:10px 0;">رأس المال = القيمة الأساسية (${money(base)}) + كل مبلغ استلمتيه من بيع أو تحصيل دين − المصاريف من رأس المال والأرباح − ديون المعمل. تكدرين تصححينه بإحدى الطرق:</div>
+      <div class="compute-box" style="margin-top:8px;"><span>مدفوعات الخياطين والفصالين والهودارية المخصومة</span><span><b class="neg">${money(workerPaymentsFromCapital())}</b></span></div>
+      <div class="desc" style="margin:10px 0;">رأس المال = القيمة الأساسية (${money(base)}) + كل مبلغ استلمته من بيع أو تحصيل دين − المصاريف من رأس المال والأرباح − ديون المعمل − مدفوعات العمال المعلّمة "من رأس المال". تكدر تصححه بإحدى الطرق:</div>
       <div class="form-row"><label>اجعل رأس المال الحالي يساوي (د.ع)</label><input type="number" id="f_capital_target" placeholder="مثال: 0 للتصفير، أو الرقم الصحيح"></div>
       <div class="form-grid2">
         <div class="form-row"><label>أضف مبلغ</label><input type="number" id="f_capital_add" placeholder="0"></div>
