@@ -695,6 +695,12 @@ function sumExpensesBySource(list, src){ return list.filter(e=>expenseSource(e)=
 
 /* دفعات الخياطين والفصالين والهودارية: إذا الدفعة معلّمة "من رأس المال" تنخصم من رأس المال.
    الدفعات القديمة (بدون علامة) ما تنخصم حتى ما يتغير رأس المال المسجل سابقاً */
+/* تسديد الديون اللي علينا: كل تسديد ينخصم من رأس المال (إلا إذا اتشال منه الخيار).
+   الدين نفسه ما ينخصم وقت تسجيله — ينخصم بس لما تسدده، حتى ما ينخصم مرتين.
+   التسديدات القديمة (بدون علامة) تنحسب مخصومة مثل ما كانت محسوبة سابقاً ضمن الدين */
+function debtRepaymentsFromCapital(){
+  return (state.debtPayments||[]).filter(p=>p.fromCapital!==false && debtById(p.debtId)).reduce((s,p)=>s+num(p.amount),0);
+}
 function workerPaymentsFromCapital(){
   const sum = list => (list||[]).filter(p=>p.fromCapital).reduce((s,p)=>s+num(p.amount),0);
   return sum(state.tailorPayments) + sum(state.cutterPayments) + sum(state.hoodariPayments);
@@ -712,8 +718,7 @@ function capitalTotal(){
   // كل مبلغ يوصلك (بيع أو تحصيل دين) يدخل رأس المال كاملاً، وحصته من الربح تدخل صافي الربح
   const totalReceived = state.sales.reduce((s,x)=> s + saleRevenue(x), 0) + allDebtCashEvents().reduce((s,e)=> s + e.amount, 0);
   const totalExpenses = sumExpensesBySource(state.expenses,'profit') + sumExpensesBySource(state.expenses,'capital');
-  const totalDebts = state.debts.reduce((s,d)=> s + num(d.amount), 0);
-  return num(state.settings.capitalBase) + totalReceived - totalExpenses - totalDebts - workerPaymentsFromCapital();
+  return num(state.settings.capitalBase) + totalReceived - totalExpenses - debtRepaymentsFromCapital() - workerPaymentsFromCapital();
 }
 function periodTotals(from, to){
   const sales = state.sales.filter(s=>inRange(s.date, from, to));
@@ -2441,13 +2446,14 @@ function openDebtRepayModal(id){
         <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${todayISO()}"></div>
       </div>
       <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes"></textarea></div>
+      ${fromCapitalFieldHtml(null)}
     `,
     onSave(){
       const amount = num(document.getElementById('f_amount').value);
       if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
       const date = document.getElementById('f_date').value || todayISO();
       const notes = document.getElementById('f_notes').value.trim();
-      state.debtPayments.push({id:uid(), debtId:id, amount, date, notes});
+      state.debtPayments.push({id:uid(), debtId:id, amount, date, notes, fromCapital: document.getElementById('f_fromCapital').checked});
       saveState(); closeModal(); render();
       const newRemaining = debtTotals(id).remaining;
       toast(newRemaining<=0 ? 'تم تسديد الدين بالكامل ✅' : 'تم تسجيل التسديد، المتبقي: '+money(newRemaining));
@@ -2467,7 +2473,7 @@ function openDebtHistoryModal(id){
           <thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead>
           <tbody>
           ${payments.length? payments.map(p=>`
-            <tr><td class="muted">${esc(p.date)}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${esc(p.notes||'—')}</td>
+            <tr><td class="muted">${esc(p.date)}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${p.fromCapital===false?'<span class="pill retail">بدون خصم من رأس المال</span> ':'<span class="pill wholesale">من رأس المال</span> '}${esc(p.notes||'—')}</td>
             <td><button class="btn sm danger" onclick="deleteDebtPayment('${p.id}','${id}')">حذف</button></td></tr>`).join('')
             : `<tr class="empty-row"><td colspan="4">لا توجد تسديدات مسجلة بعد</td></tr>`}
           </tbody>
@@ -3458,7 +3464,8 @@ function ledgerEntries(){
   state.sales.forEach(s=> out.push({date:s.date, kind:'in', label:'وارد بيع', who:saleProductLabel(s), amount:num(saleRevenue(s)), eff:num(saleRevenue(s)), tag:'sale'}));
   allDebtCashEvents().forEach(e=>{ const d = customerDebtById(e.debtId); out.push({date:e.date, kind:'in', label:'تحصيل دين زبون', who:(d&&d.customerName)||'زبون', amount:e.amount, eff:e.amount, tag:'cdebt'}); });
   state.expenses.forEach(e=>{ const src = expenseSource(e); out.push({date:e.date, kind:'out', label:'مصروف — '+e.type, who:EXPENSE_SOURCES[src], amount:num(e.amount), eff: src==='other'?0:-num(e.amount), tag:'exp', note:e.notes}); });
-  state.debts.forEach(d=> out.push({date:d.date, kind:'out', label:'دين علينا', who:d.creditor, amount:num(d.amount), eff:-num(d.amount), tag:'debt', note:d.reason}));
+  state.debts.forEach(d=> out.push({date:d.date, kind:'out', label:'تسجيل دين علينا', who:d.creditor, amount:num(d.amount), eff:0, tag:'debt', note:'ينخصم من رأس المال عند التسديد', note2:d.reason}));
+  state.debtPayments.forEach(p=>{ const d = debtById(p.debtId); if(!d) return; const ded = p.fromCapital!==false; out.push({date:p.date, kind:'out', label:'تسديد دين علينا', who:d.creditor, amount:num(p.amount), eff:ded?-num(p.amount):0, tag:'debtpay', note:ded?'من رأس المال':'لم يُخصم من رأس المال', note2:p.notes}); });
   const wk = (list, byId, title)=> (list||[]).forEach(p=>{ const w = byId(p[title.key]); out.push({date:p.date, kind:'out', label:'تسديد '+title.name, who:w?w.name:'محذوف', amount:num(p.amount), eff:p.fromCapital?-num(p.amount):0, tag:'worker', note:p.fromCapital?'من رأس المال':'لم يُخصم من رأس المال', note2:p.notes}); });
   wk(state.tailorPayments, tailorById, {key:'tailorId', name:'خياط'});
   wk(state.cutterPayments, cutterById, {key:'cutterId', name:'فصال'});
@@ -3506,7 +3513,7 @@ function renderLedger(){
       <td class="muted">${esc([r.note,r.note2].filter(Boolean).join(' · ')||'—')}</td>
     </tr>`).join('') : `<tr class="empty-row"><td colspan="6">لا توجد حركات</td></tr>`}
     </tbody></table></div>
-  <div class="hint" style="margin-top:10px;">المبالغ الرمادية (بدون + أو −) سُجّلت لكنها ما أثرت على رأس المال، مثل المصروف "غير ذلك" أو تسديد عامل بدون علامة "من رأس المال". الرصيد التراكمي يبدأ من القيمة الأساسية لرأس المال.</div>`;
+  <div class="hint" style="margin-top:10px;">المبالغ الرمادية (بدون + أو −) سُجّلت لكنها ما أثرت على رأس المال، مثل المصروف "غير ذلك" أو تسديد عامل بدون علامة "من رأس المال" أو تسجيل دين علينا (ينخصم وقت التسديد). الرصيد التراكمي يبدأ من القيمة الأساسية لرأس المال.</div>`;
 }
 
 function exportModelReportCSV(){
@@ -3631,7 +3638,8 @@ function openCapitalModal(){
     bodyHtml: `
       <div class="compute-box"><span>رأس المال الحالي</span><span><b class="${cur>=0?'pos':'neg'}">${money(cur)}</b></span></div>
       <div class="compute-box" style="margin-top:8px;"><span>مدفوعات الخياطين والفصالين والهودارية المخصومة</span><span><b class="neg">${money(workerPaymentsFromCapital())}</b></span></div>
-      <div class="desc" style="margin:10px 0;">رأس المال = القيمة الأساسية (${money(base)}) + كل مبلغ استلمته من بيع أو تحصيل دين − المصاريف من رأس المال والأرباح − ديون المعمل − مدفوعات العمال المعلّمة "من رأس المال". تكدر تصححه بإحدى الطرق:</div>
+      <div class="compute-box" style="margin-top:8px;"><span>تسديدات الديون اللي علينا المخصومة</span><span><b class="neg">${money(debtRepaymentsFromCapital())}</b></span></div>
+      <div class="desc" style="margin:10px 0;">رأس المال = القيمة الأساسية (${money(base)}) + كل مبلغ استلمته من بيع أو تحصيل دين − المصاريف من رأس المال والأرباح − تسديدات الديون اللي علينا − مدفوعات العمال المعلّمة "من رأس المال". الدين نفسه ما ينخصم وقت تسجيله، ينخصم لما تسدده. تكدر تصححه بإحدى الطرق:</div>
       <div class="form-row"><label>اجعل رأس المال الحالي يساوي (د.ع)</label><input type="number" id="f_capital_target" placeholder="مثال: 0 للتصفير، أو الرقم الصحيح"></div>
       <div class="form-grid2">
         <div class="form-row"><label>أضف مبلغ</label><input type="number" id="f_capital_add" placeholder="0"></div>
