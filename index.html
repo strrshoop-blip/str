@@ -400,7 +400,7 @@ async function loadStateAsync(){
       await firebaseUserReady;
       const doc = await db.doc(FIRESTORE_DOC).get();
       if(doc.exists) return await resolveCloudImages(Object.assign(defaultState(), doc.data()));
-    }catch(e){ console.error('firestore load failed', e); toast('⚠️ تعذر تحميل البيانات من Firebase'); }
+    }catch(e){ console.error('firestore load failed', e); window._loadFailed = true; toast('⚠️ تعذر تحميل البيانات من Firebase'); }
     return defaultState();
   }
   if(hasCloudStorage){
@@ -478,20 +478,41 @@ async function resolveCloudImages(st){
   });
   return st;
 }
+/* حالة الحفظ: بانر ثابت يبين إذا آخر تغييراتك ما انحفظت، وما نسمح لنسخة قديمة من السحابة ترجّع المحذوفات */
+let pendingSaves = 0, saveChain = Promise.resolve(), saveFailure = null, lastSavedBytes = 0;
+function showSaveBanner(){
+  let el = document.getElementById('saveBanner');
+  if(!saveFailure){ if(el) el.remove(); return; }
+  if(!el){
+    el = document.createElement('div'); el.id = 'saveBanner';
+    el.style.cssText = 'position:fixed;top:0;right:0;left:0;z-index:9999;background:#7a2e1f;color:#fff;padding:10px 16px;font-size:13.5px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<span>⚠️ آخر تغييراتك ما انحفظت بالسحابة ('+esc(saveFailure.code)+') — '+esc(saveFailure.why)+' — لا تغلقين الصفحة.</span><button class="btn sm" style="min-height:30px" onclick="saveState()">إعادة المحاولة</button>';
+}
 function saveState(){
   if(firebaseReady){
-    saveQueued = true;
-    firebaseUserReady.then(()=> packStateForCloud()).then(packed=> db.doc(FIRESTORE_DOC).set(packed))
-      .then(()=>{ saveQueued = false; })
-      .catch(e=>{
-        saveQueued = false; console.error('firestore save failed', e);
-        const code = (e && (e.code||e.message)) || '';
+    if(window._loadFailed){ saveFailure = {code:'load-failed', why:'ما انحمّلت بياناتك من السحابة فمنعت الحفظ حتى ما تنمسح بياناتك. حدّثي الصفحة (Ctrl+Shift+R) وتأكدي من الإنترنت'}; showSaveBanner(); return; }
+    pendingSaves++; saveQueued = true;
+    saveChain = saveChain.then(async ()=>{
+      try{
+        await firebaseUserReady;
+        const packed = await packStateForCloud();
+        lastSavedBytes = JSON.stringify(packed).length;
+        await db.doc(FIRESTORE_DOC).set(packed);
+        saveFailure = null;
+      }catch(e){
+        console.error('firestore save failed', e);
+        const code = (e && (e.code||e.message)) || 'unknown';
         const err = lastImageError || e;
-        const why = (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بحفظ الصور — افتحي Rules وخلي القاعدة allow read, write: if request.auth != null; على كل المستندات'
-                  : (/exceeds|size|too large|longer than/i.test(String(e&&e.message))) ? 'حجم البيانات كبير — قللي عدد الصور أو حجمها'
+        const why = (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بالحفظ، افتحي Rules وخلي allow read, write: if request.auth != null; على كل المستندات'
+                  : (/exceeds|size|too large|longer than/i.test(String(e&&e.message)) || lastSavedBytes>900000) ? 'حجم البيانات كبير ('+Math.round(lastSavedBytes/1024)+' KB من 1024)، قللي عدد الصور'
                   : 'تحقق من الاتصال بالإنترنت';
-        toast('⚠️ تعذر حفظ البيانات ('+code+') — '+why);
-      });
+        saveFailure = {code, why};
+      }
+      pendingSaves--; saveQueued = pendingSaves>0;
+      showSaveBanner();
+    });
     return;
   }
   if(hasCloudStorage){
@@ -508,9 +529,9 @@ function attachFirestoreSync(){
   if(!firebaseReady) return;
   firebaseUserReady.then(()=>{
     db.doc(FIRESTORE_DOC).onSnapshot(async doc=>{
-      if(!doc.exists || saveQueued) return; // ignore echoes of our own pending write
+      if(!doc.exists || saveQueued || saveFailure) return; // ignore echoes of our own pending write / unsaved local changes
       const next = await resolveCloudImages(Object.assign(defaultState(), doc.data()));
-      if(saveQueued) return;
+      if(saveQueued || saveFailure) return;
       state = next;
       render();
     });
