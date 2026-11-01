@@ -62,13 +62,14 @@ a{color:#fff;cursor:pointer;font-size:.85rem;text-decoration:underline;text-unde
   <p class="mut c">نادي STR للولاء · اجمعي نقاطج واستبدليها بمكافآت حصرية</p>
   <div id="fileWarn" class="warn hidden" style="margin-top:1rem">⚠️ الصفحة مفتوحة كملف من الجهاز. للتجربة الصحيحة انشريها على استضافة (Firebase Hosting / Netlify) أو شغّليها عبر localhost.</div>
   <div id="fCust">
-    <label>الاسم</label><input id="nm" placeholder="اسمج" maxlength="40" autocomplete="name">
+    <label>الاسم الثنائي (اسمج + اسم أبوج)</label><input id="nm" placeholder="مثال: سارة أحمد" maxlength="40" autocomplete="name">
     <label>رقم الهاتف</label><input id="ph" type="tel" inputmode="numeric" placeholder="07xxxxxxxxx" autocomplete="tel">
     <button class="btn" data-a="login">دخول / تسجيل جديد 🎁</button>
-    <p class="mut c" style="margin-top:.8rem">زبونة جديدة؟ اكتبي اسمج ورقمج وتحصلين على هدية ترحيبية</p>
+    <p class="mut c" style="margin-top:.8rem">زبونة جديدة؟ اكتبي اسمج الثنائي ورقمج وتحصلين على هدية ترحيبية</p>
     <p class="c" style="margin-top:1rem"><a data-a="toAdmin">دخول الإدارة</a></p>
   </div>
   <div id="fAdm" class="hidden">
+    <label>رقم هاتف الإدارة</label><input id="aph" type="tel" inputmode="numeric" placeholder="07xxxxxxxxx" autocomplete="tel">
     <label>كلمة مرور الإدارة</label><input id="apw" type="password" dir="ltr" autocomplete="current-password">
     <button class="btn" data-a="admLogin">دخول الإدارة</button>
     <p class="c" style="margin-top:1rem"><a data-a="toCust">رجوع</a></p>
@@ -126,7 +127,7 @@ import{getFirestore,doc,getDoc,setDoc,collection,query,where,onSnapshot,runTrans
 
 const app=initializeApp({apiKey:"AIzaSyB1Fvd0Rv6CyhPXugErVbZKuRuKSB1rVHQ",authDomain:"str-club.firebaseapp.com",projectId:"str-club",storageBucket:"str-club.firebasestorage.app",messagingSenderId:"139853783402",appId:"1:139853783402:web:a46d3250724f0d5806c513"});
 const auth=getAuth(app),db=getFirestore(app);
-const DOM="@members.str-abaya.app",ADMIN_EMAIL="admin@str-club.app";
+const DOM="@members.str-abaya.app",ADM="@admin.str-club.app";
 const DEF={welcome:10,purchase:35,share:15,
  tiers:[{n:"Silver",min:0,m:1,p:"مكافآت المتجر الأساسية"},{n:"Gold",min:200,m:1.25,p:"خصم 5% + نقاط أكثر"},{n:"Platinum",min:500,m:1.5,p:"خصم 10% + أولوية بالعروض الجديدة"}],
  rewards:[{t:"خصم 2,500 دينار",c:50},{t:"خصم 5,000 دينار",c:100},{t:"خصم 12,000 دينار",c:200}]};
@@ -217,16 +218,18 @@ const A={
   toCust(){$("fAdm").classList.add("hidden");$("fCust").classList.remove("hidden")},
   out(){signOut(auth)},
   tab(d,b){document.querySelectorAll(".tp").forEach(x=>x.classList.toggle("hidden",x.id!==d.t));document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b))},
-  async login(){const p=norm($("ph").value),n=$("nm").value.trim();if(!p)return toast("رقم الهاتف غير صحيح، مثال: 07xxxxxxxxx");
-    const em=p+DOM,pw="str-"+p;
+  async login(){const p=norm($("ph").value),n=$("nm").value.trim().replace(/\s+/g," ");
+    if(!p)return toast("رقم الهاتف غير صحيح، مثال: 07xxxxxxxxx");
+    if(n.split(" ").length<2||n.length<5)return toast("اكتبي الاسم الثنائي (اسمج + اسم أبوج)");
+    const key=n.replace(/[\u064B-\u065F\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").toLowerCase();
+    const em=p+DOM,pw="str-"+p+"-"+key;
     try{await signInWithEmailAndPassword(auth,em,pw)}
     catch(e){if(e.code!=="auth/invalid-credential"&&e.code!=="auth/user-not-found")return toast(errMsg(e));
-      if(n.length<2)return toast("رقم جديد! اكتبي اسمج حتى نفتح لج حساب 🎁");
       try{await loadSettings();const c=await createUserWithEmailAndPassword(auth,em,pw),w=S.welcome;
         await setDoc(doc(db,"users",c.user.uid),{name:n.slice(0,40),phone:p,points:w,lifetime:w,purchases:0,createdAt:Date.now()});
         await addDoc(collection(db,"transactions"),{uid:c.user.uid,phone:p,amount:w,reason:"هدية الترحيب 🎁",ts:Date.now()});
-      }catch(e2){toast(errMsg(e2))}}},
-  async admLogin(){try{await signInWithEmailAndPassword(auth,ADMIN_EMAIL,$("apw").value)}catch(e){toast(errMsg(e))}},
+      }catch(e2){toast(e2.code==="auth/email-already-in-use"?"الرقم مسجل باسم مختلف، اكتبي الاسم الثنائي كما سجّلتيه أول مرة":errMsg(e2))}}},
+  async admLogin(){const p=norm($("aph").value);if(!p)return toast("رقم هاتف الإدارة غير صحيح");try{await signInWithEmailAndPassword(auth,p+ADM,$("apw").value)}catch(e){toast(errMsg(e))}},
   async send(b){if(!imgData)return toast("اختاري صورة أولاً");
     if(SUBS.filter(s=>s.status==="pending").length>=3)return toast("لديكِ 3 طلبات قيد المراجعة، يرجى الانتظار");
     b.disabled=true;
