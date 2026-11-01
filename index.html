@@ -601,9 +601,9 @@ function modelPriceFor(m, type){
 }
 
 function tailorTotals(tailorId){
-  const due = state.tailorWork.filter(w=>w.tailorId===tailorId)
+  const due = state.tailorWork.filter(w=>w.tailorId===tailorId && !w.archived)
     .reduce((s,w)=> s + num(w.pieceCount)*num(w.pricePerPiece), 0);
-  const paid = state.tailorPayments.filter(p=>p.tailorId===tailorId)
+  const paid = state.tailorPayments.filter(p=>p.tailorId===tailorId && !p.archived)
     .reduce((s,p)=> s + num(p.amount), 0);
   return {due, paid, remaining: due - paid};
 }
@@ -1258,7 +1258,10 @@ function renderTailors(){
   return `
   <div class="page-head">
     <div><h1>الخياطين</h1><div class="desc">إدارة عمال الخياطة، القطع المنجزة لكل موديل، والمستحقات</div></div>
-    <button class="btn primary" onclick="openTailorModal()">+ إضافة خياط</button>
+    <div class="btn-row">
+      <button class="btn" onclick="settleAllTailors()">تصفير حساب الكل</button>
+      <button class="btn primary" onclick="openTailorModal()">+ إضافة خياط</button>
+    </div>
   </div>
   <div class="table-wrap">
     <table>
@@ -1272,6 +1275,7 @@ function renderTailors(){
             <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
             <td onclick="event.stopPropagation()">
               <div class="btn-row">
+                <button class="btn sm" onclick="settleTailor('${t.id}')">تصفير الحساب</button>
                 <button class="btn sm ghost" onclick="openTailorModal('${t.id}')">تعديل</button>
                 <button class="btn sm danger" onclick="deleteTailor('${t.id}')">حذف</button>
               </div>
@@ -1313,13 +1317,30 @@ function deleteTailor(id){
   });
 }
 function openTailorDetail(id){ currentDetail = id; render(); }
+/* تصفير حساب الخياط: السجلات تنخفي من صفحته ويصير المستحق والمدفوع والمتبقي صفر،
+   لكن تبقى محفوظة للقطع المنتجة ورأس المال والتقارير والحركات المالية */
+function settleTailor(id){
+  const t = tailorById(id); if(!t) return;
+  confirmDelete('تصفير حساب '+t.name+'؟ يصير المستحق والمدفوع والمتبقي صفر وتختفي سجلات شغله من صفحته. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.tailorWork.forEach(w=>{ if(w.tailorId===id) w.archived = true; });
+    state.tailorPayments.forEach(p=>{ if(p.tailorId===id) p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب '+t.name);
+  });
+}
+function settleAllTailors(){
+  confirmDelete('تصفير حساب كل الخياطين؟ المستحق والمدفوع والمتبقي يصير صفر للكل. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.tailorWork.forEach(w=>{ w.archived = true; });
+    state.tailorPayments.forEach(p=>{ p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب كل الخياطين');
+  });
+}
 
 function renderTailorDetail(id){
   const t = tailorById(id);
   if(!t){ currentDetail=null; return renderTailors(); }
   const tot = tailorTotals(id);
-  const work = state.tailorWork.filter(w=>w.tailorId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  const payments = state.tailorPayments.filter(p=>p.tailorId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const work = state.tailorWork.filter(w=>w.tailorId===id && !w.archived).sort((a,b)=>b.date.localeCompare(a.date));
+  const payments = state.tailorPayments.filter(p=>p.tailorId===id && !p.archived).sort((a,b)=>b.date.localeCompare(a.date));
 
   return `
   <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الخياطين</button>
@@ -1328,6 +1349,7 @@ function renderTailorDetail(id){
     <div class="btn-row">
       <button class="btn" onclick="openTailorWorkModal('${id}')">+ تسجيل شغل</button>
       <button class="btn primary" onclick="openTailorPaymentModal('${id}')">+ تسديد مبلغ</button>
+      <button class="btn" onclick="settleTailor('${id}')">تصفير الحساب</button>
     </div>
   </div>
   <div class="grid stats">
