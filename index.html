@@ -442,6 +442,7 @@ function imgHashId(s){
   return (a>>>0).toString(36)+(b>>>0).toString(36)+s.length.toString(36);
 }
 const uploadedImgIds = new Set();
+const imgCache = {};
 let lastImageError = null;
 async function packStateForCloud(){
   const copy = JSON.parse(JSON.stringify(state));
@@ -451,6 +452,7 @@ async function packStateForCloud(){
     m.images = (m.images||[]).map(src=>{
       if(typeof src==='string' && src.startsWith('data:')){
         const id = imgHashId(src);
+        imgCache[id] = src;
         if(!uploadedImgIds.has(id)){
           jobs.push(db.doc('erp_state/img_'+id).set({data:src}).then(()=>uploadedImgIds.add(id)).catch(e=>{ failed.add(id); console.error('image doc save failed', e); lastImageError = e; }));
         }
@@ -471,7 +473,8 @@ async function resolveCloudImages(st){
   (st.models||[]).forEach(m=>(m.images||[]).forEach(s=>{ if(typeof s==='string' && s.startsWith('fsimg:')) ids.add(s.slice(6)); }));
   const map = {};
   await Promise.all([...ids].map(async id=>{
-    try{ const d = await db.doc('erp_state/img_'+id).get(); if(d.exists){ map[id] = d.data().data; uploadedImgIds.add(id); } }catch(e){ console.error('image load failed', e); }
+    if(imgCache[id]){ map[id] = imgCache[id]; return; }
+    try{ const d = await db.doc('erp_state/img_'+id).get(); if(d.exists){ map[id] = d.data().data; imgCache[id] = map[id]; uploadedImgIds.add(id); } }catch(e){ console.error('image load failed', e); }
   }));
   (st.models||[]).forEach(m=>{
     m.images = (m.images||[]).map(s=> (typeof s==='string' && s.startsWith('fsimg:')) ? (map[s.slice(6)]||'') : s).filter(Boolean);
@@ -479,6 +482,7 @@ async function resolveCloudImages(st){
   return st;
 }
 /* حالة الحفظ: بانر ثابت يبين إذا آخر تغييراتك ما انحفظت، وما نسمح لنسخة قديمة من السحابة ترجّع المحذوفات */
+let localRev = 0;
 let pendingSaves = 0, saveChain = Promise.resolve(), saveFailure = null, lastSavedBytes = 0;
 function showSaveBanner(){
   let el = document.getElementById('saveBanner');
@@ -493,6 +497,7 @@ function showSaveBanner(){
 function saveState(){
   if(firebaseReady){
     if(window._loadFailed){ saveFailure = {code:'load-failed', why:'ما انحمّلت بياناتك من السحابة فمنعت الحفظ حتى ما تنمسح بياناتك. حدّثي الصفحة (Ctrl+Shift+R) وتأكدي من الإنترنت'}; showSaveBanner(); return; }
+    localRev++;
     pendingSaves++; saveQueued = true;
     saveChain = saveChain.then(async ()=>{
       try{
@@ -530,8 +535,11 @@ function attachFirestoreSync(){
   firebaseUserReady.then(()=>{
     db.doc(FIRESTORE_DOC).onSnapshot(async doc=>{
       if(!doc.exists || saveQueued || saveFailure) return; // ignore echoes of our own pending write / unsaved local changes
+      if(doc.metadata && doc.metadata.hasPendingWrites) return;
+      const rev0 = localRev;
       const next = await resolveCloudImages(Object.assign(defaultState(), doc.data()));
-      if(saveQueued || saveFailure) return;
+      // إذا سويتي تعديل وإحنا ننتظر الصور، هذي اللقطة صارت قديمة: لا ترجّعيها فوق تعديلك
+      if(saveQueued || saveFailure || localRev!==rev0) return;
       state = next;
       render();
     });
