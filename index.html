@@ -364,7 +364,13 @@ if(firebaseReady){
    DATA LAYER
 ========================================================= */
 const STORAGE_KEY = 'setr_erp_state_v1';
-const FIRESTORE_DOC = 'erp_state/main';
+/* مستند جديد (main2): النسخ القديمة من الموقع تبقى تكتب على main ولا تقدر تمسح بياناتك الجديدة.
+   أول مرة ينقل الموقع بياناتك من main إلى main2 تلقائياً */
+const FIRESTORE_DOC = 'erp_state/main2';
+const LEGACY_FIRESTORE_DOC = 'erp_state/main';
+const CLIENT_VERSION = 'v5';
+const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('str_device'); if(!d){ d = Math.random().toString(36).slice(2,7); localStorage.setItem('str_device', d); } return d; }catch(e){ return 'dev'; } })();
+let lastSeenRev = null;
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
 
 function defaultState(){
@@ -398,8 +404,11 @@ async function loadStateAsync(){
   if(firebaseReady){
     try{
       await firebaseUserReady;
-      const doc = await db.doc(FIRESTORE_DOC).get();
-      if(doc.exists) return await resolveCloudImages(Object.assign(defaultState(), doc.data()));
+      let doc = await db.doc(FIRESTORE_DOC).get();
+      if(doc.exists){ lastSeenRev = doc.data()._savedAt || null; return await resolveCloudImages(Object.assign(defaultState(), doc.data())); }
+      // أول تشغيل بالنسخة الجديدة: انقلي البيانات من المستند القديم
+      const legacy = await db.doc(LEGACY_FIRESTORE_DOC).get();
+      if(legacy.exists){ lastSeenRev = null; window._needsFirstSave = true; return await resolveCloudImages(Object.assign(defaultState(), legacy.data())); }
     }catch(e){ console.error('firestore load failed', e); window._loadFailed = true; toast('⚠️ تعذر تحميل البيانات من Firebase'); }
     return defaultState();
   }
@@ -484,6 +493,16 @@ async function resolveCloudImages(st){
 /* حالة الحفظ: بانر ثابت يبين إذا آخر تغييراتك ما انحفظت، وما نسمح لنسخة قديمة من السحابة ترجّع المحذوفات */
 let localRev = 0;
 let pendingSaves = 0, saveChain = Promise.resolve(), saveFailure = null, lastSavedBytes = 0;
+function showSyncBadge(ok){
+  let el = document.getElementById('syncBadge');
+  if(!el){
+    el = document.createElement('div'); el.id = 'syncBadge';
+    el.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:9998;background:rgba(28,24,17,.92);border:1px solid var(--border-strong);color:var(--text-dim);padding:4px 10px;border-radius:999px;font-size:11.5px;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  const d = new Date(), p2 = n=>String(n).padStart(2,'0');
+  el.textContent = '☁️ ' + CLIENT_VERSION + ' · تأكد الحفظ بالسيرفر ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+}
 function showSaveBanner(){
   let el = document.getElementById('saveBanner');
   if(!saveFailure){ if(el) el.remove(); return; }
@@ -504,13 +523,38 @@ function saveState(){
         await firebaseUserReady;
         const packed = await packStateForCloud();
         lastSavedBytes = JSON.stringify(packed).length;
-        await db.doc(FIRESTORE_DOC).set(packed);
+        packed._savedAt = Date.now() + '-' + Math.random().toString(36).slice(2,8);
+        const ref = db.doc(FIRESTORE_DOC);
+        // set() ما ترجع إلا بعد تأكيد السيرفر؛ إذا الاتصال محجوب تعلق للأبد، فنحط مهلة
+        packed._by = DEVICE_ID + ':' + CLIENT_VERSION;
+        await Promise.race([db.runTransaction(async tx=>{
+          const s = await tx.get(ref);
+          if(s.exists && (s.data()._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
+          tx.set(ref, packed);
+        }), new Promise((_,rej)=>setTimeout(()=>{ const x=new Error('no response from Firebase'); x.code='timeout'; rej(x); }, 12000))]);
+        // نقرأ من السيرفر نفسه للتأكد إن التغيير فعلاً انحفظ ولا أحد كتب فوقه
+        const back = await ref.get({source:'server'});
+        lastSeenRev = packed._savedAt;
+        if(!back.exists || back.data()._savedAt !== packed._savedAt){ const x=new Error('server copy differs after save'); x.code='verify-failed'; throw x; }
         saveFailure = null;
+        showSyncBadge(true);
       }catch(e){
         console.error('firestore save failed', e);
+        if(e && e.code==='conflict'){
+          // جهاز ثاني غيّر البيانات قبلك: حمّلي نسخته بدل ما نكتب فوقها
+          try{
+            const cur = await db.doc(FIRESTORE_DOC).get({source:'server'});
+            if(cur.exists){ lastSeenRev = cur.data()._savedAt || null; state = await resolveCloudImages(Object.assign(defaultState(), cur.data())); }
+          }catch(e2){}
+          saveFailure = null; pendingSaves--; saveQueued = pendingSaves>0; showSaveBanner(); render();
+          toast('🔄 جهاز ثاني غيّر البيانات قبلك، حدّثت الشاشة. أعيدي العملية الأخيرة');
+          return;
+        }
         const code = (e && (e.code||e.message)) || 'unknown';
         const err = lastImageError || e;
-        const why = (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بالحفظ، افتحي Rules وخلي allow read, write: if request.auth != null; على كل المستندات'
+        const why = (e && e.code==='timeout') ? 'Firebase ما رد خلال 12 ثانية، غالباً شي يحجب الاتصال (إضافة حجب إعلانات أو برنامج حماية أو شبكة تمنع firestore.googleapis.com). جربي متصفح ثاني أو عطّلي الإضافات'
+                  : (e && e.code==='verify-failed') ? 'انكتب التغيير بس السيرفر رجّع نسخة ثانية، احتمال جهاز ثاني يكتب فوقه. سكّري الموقع على كل الأجهزة الثانية'
+                  : (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بالحفظ، افتحي Rules وخلي allow read, write: if request.auth != null; على كل المستندات'
                   : (/exceeds|size|too large|longer than/i.test(String(e&&e.message)) || lastSavedBytes>900000) ? 'حجم البيانات كبير ('+Math.round(lastSavedBytes/1024)+' KB من 1024)، قللي عدد الصور'
                   : 'تحقق من الاتصال بالإنترنت';
         saveFailure = {code, why};
@@ -540,6 +584,7 @@ function attachFirestoreSync(){
       const next = await resolveCloudImages(Object.assign(defaultState(), doc.data()));
       // إذا سويتي تعديل وإحنا ننتظر الصور، هذي اللقطة صارت قديمة: لا ترجّعيها فوق تعديلك
       if(saveQueued || saveFailure || localRev!==rev0) return;
+      lastSeenRev = doc.data()._savedAt || null;
       state = next;
       render();
     });
@@ -3862,7 +3907,7 @@ async function resetAllData(){
       toast('جاري حذف جميع البيانات...');
       try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
       try{
-        if(firebaseReady){ await firebaseUserReady; await db.doc(FIRESTORE_DOC).delete(); }
+        if(firebaseReady){ await firebaseUserReady; await db.doc(FIRESTORE_DOC).delete(); try{ await db.doc(LEGACY_FIRESTORE_DOC).delete(); }catch(e){} }
         else if(hasCloudStorage){ await window.storage.delete(STORAGE_KEY, true); }
       }catch(e){ console.error('cloud clear failed', e); }
       // hard reload guarantees every in-memory reference (state, caches, open modals) is wiped clean
@@ -3928,6 +3973,7 @@ document.addEventListener('keydown', e=>{
 ========================================================= */
 (async function init(){
   state = await loadStateAsync();
+  if(window._needsFirstSave){ setTimeout(()=>saveState(), 600); }
   const foot = document.querySelector('.sidebar .foot');
   if(foot) foot.textContent = firebaseReady
     ? 'البيانات محفوظة على Firebase ومتزامنة على كل الأجهزة'
