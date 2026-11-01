@@ -511,7 +511,7 @@ function showSaveBanner(){
     el.style.cssText = 'position:fixed;top:0;right:0;left:0;z-index:9999;background:#7a2e1f;color:#fff;padding:10px 16px;font-size:13.5px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;';
     document.body.appendChild(el);
   }
-  el.innerHTML = '<span>⚠️ آخر تغييراتك ما انحفظت بالسحابة ('+esc(saveFailure.code)+') — '+esc(saveFailure.why)+' — لا تغلقين الصفحة.</span><button class="btn sm" style="min-height:30px" onclick="saveState()">إعادة المحاولة</button>';
+  el.innerHTML = '<span>⚠️ آخر تغييراتك ما انحفظت بالسحابة ('+esc(saveFailure.code)+') — '+esc(saveFailure.why)+' — لا تغلقين الصفحة.</span><span><button class="btn sm" style="min-height:30px" onclick="saveState()">إعادة المحاولة</button> <button class="btn sm ghost" style="min-height:30px" onclick="saveFailure=null;showSaveBanner()">إخفاء</button></span>';
 }
 function saveState(){
   if(firebaseReady){
@@ -535,7 +535,13 @@ function saveState(){
         // نقرأ من السيرفر نفسه للتأكد إن التغيير فعلاً انحفظ ولا أحد كتب فوقه
         const back = await ref.get({source:'server'});
         lastSeenRev = packed._savedAt;
-        if(!back.exists || back.data()._savedAt !== packed._savedAt){ const x=new Error('server copy differs after save'); x.code='verify-failed'; throw x; }
+        if(!back.exists){ const x=new Error('doc missing after save'); x.code='verify-failed'; throw x; }
+        if(back.data()._savedAt !== packed._savedAt){
+          // لو الكاتب الأخير جهازك نفسه (حفظ أحدث) فهذا طبيعي؛ فقط جهاز ثاني يعتبر تعارض
+          const by = String(back.data()._by||'');
+          if(!by.startsWith(DEVICE_ID+':')){ const x=new Error('another device wrote'); x.code='conflict'; throw x; }
+          lastSeenRev = back.data()._savedAt;
+        }
         saveFailure = null;
         showSyncBadge(true);
       }catch(e){
@@ -683,9 +689,9 @@ function tailorTotals(tailorId){
 }
 function cutterById(id){ return state.cutters.find(c=>c.id===id); }
 function cutterTotals(cutterId){
-  const due = state.cutterWork.filter(w=>w.cutterId===cutterId)
+  const due = state.cutterWork.filter(w=>w.cutterId===cutterId && !w.archived)
     .reduce((s,w)=> s + num(w.pieceCount)*num(w.pricePerPiece), 0);
-  const paid = state.cutterPayments.filter(p=>p.cutterId===cutterId)
+  const paid = state.cutterPayments.filter(p=>p.cutterId===cutterId && !p.archived)
     .reduce((s,p)=> s + num(p.amount), 0);
   return {due, paid, remaining: due - paid};
 }
@@ -694,9 +700,9 @@ function cutterDuesOutstandingTotal(){
 }
 function hoodariById(id){ return state.hoodaris.find(h=>h.id===id); }
 function hoodariTotals(hoodariId){
-  const due = state.hoodariWork.filter(w=>w.hoodariId===hoodariId)
+  const due = state.hoodariWork.filter(w=>w.hoodariId===hoodariId && !w.archived)
     .reduce((s,w)=> s + num(w.pieceCount)*num(w.pricePerPiece), 0);
-  const paid = state.hoodariPayments.filter(p=>p.hoodariId===hoodariId)
+  const paid = state.hoodariPayments.filter(p=>p.hoodariId===hoodariId && !p.archived)
     .reduce((s,p)=> s + num(p.amount), 0);
   return {due, paid, remaining: due - paid};
 }
@@ -1612,7 +1618,10 @@ function renderCutters(){
   return `
   <div class="page-head">
     <div><h1>الفصالين</h1><div class="desc">إدارة من يفصّل القماش، القطع المفصولة لكل موديل، والمستحقات</div></div>
-    <button class="btn primary" onclick="openCutterModal()">+ إضافة فصّال</button>
+    <div class="btn-row">
+      <button class="btn" onclick="settleAllCutters()">تصفير حساب الكل</button>
+      <button class="btn primary" onclick="openCutterModal()">+ إضافة فصّال</button>
+    </div>
   </div>
   <div class="table-wrap">
     <table>
@@ -1626,6 +1635,7 @@ function renderCutters(){
             <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
             <td onclick="event.stopPropagation()">
               <div class="btn-row">
+                <button class="btn sm" onclick="settleCutter('${c.id}')">تصفير الحساب</button>
                 <button class="btn sm ghost" onclick="openCutterModal('${c.id}')">تعديل</button>
                 <button class="btn sm danger" onclick="deleteCutter('${c.id}')">حذف</button>
               </div>
@@ -1667,13 +1677,28 @@ function deleteCutter(id){
   });
 }
 function openCutterDetail(id){ currentDetail = id; render(); }
+function settleCutter(id){
+  const c = cutterById(id); if(!c) return;
+  confirmDelete('تصفير حساب '+c.name+'؟ يصير المستحق والمدفوع والمتبقي صفر وتختفي سجلاته من صفحته. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.cutterWork.forEach(w=>{ if(w.cutterId===id) w.archived = true; });
+    state.cutterPayments.forEach(p=>{ if(p.cutterId===id) p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب '+c.name);
+  });
+}
+function settleAllCutters(){
+  confirmDelete('تصفير حساب كل الفصالين؟ المستحق والمدفوع والمتبقي يصير صفر للكل. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.cutterWork.forEach(w=>{ w.archived = true; });
+    state.cutterPayments.forEach(p=>{ p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب كل الفصالين');
+  });
+}
 
 function renderCutterDetail(id){
   const c = cutterById(id);
   if(!c){ currentDetail=null; return renderCutters(); }
   const tot = cutterTotals(id);
-  const work = state.cutterWork.filter(w=>w.cutterId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  const payments = state.cutterPayments.filter(p=>p.cutterId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const work = state.cutterWork.filter(w=>w.cutterId===id && !w.archived).sort((a,b)=>b.date.localeCompare(a.date));
+  const payments = state.cutterPayments.filter(p=>p.cutterId===id && !p.archived).sort((a,b)=>b.date.localeCompare(a.date));
 
   return `
   <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الفصالين</button>
@@ -1682,6 +1707,7 @@ function renderCutterDetail(id){
     <div class="btn-row">
       <button class="btn" onclick="openCutterWorkModal('${id}')">+ تسجيل شغل</button>
       <button class="btn primary" onclick="openCutterPaymentModal('${id}')">+ تسديد مبلغ</button>
+      <button class="btn" onclick="settleCutter('${id}')">تصفير الحساب</button>
     </div>
   </div>
   <div class="grid stats">
@@ -1806,7 +1832,10 @@ function renderHoodaris(){
   return `
   <div class="page-head">
     <div><h1>الهودارية</h1><div class="desc">إدارة الهودارية بالمعمل، القطع المنجزة لكل موديل، والمستحقات</div></div>
-    <button class="btn primary" onclick="openHoodariModal()">+ إضافة هوداري</button>
+    <div class="btn-row">
+      <button class="btn" onclick="settleAllHoodaris()">تصفير حساب الكل</button>
+      <button class="btn primary" onclick="openHoodariModal()">+ إضافة هوداري</button>
+    </div>
   </div>
   <div class="table-wrap">
     <table>
@@ -1820,6 +1849,7 @@ function renderHoodaris(){
             <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
             <td onclick="event.stopPropagation()">
               <div class="btn-row">
+                <button class="btn sm" onclick="settleHoodari('${h.id}')">تصفير الحساب</button>
                 <button class="btn sm ghost" onclick="openHoodariModal('${h.id}')">تعديل</button>
                 <button class="btn sm danger" onclick="deleteHoodari('${h.id}')">حذف</button>
               </div>
@@ -1861,13 +1891,28 @@ function deleteHoodari(id){
   });
 }
 function openHoodariDetail(id){ currentDetail = id; render(); }
+function settleHoodari(id){
+  const x = hoodariById(id); if(!x) return;
+  confirmDelete('تصفير حساب '+x.name+'؟ يصير المستحق والمدفوع والمتبقي صفر وتختفي سجلاته من صفحته. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.hoodariWork.forEach(w=>{ if(w.hoodariId===id) w.archived = true; });
+    state.hoodariPayments.forEach(p=>{ if(p.hoodariId===id) p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب '+x.name);
+  });
+}
+function settleAllHoodaris(){
+  confirmDelete('تصفير حساب كل الهودارية؟ المستحق والمدفوع والمتبقي يصير صفر للكل. القطع المنتجة ورأس المال والتقارير ما تتغير.', ()=>{
+    state.hoodariWork.forEach(w=>{ w.archived = true; });
+    state.hoodariPayments.forEach(p=>{ p.archived = true; });
+    saveState(); render(); toast('تم تصفير حساب كل الهودارية');
+  });
+}
 
 function renderHoodariDetail(id){
   const h = hoodariById(id);
   if(!h){ currentDetail=null; return renderHoodaris(); }
   const tot = hoodariTotals(id);
-  const work = state.hoodariWork.filter(w=>w.hoodariId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  const payments = state.hoodariPayments.filter(p=>p.hoodariId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const work = state.hoodariWork.filter(w=>w.hoodariId===id && !w.archived).sort((a,b)=>b.date.localeCompare(a.date));
+  const payments = state.hoodariPayments.filter(p=>p.hoodariId===id && !p.archived).sort((a,b)=>b.date.localeCompare(a.date));
 
   return `
   <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الهودارية</button>
@@ -1876,6 +1921,7 @@ function renderHoodariDetail(id){
     <div class="btn-row">
       <button class="btn" onclick="openHoodariWorkModal('${id}')">+ تسجيل شغل</button>
       <button class="btn primary" onclick="openHoodariPaymentModal('${id}')">+ تسديد مبلغ</button>
+      <button class="btn" onclick="settleHoodari('${id}')">تصفير الحساب</button>
     </div>
   </div>
   <div class="grid stats">
