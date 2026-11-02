@@ -122,9 +122,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <label>شنو تريدين ترسلين؟</label>
       <select id="subType"><option value="purchase">🛍️ شراء جديد (العباية مع الكارت)</option><option value="share">📸 صورتي بالعباية (ستوري مع تاك)</option></select>
       <p class="mut" id="subHint" style="margin-top:.4rem"></p>
-      <label>الصورة</label><input type="file" id="img" accept="image/*">
+      <label id="pickL" class="btn ghost" for="img" style="cursor:pointer;text-align:center">📷 اختاري الصورة</label><input type="file" id="img" accept="image/*" hidden>
       <img id="prev" class="hidden" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:.6rem">
-      <label>ملاحظة (اختياري)</label><input id="note" placeholder="رقم الفاتورة أو رابط المشاركة">
       <button class="btn" id="sendBtn" data-a="send">إرسال للمراجعة</button>
     </div>
     <div class="card"><h3>👭 ادعي صديقة</h3><div id="cRef"></div></div>
@@ -280,12 +279,12 @@ function renderC(){
 }
 function compress(file){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.7))};im.onerror=rej;im.src=u})}
 let imgData="";
-$("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=await compress(f);$("prev").src=imgData;$("prev").classList.remove("hidden")}catch{toast("تعذر قراءة الصورة")}};
+$("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=await compress(f);$("prev").src=imgData;$("prev").classList.remove("hidden");$("pickL").textContent="✔ تم اختيار الصورة، اضغطي للتغيير"}catch{toast("تعذر قراءة الصورة")}};
 
 /* ---------- Admin ---------- */
 function renderA(){
   $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid),m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
-    return`<div class="item"><b>${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span><div class="mut">${esc(s.note)}</div><img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
+    return`<div class="item"><b>${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
     <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join(""):`<p class="mut c">لا توجد طلبات معلقة</p>`;
   $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${esc(r.phone)}</b><div>${esc(r.title)} — ${r.cost} نقطة</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
   const q=$("srch").value.trim();
@@ -369,8 +368,8 @@ const A={
   async send(b){if(!imgData)return toast("اختاري صورة أولاً");
     if(SUBS.filter(s=>s.status==="pending").length>=3)return toast("لديكِ 3 طلبات قيد المراجعة، يرجى الانتظار");
     b.disabled=true;
-    try{await addDoc(collection(db,"submissions"),{uid:ME.uid,phone:P.phone,type:$("subType").value,note:$("note").value.trim().slice(0,200)||"—",image:imgData,status:"pending",ts:Date.now()});
-      imgData="";$("img").value="";$("note").value="";$("prev").classList.add("hidden");toast("تم الإرسال! ستُضاف النقاط بعد المراجعة ✨")}
+    try{await addDoc(collection(db,"submissions"),{uid:ME.uid,phone:P.phone,type:$("subType").value,note:"",image:imgData,status:"pending",ts:Date.now()});
+      imgData="";$("img").value="";$("pickL").textContent="📷 اختاري الصورة";$("prev").classList.add("hidden");toast("تم الإرسال! ستُضاف النقاط بعد المراجعة ✨")}
     catch(e){toast("تعذر الإرسال: "+(e.code||e.message))}b.disabled=false},
   async redeem(d){const r=S.rewards[+d.i];if(!r||P.points<r.c)return;if(REDS.some(x=>x.status==="pending"))return toast("لديكِ طلب استبدال قيد المراجعة");
     if(!confirm(`استبدال ${r.c} نقطة بـ ${r.t}؟`))return;
