@@ -93,6 +93,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .seg button{flex:1;padding:.7rem;border:1px solid var(--bd);border-radius:12px;background:none;color:var(--mut);font-weight:600;cursor:pointer;font-size:.9rem}
 .seg .on{background:#fff;color:#000;border-color:#fff}
 .prog{margin-top:.9rem}.pl{display:flex;justify-content:space-between;font-size:.9rem}
+.vchk{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;border-radius:50%;background:#fff;color:#000;font-size:.75rem;font-weight:800;vertical-align:middle;margin-inline-start:.35rem;line-height:1}
+.new{display:inline-block;background:#16a34a;color:#fff;border-radius:20px;padding:0 8px;font-size:.7rem;margin-inline-start:.4rem}
 </style>
 </head>
 <body>
@@ -127,6 +129,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="hero2"><img class="lg" alt="ستر"><h1 class="store">معمل ستر لبيع العبائات</h1><p class="mut">عباتج ستر واناقتج حكاية ♥</p></div>
     <div class="card c" id="cInfo"></div>
     <div class="card" id="cFree"></div>
+    <div class="card" id="cPts"></div>
     <div class="card">
       <h3>كيف تجمعين النقاط؟</h3>
       <details class="acc"><summary><span class="ic">🛍️</span><span class="t"><b>اشتري ووثّقي</b><small>اشتري عباية وأرسلي صورتها</small></span><span class="pill" id="pBuy"></span><span class="chev">‹</span></summary>
@@ -143,7 +146,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
           <button class="opt" id="cpLink" data-a="copyRef"><span>📋 نسخ رابط الدعوة</span><span class="chev">‹</span></button>
           <a class="opt" id="waLink" target="_blank" rel="noopener"><span>💬 إرسال عبر واتساب</span><span class="chev">‹</span></a>
         </div></details>
-      <div class="acc"><div class="sum"><span class="ic">✔</span><span class="t"><b>وثّقي حسابج</b><small>أضيفي واتساب وانستغرام من «حسابي»</small></span><span class="pill" id="pVer"></span></div></div>
+      <details class="acc"><summary><span class="ic">✔</span><span class="t"><b>وثّقي حسابج</b><small>برقم هاتفج أو يوزر انستغرامج</small></span><span class="pill" id="pVer"></span><span class="chev">‹</span></summary>
+        <div class="accB"><button class="opt" data-a="goVerify"><span>✔ صفحة توثيق الحساب</span><span class="chev">‹</span></button></div></details>
       <div class="acc"><div class="sum"><span class="ic">🎁</span><span class="t"><b>هدية التسجيل</b><small>أخذتيها عند انضمامج</small></span><span class="pill" id="pWel"></span></div></div>
     </div>
   </div>
@@ -158,13 +162,17 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <button class="btn" id="sendBtn" data-a="send">إرسال للمراجعة</button>
     </div>
   </div>
+  <div id="cpV" class="cp hidden">
+    <div class="card" id="cVer"></div>
+    <p class="c" style="margin:1rem 0"><a data-a="ctab" data-t="cp1">رجوع للرئيسية</a></p>
+  </div>
   <div id="cp3" class="cp hidden">
     <div class="card"><h3>🎁 المكافآت</h3><div id="cRew"></div><div id="cRewNote"></div></div>
     <div class="card"><h3>👑 مستوياتج</h3><p class="mut" style="margin-bottom:.8rem">كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁</p><div id="cTiers"></div></div>
   </div>
   <div id="cp4" class="cp hidden">
-    <div class="card" id="cVer"></div>
-    <div class="card"><h3>سجل الحساب</h3><div id="cHist"></div></div>
+    <div class="card" id="cVerS"></div>
+    <div class="card"><h3>سجل طلباتج</h3><div id="cHist"></div></div>
     <div class="card"><h3>📋 الشروط</h3><ol class="terms" id="cTerms"></ol></div>
     <div class="card c"><h3>تابعينا ♥</h3><div class="soc" id="cSoc"></div></div>
     <p class="c mut" id="cFoot" style="margin:1rem 0"></p>
@@ -200,7 +208,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <button class="btn" data-a="saveCust">حفظ التعديلات</button>
       <button class="btn no" data-a="delCust">حذف الزبونة</button>
       <button class="btn ghost" data-a="closeEdit">إغلاق</button></div>
-    <div class="card"><h3>العملاء (<span id="cnt">0</span>) <button class="btn sm ghost" style="float:left" data-a="exportCsv">تصدير CSV</button></h3><input id="srch" placeholder="بحث بالاسم أو الرقم"><div id="aCus" style="margin-top:.6rem"></div></div>
+    <div class="card"><h3>العملاء (<span id="cnt">0</span> · <span class="vchk" style="margin:0 .2rem">✓</span><span id="vcnt">0</span> موثقة) <button class="btn sm ghost" style="float:left" data-a="exportCsv">تصدير CSV</button></h3><input id="srch" placeholder="بحث بالاسم أو الرقم"><div id="aCus" style="margin-top:.6rem"></div></div>
   </div>
   <div id="tSet" class="tp hidden"><div class="card"><h3>قواعد النقاط</h3>
     <label>هدية التسجيل</label><input id="sW" type="number" min="0">
@@ -231,12 +239,12 @@ const CFG={apiKey:"AIzaSyB1Fvd0Rv6CyhPXugErVbZKuRuKSB1rVHQ",authDomain:"str-club
 const app=initializeApp(CFG);
 const auth=getAuth(app),db=getFirestore(app);
 const DOM="@members.str-abaya.app",ADM="@admin.str-club.app";
-const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,ver:4,verify:10,
+const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,ver:5,verify:10,
  tiers:[{n:"فضية",min:0,m:1,p:"نقاط على كل شراء"},{n:"ذهبية",min:200,m:1.25,p:"خصم 5% + نقاط أكثر"},{n:"ماسية",min:500,m:1.5,p:"خصم 10% + أولوية بالعروض الجديدة"}],
  rewards:[{t:"خصم 2,500 دينار",c:50},{t:"خصم 5,000 دينار",c:100},{t:"خصم 12,000 دينار",c:200},{t:"قطعة مجانية 🎁",c:1000}],
  tag:"@str.shoop",contact:"https://ig.me/m/str.shoop",
- terms:["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","جائزة دعوة الصديقة: تحصلين إنتي وهي على نقاط بعد ما توثّق أول شراء إلها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 صديقات تدعينهم ويشترن = قطعة مجانية من اختيارج.","توثيق حسابج (واتساب + انستغرام) يعطيج +10 نقاط وتصيرين زبونة رسمية ✔"]};
-const OLDT=[JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 دعوات ناجحة (صديقاتج اشترين) = قطعة مجانية من اختيارج.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"])];
+ terms:["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","ادعي 3 صديقات، وكل وحدة منهن تشتري قطعة: هم يحصلون على خصومات وإنتي تحصلين قطعة مجانية 🎁","جائزة الدعوة (نقاط) تنضاف لج ولصديقتج بعد ما توثّق أول شراء إلها.","توثيق حسابج برقم هاتفج أو يوزر انستغرامج يعطيج +10 نقاط وتصيرين زبونة رسمية ✔"]};
+const OLDT=[JSON.stringify(["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","جائزة دعوة الصديقة: تحصلين إنتي وهي على نقاط بعد ما توثّق أول شراء إلها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 صديقات تدعينهم ويشترن = قطعة مجانية من اختيارج.","توثيق حسابج (واتساب + انستغرام) يعطيج +10 نقاط وتصيرين زبونة رسمية ✔"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 دعوات ناجحة (صديقاتج اشترين) = قطعة مجانية من اختيارج.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"])];
 let S=DEF,ME=null,P=null,SUBS=[],REDS=[],TX=[],USERS=[],PEND=[],PRED=[],unsubs=[],REG=false,EID=null;
 const $=id=>document.getElementById(id);
 const SOC=[["فيسبوك","https://www.facebook.com/share/19pYD9N6jS/?mibextid=wwXIfr"],["إنستغرام","https://www.instagram.com/str.shoop"],["تيك توك","https://www.tiktok.com/@str.shoop"]];
@@ -256,8 +264,9 @@ const keyOf=n=>n.replace(/\s+/g," ").trim().replace(/[\u064B-\u065F\u0640]/g,"")
 const hash=s=>{let a=3735928559,b=1103547991;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(4294967296*(2097151&b)+(a>>>0)).toString(36)};
 const cred=n=>{const k=keyOf(n);return{em:"n"+hash(k)+DOM,pw:"str-"+k}};
 const nameOk=n=>n.trim().split(/\s+/).length>=3&&n.trim().length>=8;
-const ph=u=>u.wa||u.phone||"";
-let REFQ=null,verKey="";
+const ph=u=>u.wa||u.phone||(u.ig?"@"+u.ig:"");
+const CH=`<span class="vchk" style="margin-inline-start:0;margin-inline-end:.4rem">✓</span>`;
+let REFQ=null,verKey="",VM="wa";
 const refOf=u=>USERS.find(x=>x.id===u.referredBy||keyOf(x.regName||x.name||"")===u.referredBy);
 const errMsg=e=>({"auth/email-already-in-use":"هذا الرقم مسجل مسبقاً، سجّلي دخول","auth/invalid-credential":"الرقم أو الرمز السري غير صحيح","auth/too-many-requests":"محاولات كثيرة، حاولي لاحقاً","auth/network-request-failed":"تحقق من الإنترنت"}[e.code]||"حدث خطأ: "+(e.code||e.message));
 const clear=()=>{unsubs.forEach(u=>u());unsubs=[]};
@@ -281,7 +290,7 @@ onAuthStateChanged(auth,async u=>{
     if(!a.exists()){toast("هذا الحساب ليس حساب إدارة");signOut(auth);return}
     const sc=await getDoc(doc(db,"settings","config"));
     if(!sc.exists())await setDoc(doc(db,"settings","config"),DEF);
-    else if((sc.data().ver||1)<4){const d=sc.data(),nw={ver:4,verify:d.verify??DEF.verify,ref:d.ref??DEF.ref,freeBuy:d.freeBuy??DEF.freeBuy,freeRef:d.freeRef??DEF.freeRef};if(d.welcome===10)nw.welcome=50;if(Array.isArray(d.tiers))nw.tiers=d.tiers.map(t=>({...t,n:tn(t.n)}));if(!d.terms||OLDT.includes(JSON.stringify(d.terms)))nw.terms=DEF.terms;await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}
+    else if((sc.data().ver||1)<5){const d=sc.data(),nw={ver:5,verify:d.verify??DEF.verify,ref:d.ref??DEF.ref,freeBuy:d.freeBuy??DEF.freeBuy,freeRef:d.freeRef??DEF.freeRef};if(d.welcome===10)nw.welcome=50;if(Array.isArray(d.tiers))nw.tiers=d.tiers.map(t=>({...t,n:tn(t.n)}));if(!d.terms||OLDT.includes(JSON.stringify(d.terms)))nw.terms=DEF.terms;await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}
     show("vAdm");fillSettings();
     listen(query(collection(db,"submissions"),where("status","==","pending")),r=>{PEND=r;renderA()});
     listen(query(collection(db,"redemptions"),where("status","==","pending")),r=>{PRED=r;renderA()});
@@ -297,7 +306,7 @@ function renderC(){
   const tag=S.tag||"@str.shoop",con=/^https:\/\//.test(S.contact||"")?esc(S.contact):"",pt=b=>Math.round(b*t.m);
   const fb=S.freeBuy||3,fr=S.freeRef||3,av=freeAvail(P),pend=REDS.some(r=>r.kind==="free"&&r.status==="pending");
   const link=location.href.split("#")[0].split("?")[0]+"?ref="+ME.uid;
-  $("cInfo").innerHTML=`<div class="mut" style="margin-bottom:.6rem">أهلاً ${esc(P.name||"")} ♥</div><span class="badge">${esc(tn(t.n))}</span>${P.verified?` <span class="badge" style="margin-right:.4rem">✔ زبونة رسمية</span>`:""}<div class="pts">${P.points}</div><div class="mut">نقطة</div>
+  $("cInfo").innerHTML=`<div class="mut" style="margin-bottom:.6rem">أهلاً ${esc(P.name||"")}${P.verified?`<span class="vchk">✓</span>`:""} ♥</div><span class="badge">${esc(tn(t.n))}</span>${P.verified?` <span class="badge" style="margin-right:.4rem">زبونة رسمية</span>`:""}<div class="pts">${P.points}</div><div class="mut">نقطة</div>
   <p class="mut" style="margin-top:.5rem">${esc(t.p)}${t.m>1?` · نقاطج ×${t.m}`:""}</p>
   ${n?`<div class="bar"><i style="width:${Math.min(100,P.lifetime/n.min*100)}%"></i></div><div class="mut">باقي ${n.min-P.lifetime} نقطة للمستوى ${esc(tn(n.n))}</div>`:`<div class="mut" style="margin-top:.6rem">وصلتي لأعلى مستوى 👑</div>`}
   ${nr?`<div class="nxt">🎯 باقي ${nr.c-P.points} نقطة على: <b>${esc(nr.t)}</b></div>`:`<div class="nxt">🎉 تقدرين تستبدلين أي مكافأة الآن</div>`}
@@ -305,26 +314,28 @@ function renderC(){
   const pb=(P.purchases||0)%fb,pr=(P.refCount||0)%fr;
   $("cFree").innerHTML=`<h3>🎁 قطعتج المجانية من اختيارج</h3>
   <div class="prog"><div class="pl"><span>🛍️ مشترياتج الموثّقة</span><b>${pb} / ${fb}</b></div><div class="bar"><i style="width:${pb/fb*100}%"></i></div></div>
-  <div class="prog"><div class="pl"><span>👭 صديقاتج اللي اشترين</span><b>${pr} / ${fr}</b></div><div class="bar"><i style="width:${pr/fr*100}%"></i></div></div>
-  ${av>0?`<div class="nxt">🎉 عندج ${av} قطعة مجانية</div><button class="btn" data-a="claimFree" ${pend?"disabled":""}>${pend?"طلبج قيد المراجعة":"اطلبي قطعتج المجانية"}</button>`:`<p class="mut" style="margin-top:.8rem">اشتري ${fb} مرات وتحصلين قطعة مجانية 🎁 أو ادعي ${fr} صديقات واشترين وتحصلين قطعة مجانية 🎁</p>`}`;
-  $("pBuy").textContent="+"+pt(S.purchase);$("pShare").textContent="+"+pt(S.share);$("pRef").textContent="+"+S.ref;$("pWel").textContent="+"+S.welcome;$("pVer").textContent="+"+(S.verify||0);
+  <div class="prog"><div class="pl"><span>👭 صديقاتج اللي اشتروا</span><b>${pr} / ${fr}</b></div><div class="bar"><i style="width:${pr/fr*100}%"></i></div></div>
+  ${av>0?`<div class="nxt">🎉 عندج ${av} قطعة مجانية</div><button class="btn" data-a="claimFree" ${pend?"disabled":""}>${pend?"طلبج قيد المراجعة":"اطلبي قطعتج المجانية"}</button>`:`<p class="mut" style="margin-top:.8rem">🛍️ اشتري ${fb} مرات = قطعة مجانية 🎁<br>👭 ادعي ${fr} صديقات، وكل وحدة منهن تشتري قطعة: هم يحصلون على خصومات وإنتي تحصلين قطعة مجانية 🎁</p>`}`;
+  $("pBuy").textContent="+"+pt(S.purchase);$("pShare").textContent="+"+pt(S.share);$("pRef").textContent="+"+S.ref;$("pWel").textContent="+"+S.welcome;$("pVer").textContent=P.verified?"✔ تم":"+"+(S.verify||0);
   $("shareTxt").textContent="انشري صورتج وإنتي لابسة العباية ستوري، وسوّي تاك لـ "+tag+"، وأرسلي لنا لقطة الستوري.";
-  $("refTxt").textContent="ادعي صديقتج بالرابط. إذا اشترت أول مرة، تحصلين إنتي وهي على +"+S.ref+" نقطة. وكل "+fr+" صديقات يشترن = قطعة مجانية.";
+  $("refTxt").textContent="ادعي صديقاتج بالرابط. كل وحدة تشتري قطعة، هي وإنتي تحصلون +"+S.ref+" نقطة وخصومات. وكل "+fr+" منهن يشترون = قطعة مجانية إلج 🎁";
   $("cpLink").dataset.l=link;$("waLink").href="https://wa.me/?text="+encodeURIComponent("انضمي لنادي ستر واحصلي على هدية ترحيبية 🎁\n"+link);
   $("cTiers").innerHTML=tiers().map(x=>`<div class="tier ${x.n===t.n?"on":""}"><h4><span>${esc(tn(x.n))}</span><span class="mut">من ${x.min} نقطة</span></h4><div class="mut">${esc(x.p)}${x.m>1?` · نقاط ×${x.m}`:""}</div>${x.n===t.n?`<div style="margin-top:.4rem;font-size:.8rem">✔ مستواج الحالي</div>`:""}</div>`).join("");
   const btn=con?`<a class="btn" href="${con}" target="_blank" rel="noopener">📲 أرسلي سكرين نقاطج للصفحة</a>`:"";
   $("cRew").innerHTML=[...S.rewards].sort((a,b)=>a.c-b.c).map(r=>{const i=S.rewards.indexOf(r),free=/مجان/.test(r.t);return`<div class="row ${free?"free":""}"><span>${free?"🎁 ":""}${esc(r.t)}</span><button class="btn sm" data-a="redeem" data-i="${i}" ${P.points<r.c?"disabled":""}>${r.c} نقطة</button></div>`}).join("");
   $("cRewNote").innerHTML=`<p class="mut" style="margin-top:.8rem">بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا لتأكيد الخصم.</p>${btn}`;
-  const vk=P.verified?"v"+P.wa+P.ig:"n";
-  if(vk!==verKey){verKey=vk;$("cVer").innerHTML=P.verified?`<h3>✔ حسابج موثّق</h3><div class="c" style="margin-bottom:.6rem"><span class="badge">✔ زبونة رسمية</span></div><div class="row"><span class="mut">واتساب</span><b dir="ltr">${esc(P.wa||"")}</b></div><div class="row"><span class="mut">انستغرام</span><b dir="ltr">@${esc(P.ig||"")}</b></div>`:`<h3>وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">أضيفي رقم واتسابج ومعرّف انستغرامج، وحسابج يتوثّق وتصيرين زبونة رسمية ✔</p><label>رقم الواتساب</label><input id="vWa" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx"><label>معرّف انستغرام</label><input id="vIg" dir="ltr" placeholder="@username" autocapitalize="off" autocomplete="off"><button class="btn" data-a="verify">وثّقي حسابي 🎁</button>`}
+  const nowT=Date.now(),tl=[...TX].sort((x,y)=>y.ts-x.ts),rw=x=>`<div class="row"><span>${esc(x.reason)}${nowT-x.ts<172800000&&x.amount>0?`<span class="new">جديد</span>`:""}<br><small class="mut">${fmt(x.ts)}</small></span><b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b></div>`;
+  $("cPts").innerHTML=`<h3>💰 نقاطج وشلون حصلتيها</h3><p class="mut" style="margin-bottom:.4rem">مجموع اللي حصلتيه: <b style="color:#fff">${P.lifetime}</b> نقطة</p>${tl.length?tl.slice(0,5).map(rw).join("")+(tl.length>5?`<details style="margin-top:.4rem"><summary class="mut" style="cursor:pointer">عرض الكل (${tl.length})</summary>${tl.slice(5).map(rw).join("")}</details>`:""):`<p class="mut c">ما أكو نقاط بعد، ابدئي بجمع نقاطج 🎁</p>`}`;
+  $("cVerS").innerHTML=P.verified?`<h3>حسابج <span class="vchk">✓</span></h3><div class="c"><span class="badge">زبونة رسمية موثّقة</span></div>`:`<h3>توثيق الحساب</h3><p class="mut">وثّقي حسابج وخذي +${S.verify||0} نقطة وتصيرين زبونة رسمية.</p><button class="btn" data-a="goVerify">وثّقي حسابج ✔</button>`;
+  const vk=P.verified?"v"+(P.wa||"")+(P.ig||""):"n";
+  if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:`<h3>✔ وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">اختاري طريقة وحدة واكتبيها، وحسابج يتوثّق والنقاط تنضاف لج تلقائياً.</p><div class="seg" id="vSeg"><button class="on" data-a="vseg" data-t="wa">📱 رقم الهاتف</button><button data-a="vseg" data-t="ig">📷 يوزر انستغرام</button></div><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" data-a="verify">وثّقي حسابي 🎁</button>`}
   $("cTerms").innerHTML=(S.terms||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥";
   const h=[];
   SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?"قيد المراجعة":"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
   REDS.forEach(r=>h.push({ts:r.ts,x:`${r.kind==="free"?"طلب":"استبدال:"} ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?`الكود: <b style="color:var(--gold)">${esc(r.code)}</b>`:"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
-  TX.forEach(x=>h.push({ts:x.ts,x:`${esc(x.reason)} <b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b>`}));
   h.sort((a,b)=>b.ts-a.ts);
-  $("cHist").innerHTML=h.length?h.map(i=>`<div class="row"><span>${i.x}</span><span class="mut">${fmt(i.ts)}</span></div>`).join(""):`<p class="mut c">لا يوجد نشاط بعد</p>`;
+  $("cHist").innerHTML=h.length?h.map(i=>`<div class="row"><span>${i.x}</span><span class="mut">${fmt(i.ts)}</span></div>`).join(""):`<p class="mut c">لا توجد طلبات بعد</p>`;
 }
 function compress(file){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.7))};im.onerror=rej;im.src=u})}
 let imgData="";
@@ -333,15 +344,15 @@ $("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=a
 /* ---------- Admin ---------- */
 function renderA(){
   $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid),m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
-    return`<div class="item"><b>${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
+    return`<div class="item"><b>${u&&u.verified?CH:""}${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
     <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join(""):`<p class="mut c">لا توجد طلبات معلقة</p>`;
-  $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${esc((USERS.find(x=>x.id===r.uid)||{}).name||r.phone||"")}</b><div>${esc(r.title)}${r.kind==="free"?" (من اختيارها)":` — ${r.cost} نقطة`}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
+  $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${(USERS.find(x=>x.id===r.uid)||{}).verified?CH:""}${esc((USERS.find(x=>x.id===r.uid)||{}).name||r.phone||"")}</b><div>${esc(r.title)}${r.kind==="free"?" (من اختيارها)":` — ${r.cost} نقطة`}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
   const q=$("srch").value.trim();
-  $("cnt").textContent=USERS.length;
+  $("cnt").textContent=USERS.length;$("vcnt").textContent=USERS.filter(u=>u.verified).length;
   const refs=USERS.filter(u=>u.referredBy&&!u.refDone);
-  $("aRef").innerHTML=refs.length?refs.map(u=>{const r=refOf(u),ok=u.purchases>=1&&r;return`<div class="item"><b>${esc(u.name||"")}</b> <span class="mut" dir="ltr">${esc(ph(u))}</span><div class="mut">دعتها: ${r?esc(r.name||""):esc(u.referredBy)+" (غير مسجلة)"}</div><div class="acts">${ok?`<button class="btn sm ok" data-a="refOk" data-id="${u.id}">منح +${S.ref} للاثنتين</button>`:`<span class="mut">${r?"بانتظار أول شراء موثّق":"الداعية غير مسجلة"}</span>`}<button class="btn sm ghost" data-a="refNo" data-id="${u.id}">تجاهل</button></div></div>`}).join(""):`<p class="mut c">لا توجد إحالات معلقة</p>`;
+  $("aRef").innerHTML=refs.length?refs.map(u=>{const r=refOf(u),ok=u.purchases>=1&&r;return`<div class="item"><b>${u.verified?CH:""}${esc(u.name||"")}</b> <span class="mut" dir="ltr">${esc(ph(u))}</span><div class="mut">دعتها: ${r?esc(r.name||""):esc(u.referredBy)+" (غير مسجلة)"}</div><div class="acts">${ok?`<button class="btn sm ok" data-a="refOk" data-id="${u.id}">منح +${S.ref} للاثنتين</button>`:`<span class="mut">${r?"بانتظار أول شراء موثّق":"الداعية غير مسجلة"}</span>`}<button class="btn sm ghost" data-a="refNo" data-id="${u.id}">تجاهل</button></div></div>`}).join(""):`<p class="mut c">لا توجد إحالات معلقة</p>`;
   $("aStats").innerHTML=[["الزبونات",USERS.length],["طلبات معلقة",PEND.length+PRED.length],["نقاط ممنوحة",USERS.reduce((a,u)=>a+u.lifetime,0)]].map(([l,v])=>`<div><div class="pts" style="font-size:1.6rem">${v}</div><div class="mut">${l}</div></div>`).join("");
-  $("aCus").innerHTML=USERS.filter(u=>((u.wa||"")+(u.phone||"")+(u.ig||"")+(u.name||"")).includes(q)).sort((a,b)=>b.lifetime-a.lifetime).map(u=>`<div class="row" data-a="pick" data-id="${u.id}" style="cursor:pointer"><span>${u.verified?"✔ ":""}${esc(u.name||"")} <small class="mut" dir="ltr">${esc(ph(u))}</small></span><span class="mut">${esc(tn(tierOf(u.lifetime).n))}</span><b style="color:var(--gold)">${u.points}</b></div>`).join("");
+  $("aCus").innerHTML=USERS.filter(u=>((u.wa||"")+(u.phone||"")+(u.ig||"")+(u.name||"")).includes(q)).sort((a,b)=>b.lifetime-a.lifetime).map(u=>`<div class="row" data-a="pick" data-id="${u.id}" style="cursor:pointer"><span>${u.verified?CH:""}${esc(u.name||"")} <small class="mut" dir="ltr">${esc(ph(u))}</small></span><span class="mut">${esc(tn(tierOf(u.lifetime).n))}</span><b style="color:var(--gold)">${u.points}</b></div>`).join("");
 }
 $("srch").oninput=renderA;
 setType("purchase");
@@ -396,15 +407,15 @@ const A={
       if(pts>0)await addDoc(collection(db,"transactions"),{uid,phone:"",amount:pts,reason:"رصيد ابتدائي من الإدارة",ts:Date.now()});
       $("nCn").value="";$("nCpt").value="";toast("تم إنشاء الحساب ✅")}
     catch(e){toast(e.code?errMsg(e):e.message)}},
-  async verify(){if(!P||P.verified)return;
-    const w=norm($("vWa").value),ig=$("vIg").value.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^@/,"").replace(/[\/?].*$/,"");
-    if(!w)return toast("رقم الواتساب غير صحيح، مثال: 07xxxxxxxxx");
-    if(!/^[A-Za-z0-9._]{2,30}$/.test(ig))return toast("اكتبي معرّف الانستغرام بشكل صحيح، مثال: @str.shoop");
-    const g=S.verify||0;
+  goVerify(){A.ctab({t:"cpV"})},
+  vseg(d){VM=d.t;document.querySelectorAll("#vSeg button").forEach(x=>x.classList.toggle("on",x.dataset.t===d.t));const i=$("vIn");i.value="";i.type=VM==="wa"?"tel":"text";i.inputMode=VM==="wa"?"numeric":"text";i.placeholder=VM==="wa"?"07xxxxxxxxx":"@username"},
+  async verify(){if(!P||P.verified)return;const v=$("vIn").value.trim(),g=S.verify||0;let upd;
+    if(VM==="wa"){const w=norm(v);if(!w)return toast("رقم الهاتف غير صحيح، مثال: 07xxxxxxxxx");upd={wa:w,phone:w}}
+    else{const ig=v.replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^@/,"").replace(/[\/?].*$/,"");if(!/^[A-Za-z0-9._]{2,30}$/.test(ig))return toast("اكتبي يوزر الانستغرام بشكل صحيح، مثال: @str.shoop");upd={ig}}
     try{await runTransaction(db,async tx=>{const r=doc(db,"users",ME.uid),sn=await tx.get(r);if(!sn.exists())throw new Error("الحساب غير موجود");const u=sn.data();if(u.verified)throw new Error("حسابج موثّق مسبقاً");
-      tx.update(r,{wa:w,ig,phone:w,verified:true,points:u.points+g,lifetime:u.lifetime+g});
-      if(g>0)tx.set(doc(collection(db,"transactions")),{uid:ME.uid,phone:w,amount:g,reason:"مكافأة توثيق الحساب ✔",ts:Date.now()})});
-      toast("تم توثيق حسابج ✅ +"+g+" نقطة")}catch(e){toast(e.message)}},
+      tx.update(r,{...upd,verified:true,points:u.points+g,lifetime:u.lifetime+g});
+      if(g>0)tx.set(doc(collection(db,"transactions")),{uid:ME.uid,phone:upd.wa||"",amount:g,reason:"مكافأة توثيق الحساب ✔",ts:Date.now()})});
+      toast("تم توثيق حسابج ✅ حصلتي على +"+g+" نقطة");A.ctab({t:"cp1"})}catch(e){toast(e.message)}},
   exportCsv(){const rows=[["الاسم","واتساب","انستغرام","موثقة","المستوى","الرصيد","إجمالي النقاط","المشتريات"],...USERS.map(u=>[u.name||"",u.wa||"",u.ig||"",u.verified?"نعم":"لا",tn(tierOf(u.lifetime).n),u.points,u.lifetime,u.purchases])];
     const csv="\ufeff"+rows.map(r=>r.map(v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(",")).join("\n");
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="str-customers.csv";a.click()},
@@ -459,7 +470,7 @@ const A={
     const rl=$("sR").value.split("\n").filter(l=>l.trim()).map(l=>{const[t,c]=l.split("|");if(!t||isNaN(+c))throw new Error("صيغة المكافآت غير صحيحة");return{t:t.trim(),c:+c}});
     if(!tl.length||!tl.some(t=>t.min===0))throw new Error("يجب وجود مستوى أول حدّه 0");
     const con=$("sCon").value.trim();if(con&&!/^https:\/\//.test(con))throw new Error("الرابط لازم يبدأ بـ https://");
-    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,freeBuy:+$("sFB").value||3,freeRef:+$("sFR").value||3,ver:4,verify:Math.max(0,+$("sV").value||0),tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
+    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,freeBuy:+$("sFB").value||3,freeRef:+$("sFR").value||3,ver:5,verify:Math.max(0,+$("sV").value||0),tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
     await setDoc(doc(db,"settings","config"),S);toast("تم حفظ الإعدادات ✅");renderA()}catch(e){toast(e.message)}}
 };
 ["nm"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")A.login()}));$("apw").addEventListener("keydown",e=>{if(e.key==="Enter")A.admLogin()});
