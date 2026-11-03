@@ -80,6 +80,19 @@ a.btn{display:block;text-align:center;text-decoration:none}
 #cNav button span{font-size:1.3rem;line-height:1.1}#cNav .on{color:#fff;font-weight:700}
 .cp{animation:fd .25s}@keyframes fd{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .qa{display:flex;gap:.5rem;margin-top:1rem}.qa .btn{margin:0;flex:1;padding:.7rem}
+.acc{border-bottom:1px solid rgba(255,255,255,.08)}.acc:last-child{border:0}
+.acc summary,.acc .sum{list-style:none;display:flex;align-items:center;gap:.7rem;padding:.85rem 0;cursor:pointer}
+.acc .sum{cursor:default}.acc summary::-webkit-details-marker{display:none}
+.acc .t{flex:1}.acc .t b{display:block}.acc .t small{color:var(--mut);font-size:.8rem}
+.chev{color:var(--mut);font-size:1.4rem;line-height:1;transition:.2s}
+.acc[open]>summary .chev{transform:rotate(-90deg)}
+.accB{padding:0 0 .8rem}
+.opt{display:flex;justify-content:space-between;align-items:center;width:100%;background:#000;border:1px solid var(--bd);border-radius:12px;color:#fff;padding:.8rem .9rem;margin-top:.5rem;font-size:.95rem;font-family:inherit;cursor:pointer;text-decoration:none}
+.opt:hover{border-color:#fff}
+.seg{display:flex;gap:.4rem;margin-top:.8rem}
+.seg button{flex:1;padding:.7rem;border:1px solid var(--bd);border-radius:12px;background:none;color:var(--mut);font-weight:600;cursor:pointer;font-size:.9rem}
+.seg .on{background:#fff;color:#000;border-color:#fff}
+.prog{margin-top:.9rem}.pl{display:flex;justify-content:space-between;font-size:.9rem}
 </style>
 </head>
 <body>
@@ -114,23 +127,40 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div id="cp1" class="cp">
     <div class="hero2"><img class="lg" alt="ستر"><h1 class="store">معمل ستر لبيع العبائات</h1><p class="mut">عباتج ستر واناقتج حكاية ♥</p></div>
     <div class="card c" id="cInfo"></div>
-    <div class="card"><h3>كيف تجمعين النقاط؟</h3><div id="cHow"></div></div>
+    <div class="card" id="cFree"></div>
+    <div class="card">
+      <h3>كيف تجمعين النقاط؟</h3>
+      <details class="acc"><summary><span class="ic">🛍️</span><span class="t"><b>اشتري ووثّقي</b><small>اشتري عباية وأرسلي صورتها</small></span><span class="pill" id="pBuy"></span><span class="chev">‹</span></summary>
+        <div class="accB">
+          <a class="opt" href="https://www.instagram.com/str.shoop" target="_blank" rel="noopener"><span>🛒 شراء قطعة</span><span class="chev">‹</span></a>
+          <button class="opt" data-a="goSend" data-t="purchase"><span>📤 توثيق شراء</span><span class="chev">‹</span></button>
+        </div></details>
+      <details class="acc"><summary><span class="ic">📸</span><span class="t"><b>انشري صورتج</b><small>ستوري بالعباية مع تاك لصفحتنا</small></span><span class="pill" id="pShare"></span><span class="chev">‹</span></summary>
+        <div class="accB"><p class="mut" id="shareTxt"></p>
+          <button class="opt" data-a="goSend" data-t="share"><span>📤 إرسال لقطة الستوري</span><span class="chev">‹</span></button>
+        </div></details>
+      <details class="acc"><summary><span class="ic">👭</span><span class="t"><b>ادعي صديقة</b><small>لج ولها، بعد أول شراء لها</small></span><span class="pill" id="pRef"></span><span class="chev">‹</span></summary>
+        <div class="accB"><p class="mut" id="refTxt"></p>
+          <button class="opt" id="cpLink" data-a="copyRef"><span>📋 نسخ رابط الدعوة</span><span class="chev">‹</span></button>
+          <a class="opt" id="waLink" target="_blank" rel="noopener"><span>💬 إرسال عبر واتساب</span><span class="chev">‹</span></a>
+        </div></details>
+      <div class="acc"><div class="sum"><span class="ic">🎁</span><span class="t"><b>هدية التسجيل</b><small>أخذتيها عند انضمامج</small></span><span class="pill" id="pWel"></span></div></div>
+    </div>
   </div>
   <div id="cp2" class="cp hidden">
     <div class="card">
       <h3>📤 أرسلي طلبج</h3>
-      <label>شنو تريدين ترسلين؟</label>
-      <select id="subType"><option value="purchase">🛍️ شراء جديد (العباية مع الكارت)</option><option value="share">📸 صورتي بالعباية (ستوري مع تاك)</option></select>
-      <p class="mut" id="subHint" style="margin-top:.4rem"></p>
+      <div class="seg" id="seg"><button class="on" data-a="seg" data-t="purchase">🛍️ توثيق شراء</button><button data-a="seg" data-t="share">📸 لقطة ستوري</button></div>
+      <input type="hidden" id="subType" value="purchase">
+      <p class="mut" id="subHint" style="margin-top:.8rem"></p>
       <label id="pickL" class="btn ghost" for="img" style="cursor:pointer;text-align:center">📷 اختاري الصورة</label><input type="file" id="img" accept="image/*" hidden>
       <img id="prev" class="hidden" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:.6rem">
       <button class="btn" id="sendBtn" data-a="send">إرسال للمراجعة</button>
     </div>
-    <div class="card"><h3>👭 ادعي صديقة</h3><div id="cRef"></div></div>
   </div>
   <div id="cp3" class="cp hidden">
     <div class="card"><h3>🎁 المكافآت</h3><div id="cRew"></div><div id="cRewNote"></div></div>
-    <div class="card"><h3>👑 مستوياتج</h3><p class="mut" style="margin-bottom:.8rem">كل ما زادت نقاطج، ارتفع مستوجِ وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁</p><div id="cTiers"></div></div>
+    <div class="card"><h3>👑 مستوياتج</h3><p class="mut" style="margin-bottom:.8rem">كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁</p><div id="cTiers"></div></div>
   </div>
   <div id="cp4" class="cp hidden">
     <div class="card"><h3>سجل الحساب</h3><div id="cHist"></div></div>
@@ -164,6 +194,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <label>الاسم المسجل للدخول (للمعلومة)</label><input id="eReg" disabled>
       <label>الرصيد الحالي</label><input id="ePts" type="number" min="0">
       <label>إجمالي النقاط المكتسبة (يحدد المستوى)</label><input id="eLife" type="number" min="0">
+      <label>عدد المشتريات الموثّقة</label><input id="ePur" type="number" min="0">
+      <label>عدد الدعوات الناجحة</label><input id="eRefN" type="number" min="0">
       <label>سبب التعديل (اختياري)</label><input id="eWhy">
       <button class="btn" data-a="saveCust">حفظ التعديلات</button>
       <button class="btn no" data-a="delCust">حذف الزبونة</button>
@@ -175,6 +207,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <label>نقاط توثيق الشراء</label><input id="sP" type="number" min="0">
     <label>نقاط مشاركة الصورة</label><input id="sS" type="number" min="0">
     <label>جائزة دعوة صديقة (تُمنح لكل واحدة منهن)</label><input id="sRef" type="number" min="0">
+    <label>عدد المشتريات للحصول على قطعة مجانية</label><input id="sFB" type="number" min="1">
+    <label>عدد الدعوات الناجحة للحصول على قطعة مجانية</label><input id="sFR" type="number" min="1">
     <label>المستويات (سطر لكل مستوى: الاسم|الحد الأدنى من النقاط|المضاعف|الامتياز)</label><textarea id="sT"></textarea>
     <label>المكافآت (سطر لكل مكافأة: العنوان|النقاط)</label><textarea id="sR"></textarea>
     <label>حساب المتجر للتاق (مثال: @str.shoop)</label><input id="sTag" dir="ltr">
@@ -184,7 +218,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <button class="btn" data-a="saveSet">حفظ الإعدادات</button></div></div>
 </section>
 </main>
-<nav id="cNav" class="hidden"><button class="on" data-a="ctab" data-t="cp1"><span>🏠</span>الرئيسية</button><button data-a="ctab" data-t="cp2"><span>✨</span>اكسبي نقاط</button><button data-a="ctab" data-t="cp3"><span>🎁</span>المكافآت</button><button data-a="ctab" data-t="cp4"><span>👤</span>حسابي</button></nav>
+<nav id="cNav" class="hidden"><button class="on" data-a="ctab" data-t="cp1"><span>🏠</span>الرئيسية</button><button data-a="ctab" data-t="cp2"><span>📤</span>أرسلي طلب</button><button data-a="ctab" data-t="cp3"><span>🎁</span>المكافآت</button><button data-a="ctab" data-t="cp4"><span>👤</span>حسابي</button></nav>
 <div id="toast"></div>
 
 <script type="module">
@@ -196,12 +230,12 @@ const CFG={apiKey:"AIzaSyB1Fvd0Rv6CyhPXugErVbZKuRuKSB1rVHQ",authDomain:"str-club
 const app=initializeApp(CFG);
 const auth=getAuth(app),db=getFirestore(app);
 const DOM="@members.str-abaya.app",ADM="@admin.str-club.app";
-const DEF={welcome:50,purchase:35,share:15,ref:50,ver:2,
+const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,ver:3,
  tiers:[{n:"فضية",min:0,m:1,p:"نقاط على كل شراء"},{n:"ذهبية",min:200,m:1.25,p:"خصم 5% + نقاط أكثر"},{n:"ماسية",min:500,m:1.5,p:"خصم 10% + أولوية بالعروض الجديدة"}],
  rewards:[{t:"خصم 2,500 دينار",c:50},{t:"خصم 5,000 دينار",c:100},{t:"خصم 12,000 دينار",c:200},{t:"قطعة مجانية 🎁",c:1000}],
  tag:"@str.shoop",contact:"https://ig.me/m/str.shoop",
- terms:["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل ما زادت نقاطج ارتفع مستوجِ وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]};
-const OLDTERMS=JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستوجِ وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]);
+ terms:["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 دعوات ناجحة (صديقاتج اشترين) = قطعة مجانية من اختيارج.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁"]};
+const OLDT=[JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"])];
 let S=DEF,ME=null,P=null,SUBS=[],REDS=[],TX=[],USERS=[],PEND=[],PRED=[],unsubs=[],REG=false,EID=null;
 const $=id=>document.getElementById(id);
 const SOC=[["فيسبوك","https://www.facebook.com/share/19pYD9N6jS/?mibextid=wwXIfr"],["إنستغرام","https://www.instagram.com/str.shoop"],["تيك توك","https://www.tiktok.com/@str.shoop"]];
@@ -216,6 +250,7 @@ const nextTier=l=>tiers().find(t=>t.min>l);
 const fmt=t=>new Date(t).toLocaleDateString("ar-IQ");
 function norm(p){p=p.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g,"").replace(/^00/,"");if(p.startsWith("964"))p="0"+p.slice(3);if(/^7\d{9}$/.test(p))p="0"+p;return/^07\d{9}$/.test(p)?p:null}
 const tn=n=>({Silver:"فضية",Gold:"ذهبية",Platinum:"ماسية"}[n]||n);
+const freeAvail=u=>Math.max(0,Math.floor((u.purchases||0)/(S.freeBuy||3))+Math.floor((u.refCount||0)/(S.freeRef||3))-(u.freeUsed||0));
 const keyOf=n=>n.replace(/\s+/g," ").trim().replace(/[\u064B-\u065F\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").toLowerCase();
 const errMsg=e=>({"auth/email-already-in-use":"هذا الرقم مسجل مسبقاً، سجّلي دخول","auth/invalid-credential":"الرقم أو الرمز السري غير صحيح","auth/too-many-requests":"محاولات كثيرة، حاولي لاحقاً","auth/network-request-failed":"تحقق من الإنترنت"}[e.code]||"حدث خطأ: "+(e.code||e.message));
 const clear=()=>{unsubs.forEach(u=>u());unsubs=[]};
@@ -236,10 +271,10 @@ onAuthStateChanged(auth,async u=>{
     listen(query(collection(db,"transactions"),where("uid","==",u.uid)),r=>{TX=r;renderC()});
   }else{
     const a=await getDoc(doc(db,"admins",u.uid));
-    if(!a.exists()){toast("هذا الحساب ليس مدير");signOut(auth);return}
+    if(!a.exists()){toast("هذا الحساب ليس حساب إدارة");signOut(auth);return}
     const sc=await getDoc(doc(db,"settings","config"));
     if(!sc.exists())await setDoc(doc(db,"settings","config"),DEF);
-    else if((sc.data().ver||1)<2){const d=sc.data(),nw={ver:2,ref:d.ref??DEF.ref};if(d.welcome===10)nw.welcome=50;if(Array.isArray(d.tiers))nw.tiers=d.tiers.map(t=>({...t,n:tn(t.n)}));if(!d.terms||JSON.stringify(d.terms)===OLDTERMS)nw.terms=DEF.terms;await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}
+    else if((sc.data().ver||1)<3){const d=sc.data(),nw={ver:3,ref:d.ref??DEF.ref,freeBuy:d.freeBuy??DEF.freeBuy,freeRef:d.freeRef??DEF.freeRef};if(d.welcome===10)nw.welcome=50;if(Array.isArray(d.tiers))nw.tiers=d.tiers.map(t=>({...t,n:tn(t.n)}));if(!d.terms||OLDT.includes(JSON.stringify(d.terms)))nw.terms=DEF.terms;await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}
     show("vAdm");fillSettings();
     listen(query(collection(db,"submissions"),where("status","==","pending")),r=>{PEND=r;renderA()});
     listen(query(collection(db,"redemptions"),where("status","==","pending")),r=>{PRED=r;renderA()});
@@ -248,31 +283,36 @@ onAuthStateChanged(auth,async u=>{
 });
 
 /* ---------- Customer ---------- */
+function setType(t){$("subType").value=t;document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));$("subHint").textContent=t==="share"?"أرسلي لقطة الستوري اللي فيها التاك لصفحتنا.":"أرسلي صورة العباية مع الكارت الخاص بالمتجر."}
 function renderC(){
   if(!P)return;
   const t=tierOf(P.lifetime),n=nextTier(P.lifetime),nr=S.rewards.filter(r=>r.c>P.points).sort((a,b)=>a.c-b.c)[0];
-  const tag=S.tag?esc(S.tag):"@str.shoop",con=/^https:\/\//.test(S.contact||"")?esc(S.contact):"",pt=b=>Math.round(b*t.m);
+  const tag=S.tag||"@str.shoop",con=/^https:\/\//.test(S.contact||"")?esc(S.contact):"",pt=b=>Math.round(b*t.m);
+  const fb=S.freeBuy||3,fr=S.freeRef||3,av=freeAvail(P),pend=REDS.some(r=>r.kind==="free"&&r.status==="pending");
   const link=location.href.split("#")[0].split("?")[0]+"?ref="+P.phone;
   $("cInfo").innerHTML=`<div class="mut" style="margin-bottom:.6rem">أهلاً ${esc(P.name||"")} ♥</div><span class="badge">${esc(tn(t.n))}</span><div class="pts">${P.points}</div><div class="mut">نقطة</div>
   <p class="mut" style="margin-top:.5rem">${esc(t.p)}${t.m>1?` · نقاطج ×${t.m}`:""}</p>
-  ${n?`<div class="bar"><i style="width:${Math.min(100,P.lifetime/n.min*100)}%"></i></div><div class="mut">باقي ${n.min-P.lifetime} نقطة للمستوى ${esc(tn(n.n))}</div>`:`<div class="mut" style="margin-top:.6rem">وصلتِ لأعلى مستوى 👑</div>`}
+  ${n?`<div class="bar"><i style="width:${Math.min(100,P.lifetime/n.min*100)}%"></i></div><div class="mut">باقي ${n.min-P.lifetime} نقطة للمستوى ${esc(tn(n.n))}</div>`:`<div class="mut" style="margin-top:.6rem">وصلتي لأعلى مستوى 👑</div>`}
   ${nr?`<div class="nxt">🎯 باقي ${nr.c-P.points} نقطة على: <b>${esc(nr.t)}</b></div>`:`<div class="nxt">🎉 تقدرين تستبدلين أي مكافأة الآن</div>`}
   <div class="qa"><button class="btn" data-a="ctab" data-t="cp2">📤 أرسلي طلب</button><button class="btn ghost" data-a="ctab" data-t="cp3">🎁 استبدلي</button></div>`;
-  $("cHow").innerHTML=`<div class="step"><span class="ic">🎁</span><div><b>هدية التسجيل <span class="pill">+${S.welcome}</span></b><span class="mut">أخذتيها عند انضمامج</span></div></div>
-  <div class="step"><span class="ic">🛍️</span><div><b>اشتري ووثّقي <span class="pill">+${pt(S.purchase)}</span></b><span class="mut">صوري العباية مع الكارت وأرسليها لنا</span></div></div>
-  <div class="step"><span class="ic">📸</span><div><b>انشري صورتج <span class="pill">+${pt(S.share)}</span></b><span class="mut">ستوري بالعباية مع تاك لـ ${tag}</span></div></div>
-  <div class="step"><span class="ic">👭</span><div><b>ادعي صديقة <span class="pill">+${S.ref}</span></b><span class="mut">لج ولها، بعد أول شراء موثّق لها</span></div></div>`;
-  $("subHint").textContent=$("subType").value==="share"?"أرسلي لقطة الستوري اللي فيها التاك لصفحتنا.":"أرسلي صورة العباية مع الكارت الخاص بالمتجر.";
-  $("cRef").innerHTML=`<p class="mut">ادعي صديقتج للنادي. إذا وثّقت أول شراء لها، تحصلين انتي وهي على <b style="color:#fff">+${S.ref} نقطة</b> كل وحدة.</p><input readonly dir="ltr" value="${esc(link)}" onclick="this.select()" style="margin-top:.7rem"><button class="btn" data-a="copyRef" data-l="${esc(link)}">📋 نسخ الرابط</button><a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("انضمي لنادي ستر واحصلي على هدية ترحيبية 🎁\n"+link)}">إرسال عبر واتساب</a>`;
+  const pb=(P.purchases||0)%fb,pr=(P.refCount||0)%fr;
+  $("cFree").innerHTML=`<h3>🎁 قطعتج المجانية من اختيارج</h3>
+  <div class="prog"><div class="pl"><span>🛍️ ${fb} مشتريات موثّقة</span><b>${pb} / ${fb}</b></div><div class="bar"><i style="width:${pb/fb*100}%"></i></div></div>
+  <div class="prog"><div class="pl"><span>👭 ${fr} دعوات ناجحة</span><b>${pr} / ${fr}</b></div><div class="bar"><i style="width:${pr/fr*100}%"></i></div></div>
+  ${av>0?`<div class="nxt">🎉 عندج ${av} قطعة مجانية</div><button class="btn" data-a="claimFree" ${pend?"disabled":""}>${pend?"طلبج قيد المراجعة":"اطلبي قطعتج المجانية"}</button>`:`<p class="mut" style="margin-top:.8rem">كل ${fb} مشتريات، أو ${fr} دعوات ناجحة (صديقاتج اشترين)، تحصلين على قطعة مجانية.</p>`}`;
+  $("pBuy").textContent="+"+pt(S.purchase);$("pShare").textContent="+"+pt(S.share);$("pRef").textContent="+"+S.ref;$("pWel").textContent="+"+S.welcome;
+  $("shareTxt").textContent="انشري صورتج وإنتي لابسة العباية ستوري، وسوّي تاك لـ "+tag+"، وأرسلي لنا لقطة الستوري.";
+  $("refTxt").textContent="إذا وثّقت صديقتج أول شراء لها، تحصلين إنتي وهي على +"+S.ref+" نقطة. وكل "+fr+" دعوات ناجحة = قطعة مجانية.";
+  $("cpLink").dataset.l=link;$("waLink").href="https://wa.me/?text="+encodeURIComponent("انضمي لنادي ستر واحصلي على هدية ترحيبية 🎁\n"+link);
   $("cTiers").innerHTML=tiers().map(x=>`<div class="tier ${x.n===t.n?"on":""}"><h4><span>${esc(tn(x.n))}</span><span class="mut">من ${x.min} نقطة</span></h4><div class="mut">${esc(x.p)}${x.m>1?` · نقاط ×${x.m}`:""}</div>${x.n===t.n?`<div style="margin-top:.4rem;font-size:.8rem">✔ مستواج الحالي</div>`:""}</div>`).join("");
   const btn=con?`<a class="btn" href="${con}" target="_blank" rel="noopener">📲 أرسلي سكرين نقاطج للصفحة</a>`:"";
   $("cRew").innerHTML=[...S.rewards].sort((a,b)=>a.c-b.c).map(r=>{const i=S.rewards.indexOf(r),free=/مجان/.test(r.t);return`<div class="row ${free?"free":""}"><span>${free?"🎁 ":""}${esc(r.t)}</span><button class="btn sm" data-a="redeem" data-i="${i}" ${P.points<r.c?"disabled":""}>${r.c} نقطة</button></div>`}).join("");
-  $("cRewNote").innerHTML=`<p class="mut" style="margin-top:.8rem">لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لهذه الصفحة وأرسليها لصفحتنا.</p>${btn}`;
+  $("cRewNote").innerHTML=`<p class="mut" style="margin-top:.8rem">بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا لتأكيد الخصم.</p>${btn}`;
   $("cTerms").innerHTML=(S.terms||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥";
   const h=[];
   SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?"قيد المراجعة":"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
-  REDS.forEach(r=>h.push({ts:r.ts,x:`استبدال: ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?`كود الخصم: <b style="color:var(--gold)">${esc(r.code)}</b>`:"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
+  REDS.forEach(r=>h.push({ts:r.ts,x:`${r.kind==="free"?"طلب":"استبدال:"} ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?`الكود: <b style="color:var(--gold)">${esc(r.code)}</b>`:"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
   TX.forEach(x=>h.push({ts:x.ts,x:`${esc(x.reason)} <b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b>`}));
   h.sort((a,b)=>b.ts-a.ts);
   $("cHist").innerHTML=h.length?h.map(i=>`<div class="row"><span>${i.x}</span><span class="mut">${fmt(i.ts)}</span></div>`).join(""):`<p class="mut c">لا يوجد نشاط بعد</p>`;
@@ -286,7 +326,7 @@ function renderA(){
   $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid),m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
     return`<div class="item"><b>${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
     <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join(""):`<p class="mut c">لا توجد طلبات معلقة</p>`;
-  $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${esc(r.phone)}</b><div>${esc(r.title)} — ${r.cost} نقطة</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
+  $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${esc(r.phone)}</b><div>${esc(r.title)}${r.kind==="free"?" (من اختيارها)":` — ${r.cost} نقطة`}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
   const q=$("srch").value.trim();
   $("cnt").textContent=USERS.length;
   const refs=USERS.filter(u=>u.referredBy&&!u.refDone);
@@ -295,8 +335,8 @@ function renderA(){
   $("aCus").innerHTML=USERS.filter(u=>(u.phone+(u.name||"")).includes(q)).sort((a,b)=>b.lifetime-a.lifetime).map(u=>`<div class="row" data-a="pick" data-id="${u.id}" style="cursor:pointer"><span>${esc(u.name||"")} <small class="mut" dir="ltr">${esc(u.phone)}</small></span><span class="mut">${esc(tn(tierOf(u.lifetime).n))}</span><b style="color:var(--gold)">${u.points}</b></div>`).join("");
 }
 $("srch").oninput=renderA;
-$("subType").onchange=()=>{if(P)renderC()};
-function fillSettings(o=S){$("sW").value=o.welcome;$("sP").value=o.purchase;$("sS").value=o.share;$("sRef").value=o.ref;
+setType("purchase");
+function fillSettings(o=S){$("sW").value=o.welcome;$("sP").value=o.purchase;$("sS").value=o.share;$("sRef").value=o.ref;$("sFB").value=o.freeBuy||3;$("sFR").value=o.freeRef||3;
   $("sT").value=o.tiers.map(t=>[tn(t.n),t.min,t.m,t.p].join("|")).join("\n");$("sR").value=o.rewards.map(r=>r.t+"|"+r.c).join("\n");$("sTag").value=o.tag||"";$("sCon").value=o.contact||"";$("sTerms").value=(o.terms||[]).join("\n")}
 
 async function award(uid,phone,amt,reason,extra={}){
@@ -325,12 +365,12 @@ const A={
         await setDoc(doc(db,"users",c.user.uid),{name:n.slice(0,40),regName:n.slice(0,40),phone:p,referredBy:ref,points:w,lifetime:w,purchases:0,createdAt:Date.now()});
         await addDoc(collection(db,"transactions"),{uid:c.user.uid,phone:p,amount:w,reason:"هدية الترحيب 🎁",ts:Date.now()});
       REG=false}catch(e2){REG=false;toast(e2.code==="auth/email-already-in-use"?"الرقم مسجل باسم مختلف، اكتبي الاسم الثنائي كما سجّلتيه أول مرة":errMsg(e2))}}},
-  pick(d){const u=USERS.find(x=>x.id===d.id);if(!u)return;EID=u.id;$("editCard").classList.remove("hidden");$("eTitle").textContent=u.phone;$("eNm").value=u.name||"";$("eReg").value=u.regName||u.name||"";$("ePts").value=u.points;$("eLife").value=u.lifetime;$("eWhy").value="";$("editCard").scrollIntoView({behavior:"smooth"})},
+  pick(d){const u=USERS.find(x=>x.id===d.id);if(!u)return;EID=u.id;$("editCard").classList.remove("hidden");$("eTitle").textContent=u.phone;$("eNm").value=u.name||"";$("eReg").value=u.regName||u.name||"";$("ePts").value=u.points;$("eLife").value=u.lifetime;$("ePur").value=u.purchases||0;$("eRefN").value=u.refCount||0;$("eWhy").value="";$("editCard").scrollIntoView({behavior:"smooth"})},
   closeEdit(){EID=null;$("editCard").classList.add("hidden")},
-  async saveCust(){const u=USERS.find(x=>x.id===EID);if(!u)return;const nm=$("eNm").value.trim(),pt=parseInt($("ePts").value),lf=parseInt($("eLife").value);
-    if(nm.length<2||isNaN(pt)||isNaN(lf)||pt<0||lf<0)return toast("تأكدي من القيم المدخلة");
+  async saveCust(){const u=USERS.find(x=>x.id===EID);if(!u)return;const nm=$("eNm").value.trim(),pt=parseInt($("ePts").value),lf=parseInt($("eLife").value),pu=parseInt($("ePur").value),rn=parseInt($("eRefN").value);
+    if(nm.length<2||isNaN(pt)||isNaN(lf)||pt<0||lf<0||isNaN(pu)||isNaN(rn)||pu<0||rn<0)return toast("تأكدي من القيم المدخلة");
     try{await runTransaction(db,async tx=>{const r=doc(db,"users",EID),sn=await tx.get(r);if(!sn.exists())throw new Error("الحساب غير موجود");const o=sn.data();
-      tx.update(r,{name:nm.slice(0,40),points:pt,lifetime:lf});
+      tx.update(r,{name:nm.slice(0,40),points:pt,lifetime:lf,purchases:pu,refCount:rn});
       if(pt!==o.points)tx.set(doc(collection(db,"transactions")),{uid:EID,phone:o.phone,amount:pt-o.points,reason:$("eWhy").value.trim()||"تعديل من الإدارة",ts:Date.now()})});
       toast("تم الحفظ ✅")}catch(e){toast(e.message)}},
   async delCust(){const u=USERS.find(x=>x.id===EID);if(!u)return;if(!confirm("حذف "+(u.name||"")+" ("+u.phone+") نهائياً؟ لا يمكن التراجع."))return;
@@ -359,19 +399,23 @@ const A={
   async refOk(d){const u=USERS.find(x=>x.id===d.id),r=u&&USERS.find(x=>x.phone===u.referredBy);if(!u||!r)return;const g=S.ref;
     try{await runTransaction(db,async tx=>{const ra=doc(db,"users",u.id),rb=doc(db,"users",r.id),sa=await tx.get(ra),sb=await tx.get(rb);
       if(!sa.exists()||!sb.exists())throw new Error("الحساب غير موجود");const x1=sa.data(),x2=sb.data();if(x1.refDone)throw new Error("تمت معالجتها مسبقاً");
-      tx.update(ra,{points:x1.points+g,lifetime:x1.lifetime+g,refDone:true});tx.update(rb,{points:x2.points+g,lifetime:x2.lifetime+g});
+      tx.update(ra,{points:x1.points+g,lifetime:x1.lifetime+g,refDone:true});tx.update(rb,{points:x2.points+g,lifetime:x2.lifetime+g,refCount:(x2.refCount||0)+1});
       tx.set(doc(collection(db,"transactions")),{uid:u.id,phone:u.phone,amount:g,reason:"جائزة الانضمام بدعوة صديقة 👭",ts:Date.now()});
       tx.set(doc(collection(db,"transactions")),{uid:r.id,phone:r.phone,amount:g,reason:"جائزة دعوة صديقة 👭",ts:Date.now()})});
       toast("تم منح الجائزة للاثنتين ✅")}catch(e){toast(e.message)}},
   async refNo(d){if(!confirm("تجاهل هذه الإحالة بدون جائزة؟"))return;try{await setDoc(doc(db,"users",d.id),{refDone:true},{merge:true})}catch(e){toast(e.message)}},
+  seg(d){setType(d.t)},
+  goSend(d){setType(d.t);A.ctab({t:"cp2"})},
+  async claimFree(){if(!P||freeAvail(P)<1)return;if(REDS.some(r=>r.kind==="free"&&r.status==="pending"))return toast("عندج طلب قطعة مجانية قيد المراجعة");
+    try{await addDoc(collection(db,"redemptions"),{uid:ME.uid,phone:P.phone,kind:"free",title:"قطعة مجانية 🎁",cost:0,status:"pending",ts:Date.now()});toast("تم إرسال طلبج، راح نتواصل وياج حتى تختارين قطعتج 🎁")}catch(e){toast("تعذر الإرسال")}},
   async admLogin(){const p=norm($("aph").value);if(!p)return toast("رقم هاتف الإدارة غير صحيح");try{await signInWithEmailAndPassword(auth,p+ADM,$("apw").value)}catch(e){toast(errMsg(e))}},
   async send(b){if(!imgData)return toast("اختاري صورة أولاً");
-    if(SUBS.filter(s=>s.status==="pending").length>=3)return toast("لديكِ 3 طلبات قيد المراجعة، يرجى الانتظار");
+    if(SUBS.filter(s=>s.status==="pending").length>=3)return toast("عندج 3 طلبات قيد المراجعة، يرجى الانتظار");
     b.disabled=true;
     try{await addDoc(collection(db,"submissions"),{uid:ME.uid,phone:P.phone,type:$("subType").value,note:"",image:imgData,status:"pending",ts:Date.now()});
       imgData="";$("img").value="";$("pickL").textContent="📷 اختاري الصورة";$("prev").classList.add("hidden");toast("تم الإرسال! ستُضاف النقاط بعد المراجعة ✨")}
     catch(e){toast("تعذر الإرسال: "+(e.code||e.message))}b.disabled=false},
-  async redeem(d){const r=S.rewards[+d.i];if(!r||P.points<r.c)return;if(REDS.some(x=>x.status==="pending"))return toast("لديكِ طلب استبدال قيد المراجعة");
+  async redeem(d){const r=S.rewards[+d.i];if(!r||P.points<r.c)return;if(REDS.some(x=>x.status==="pending"))return toast("عندج طلب استبدال قيد المراجعة");
     if(!confirm(`استبدال ${r.c} نقطة بـ ${r.t}؟`))return;
     try{await addDoc(collection(db,"redemptions"),{uid:ME.uid,phone:P.phone,title:r.t,cost:r.c,status:"pending",ts:Date.now()});toast("تم إرسال طلب الاستبدال")}catch(e){toast("تعذر الإرسال")}},
   async appr(d){const s=PEND.find(x=>x.id===d.id),amt=parseInt($("pa_"+d.id).value);if(!s||!(amt>0))return toast("أدخل عدد نقاط صحيح");
@@ -382,12 +426,13 @@ const A={
       tx.set(doc(collection(db,"transactions")),{uid:s.uid,phone:s.phone,amount:amt,reason:s.type==="share"?"نقاط مشاركة الصورة":"نقاط شراء موثّق",ts:Date.now()})});
       toast("تمت الموافقة وإضافة "+amt+" نقطة")}catch(e){toast(e.message)}},
   async rej(d){const why=prompt("سبب الرفض (اختياري)");if(why===null)return;try{await setDoc(doc(db,"submissions",d.id),{status:"rejected",reason:why.slice(0,100)},{merge:true})}catch(e){toast(e.message)}},
-  async apprR(d){const r=PRED.find(x=>x.id===d.id);if(!r)return;const code=String(Math.floor(100000+Math.random()*900000));
+  async apprR(d){const r=PRED.find(x=>x.id===d.id);if(!r)return;const code=String(Math.floor(100000+Math.random()*900000)),free=r.kind==="free";
     try{await runTransaction(db,async tx=>{const rr=doc(db,"redemptions",r.id),rs=await tx.get(rr),ur=doc(db,"users",r.uid),us=await tx.get(ur);
-      if(rs.data().status!=="pending")throw new Error("تمت معالجته مسبقاً");const u=us.data();if(u.points<r.cost)throw new Error("رصيد الزبونة لا يكفي");
-      tx.update(ur,{points:u.points-r.cost});tx.update(rr,{status:"approved",code});
-      tx.set(doc(collection(db,"transactions")),{uid:r.uid,phone:r.phone,amount:-r.cost,reason:"استبدال: "+r.title,ts:Date.now()})});
-      toast("كود الخصم: "+code)}catch(e){toast(e.message)}},
+      if(rs.data().status!=="pending")throw new Error("تمت معالجته مسبقاً");const u=us.data();
+      if(free){if(freeAvail(u)<1)throw new Error("لا توجد قطعة مجانية متاحة لهذه الزبونة");tx.update(ur,{freeUsed:(u.freeUsed||0)+1})}
+      else{if(u.points<r.cost)throw new Error("رصيد الزبونة لا يكفي");tx.update(ur,{points:u.points-r.cost});tx.set(doc(collection(db,"transactions")),{uid:r.uid,phone:r.phone,amount:-r.cost,reason:"استبدال: "+r.title,ts:Date.now()})}
+      tx.update(rr,{status:"approved",code})});
+      toast("الكود: "+code)}catch(e){toast(e.message)}},
   async rejR(d){const why=prompt("سبب الرفض (اختياري)");if(why===null)return;try{await setDoc(doc(db,"redemptions",d.id),{status:"rejected",reason:why.slice(0,100)},{merge:true})}catch(e){toast(e.message)}},
   async adjust(){const p=norm($("adjPh").value),amt=parseInt($("adjAmt").value),u=USERS.find(x=>x.phone===p);
     if(!u||isNaN(amt)||!amt)return toast("تأكدي من الرقم (مسجل) ومن عدد النقاط");
@@ -397,7 +442,7 @@ const A={
     const rl=$("sR").value.split("\n").filter(l=>l.trim()).map(l=>{const[t,c]=l.split("|");if(!t||isNaN(+c))throw new Error("صيغة المكافآت غير صحيحة");return{t:t.trim(),c:+c}});
     if(!tl.length||!tl.some(t=>t.min===0))throw new Error("يجب وجود مستوى أول حدّه 0");
     const con=$("sCon").value.trim();if(con&&!/^https:\/\//.test(con))throw new Error("الرابط لازم يبدأ بـ https://");
-    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,ver:2,tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
+    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,freeBuy:+$("sFB").value||3,freeRef:+$("sFR").value||3,ver:3,tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
     await setDoc(doc(db,"settings","config"),S);toast("تم حفظ الإعدادات ✅");renderA()}catch(e){toast(e.message)}}
 };
 ["nm","ph"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")A.login()}));$("apw").addEventListener("keydown",e=>{if(e.key==="Enter")A.admLogin()});
