@@ -110,6 +110,32 @@ a.nm{font-weight:700;font-size:1.05rem;text-decoration:none;cursor:pointer}
 .acts{flex-wrap:wrap}
 details.card>summary{cursor:pointer;font-weight:700;list-style:none}details.card>summary::-webkit-details-marker{display:none}details.card[open]>summary{margin-bottom:.5rem}
 .stats3{display:flex;justify-content:space-around;margin-top:.9rem}.stats3 b{font-size:1.2rem}
+
+#vAdm{--ac:#c9a24b}
+#vAdm .tabs{position:sticky;top:60px;z-index:8;background:rgba(5,5,5,.96);padding:.45rem 0;margin-bottom:1rem;backdrop-filter:blur(10px)}
+#vAdm .tabs button{position:relative;font-size:.92rem}
+#vAdm .tabs .on{background:var(--ac);border-color:var(--ac);color:#000}
+#vAdm h2,#vAdm h3{letter-spacing:.2px}
+#vAdm .pts{color:var(--ac)}
+#vAdm .badge{border-color:var(--ac);color:var(--ac)}
+#vAdm .card{background:linear-gradient(165deg,#121212,#080808);border-color:rgba(255,255,255,.12);border-radius:18px}
+#vAdm .item{background:linear-gradient(165deg,#111,#070707);border:1px solid rgba(255,255,255,.12);border-right:3px solid var(--ac);border-radius:16px;padding:1rem;margin-bottom:.9rem}
+#vAdm .item.k-free{border-right-color:var(--ok)}#vAdm .item.k-ver{border-right-color:#fff}#vAdm .item.k-red{border-right-color:#60a5fa}#vAdm .item.k-ref{border-right-color:#f472b6}
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.9rem}
+.stt{background:linear-gradient(160deg,#171717,#0a0a0a);border:1px solid rgba(201,162,75,.35);border-radius:14px;padding:.7rem .3rem;text-align:center}
+.stt b{display:block;font-size:1.25rem;color:#c9a24b;font-weight:800;line-height:1.25}.stt span{color:var(--mut);font-size:.68rem;line-height:1.3;display:block}
+.chips{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:.6rem;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips:empty{display:none}
+.chip{flex:none;padding:.4rem .9rem;border:1px solid var(--bd);border-radius:20px;background:none;color:var(--mut);font-size:.8rem;cursor:pointer;font-weight:600;font-family:inherit}
+.chip.on{background:#c9a24b;color:#000;border-color:#c9a24b}
+.av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#e2c277,#8a6a24);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;flex:none;font-size:1.05rem}
+.av.sm{width:34px;height:34px;font-size:.9rem}.av.lg{width:68px;height:68px;font-size:1.7rem;margin:0 auto .6rem}
+a.who{display:flex;align-items:center;gap:.65rem;text-decoration:none;cursor:pointer;min-width:0}.who b{display:block;font-size:1.02rem}.who small{display:block;font-size:.75rem}
+.who2{display:flex;align-items:center;gap:.65rem}
+.why{background:rgba(201,162,75,.08);border:1px solid rgba(201,162,75,.35);border-radius:12px;padding:.6rem .8rem;margin:.6rem 0;font-size:.88rem;line-height:1.9}.why>b:first-child{color:#c9a24b}
+.nmc{display:inline-block;padding:1px 11px;border-radius:14px;background:rgba(255,255,255,.12);margin:2px 3px;font-size:.82rem;font-weight:600}
+.sec{display:flex;align-items:center;gap:.6rem;color:#c9a24b;font-weight:700;margin:1rem 0 .5rem;font-size:.92rem}.sec::after{content:"";flex:1;height:1px;background:rgba(201,162,75,.3)}
+.cwin .step{align-items:flex-start}
 </style>
 </head>
 <body>
@@ -147,6 +173,7 @@ details.card>summary{cursor:pointer;font-weight:700;list-style:none}details.card
     <div class="card" id="cPts"></div>
     <div class="card">
       <h3>كيف تجمعين النقاط؟</h3>
+      <details class="acc" open><summary><span class="ic">👑</span><span class="t"><b>اربحي عباية مجانية</b><small>3 طرق، اختاري الأسهل لج</small></span><span class="chev">‹</span></summary><div class="accB cwin" id="winB"></div></details>
       <details class="acc"><summary><span class="ic">🛍️</span><span class="t"><b>اشتري ووثّقي</b><small>اشتري عباية وأرسلي صورتها</small></span><span class="pill" id="pBuy"></span><span class="chev">‹</span></summary>
         <div class="accB">
           <a class="opt" href="https://www.instagram.com/str.shoop" target="_blank" rel="noopener"><span>🛒 شراء قطعة</span><span class="chev">‹</span></a>
@@ -183,6 +210,7 @@ details.card>summary{cursor:pointer;font-weight:700;list-style:none}details.card
   </div>
   <div id="cpN" class="cp hidden"><div class="card"><h3>🔔 الإشعارات</h3><div id="cNotif"></div></div><p class="c" style="margin:1rem 0"><a data-a="ctab" data-t="cp1">رجوع للرئيسية</a></p></div>
   <div id="cp3" class="cp hidden">
+    <div class="card cwin" id="cWin"></div>
     <div class="card"><h3>🎁 المكافآت</h3><div id="cRew"></div><div id="cRewNote"></div></div>
     <div class="card"><h3>👑 مستوياتج</h3><p class="mut" style="margin-bottom:.8rem">كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁</p><div id="cTiers"></div></div>
   </div>
@@ -196,13 +224,14 @@ details.card>summary{cursor:pointer;font-weight:700;list-style:none}details.card
 </section>
 
 <section id="vAdm" class="hidden">
+  <div id="aStats" class="stg"></div>
   <div class="tabs">
     <button class="on" data-a="tab" data-t="tReq">الطلبات<i class="dot s hidden" id="reqN"></i></button>
     <button data-a="tab" data-t="tCus">الزبونات</button>
     <button data-a="tab" data-t="tSet">الإعدادات</button>
   </div>
 
-  <div id="tReq" class="tp"><div id="aReq"></div></div>
+  <div id="tReq" class="tp"><div id="aChips" class="chips"></div><div id="aReq"></div></div>
 
   <div id="tCus" class="tp hidden">
     <input id="srch" placeholder="🔍 ابحثي عن اسم">
@@ -274,7 +303,7 @@ const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,abaya:500,
 const NEWT=["اجمعي 500 نقطة وبدليها بعباية من اختيارج 🎁","إذا عندج قطعة مجانية اضغطي «مطالبة»، يوصل طلبج للإدارة، وبعد الموافقة تُسجَّل لج وتوصلج إشعار."];
 const FREEMSG="تم الحصول على قطعة مجانية 🎁";
 const OLDT=[JSON.stringify(["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","جائزة دعوة الصديقة: تحصلين إنتي وهي على نقاط بعد ما توثّق أول شراء إلها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 صديقات تدعينهم ويشترن = قطعة مجانية من اختيارج.","توثيق حسابج (واتساب + انستغرام) يعطيج +10 نقاط وتصيرين زبونة رسمية ✔"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 دعوات ناجحة (صديقاتج اشترين) = قطعة مجانية من اختيارج.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"])];
-let S=DEF,ME=null,P=null,SUBS=[],REDS=[],TX=[],USERS=[],PEND=[],PRED=[],unsubs=[],REG=false,EID=null,DET=null,CUR="tReq",BACK="tReq";
+let S=DEF,ME=null,P=null,SUBS=[],REDS=[],TX=[],USERS=[],PEND=[],PRED=[],unsubs=[],REG=false,EID=null,DET=null,CUR="tReq",BACK="tReq",UID=new Map(),KEYM=new Map(),FRI=new Map();
 const $=id=>document.getElementById(id);
 const SOC=[["فيسبوك","https://www.facebook.com/share/19pYD9N6jS/?mibextid=wwXIfr"],["إنستغرام","https://www.instagram.com/str.shoop"],["تيك توك","https://www.tiktok.com/@str.shoop"]];
 const socHtml=SOC.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join("");
@@ -299,7 +328,7 @@ const VREASON="توثيق الزبونة كزبونة رسمية في نظام �
 const ph=u=>u.wa||u.phone||(u.ig?"@"+u.ig:"");
 const CH=`<span class="vchk" style="margin-inline-start:0;margin-inline-end:.4rem">✓</span>`;
 let REFQ=null,verKey="",VM="wa";
-const refOf=u=>USERS.find(x=>x.id===u.referredBy||keyOf(x.regName||x.name||"")===u.referredBy);
+const refOf=u=>UID.get(u.referredBy)||KEYM.get(u.referredBy);
 const errMsg=e=>({"auth/email-already-in-use":"هذا الرقم مسجل مسبقاً، سجّلي دخول","auth/invalid-credential":"الرقم أو الرمز السري غير صحيح","auth/too-many-requests":"محاولات كثيرة، حاولي لاحقاً","auth/network-request-failed":"تحقق من الإنترنت"}[e.code]||"حدث خطأ: "+(e.code||e.message));
 const clear=()=>{unsubs.forEach(u=>u());unsubs=[]};
 const listen=(q,fn)=>unsubs.push(onSnapshot(q,s=>fn(s.docs.map(d=>({id:d.id,...d.data()}))),e=>console.error(e)));
@@ -327,7 +356,7 @@ onAuthStateChanged(auth,async u=>{
     show("vAdm");goTab("tReq");fillSettings();
     listen(query(collection(db,"submissions"),where("status","==","pending")),r=>{PEND=r;renderA()});
     listen(query(collection(db,"redemptions"),where("status","==","pending")),r=>{PRED=r;renderA()});
-    listen(collection(db,"users"),r=>{USERS=r;renderA()});
+    listen(collection(db,"users"),r=>{USERS=r;buildMaps();renderA()});
   }
 });
 
@@ -346,8 +375,14 @@ function renderC(){
   <div class="qa"><button class="btn" data-a="ctab" data-t="cp2">📤 أرسلي طلب</button><button class="btn ghost" data-a="ctab" data-t="cp3">🎁 استبدلي</button></div>`;
   const pb=(P.purchases||0)%fb,pr=(P.refCount||0)%fr;
   const pAny=REDS.some(r=>r.status==="pending");
+  const wc=used<Math.floor((P.purchases||0)/fb)?`أكملتي ${fb} مشتريات موثّقة 🛍️`:`${fr} من صديقاتج اشترن 👭`;
+  const wh=`<div class="step"><span class="ic">🛍️</span><div style="flex:1"><b>${fb} مشتريات موثّقة = قطعة مجانية</b><div class="mut">اشتري ووثّقي ${fb} قطع، والقطعة بعدها مجانية من اختيارج.</div><div class="bar"><i style="width:${pb/fb*100}%"></i></div><small class="mut">${pb} / ${fb}</small></div></div>
+  <div class="step"><span class="ic">👭</span><div style="flex:1"><b>${fr} صديقات يشترن = قطعة مجانية</b><div class="mut">ادعي صديقاتج برابطج، ولما ${fr} منهن يشترن تحصلين قطعة مجانية.</div><div class="bar"><i style="width:${pr/fr*100}%"></i></div><small class="mut">${pr} / ${fr}</small></div></div>
+  <div class="step"><span class="ic">💰</span><div style="flex:1"><b>${AB} نقطة = عباية مجانية</b><div class="mut">اجمعي ${AB} نقطة من الشراء والستوري والدعوات والتوثيق وبدليها بعباية مجانية، بدون ما تحتاجين تكملين ${fb} مشتريات أو تجيبين صديقات.</div><div class="bar"><i style="width:${Math.min(100,P.points/AB*100)}%"></i></div><small class="mut">${Math.min(P.points,AB)} / ${AB}</small></div></div>`;
+  $("winB").innerHTML=wh;$("cWin").innerHTML=`<h3>🎁 كيف تحصلين عباية مجانية؟</h3>`+wh;
   $("cFree").innerHTML=`<h3>🎁 القطع المجانية</h3>
   ${av>0?`<div class="row free"><span>🎁 قطعة مجانية${av>1?` × ${av}`:""}</span>${pend?`<span class="mut">⏳ قيد المراجعة</span>`:`<button class="btn sm" data-a="claimFree">مطالبة</button>`}</div>`:""}
+  ${av>0?`<div class="mut" style="margin:.3rem 0 .6rem">السبب: ${wc}</div>`:""}
   ${used>0?`<div class="mut" style="margin:.5rem 0">${CH}تم الحصول على ${used} ${used>1?"قطع":"قطعة"} مجانية</div>`:""}
   <div class="prog"><div class="pl"><span>🛍️ مشترياتج الموثّقة</span><b>${pb} / ${fb}</b></div><div class="bar"><i style="width:${pb/fb*100}%"></i></div></div>
   <div class="prog"><div class="pl"><span>👭 صديقاتج اللي اشتروا</span><b>${pr} / ${fr}</b></div><div class="bar"><i style="width:${pr/fr*100}%"></i></div></div>
@@ -391,62 +426,90 @@ let imgData="";
 $("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=await compress(f);$("prev").src=imgData;$("prev").classList.remove("hidden");$("pickL").textContent="✔ تم اختيار الصورة، اضغطي للتغيير"}catch{toast("تعذر قراءة الصورة")}};
 
 /* ---------- Admin ---------- */
-const KIND={buy:["🛍️ توثيق شراء","buy"],share:["📸 مشاركة ستوري","share"],ver:["✔ توثيق حساب","ver"],ref:["👭 إحالة","ref"],red:["🎁 استبدال نقاط","red"],free:["🎁 قطعة مجانية","free"]};
-const uBy=id=>USERS.find(x=>x.id===id);
+const KIND={buy:["🛍️ شراء","buy"],share:["📸 ستوري","share"],ver:["✔ توثيق","ver"],ref:["👭 إحالة","ref"],red:["💰 استبدال","red"],free:["🎁 مجانية","free"]};
+let FILT="all",RAF=0;
+const uBy=id=>UID.get(id);
 const FREEDONE="تم إرسال القطعة المجانية ✓";
-function setHTML(el,html){const m={};el.querySelectorAll("input[data-k]").forEach(i=>m[i.dataset.k]=i.value);el.innerHTML=html;el.querySelectorAll("input[data-k]").forEach(i=>{if(i.dataset.k in m)i.value=m[i.dataset.k]})}
+const nf=n=>Number(n||0).toLocaleString("en");
+const ago=t=>{if(!t)return"";const m=Math.floor((Date.now()-t)/60000);return m<1?"الآن":m<60?`قبل ${m} د`:m<1440?`قبل ${Math.floor(m/60)} ساعة`:fmt(t)};
+const ini=n=>esc([...(n||"").trim()][0]||"؟");
+function buildMaps(){UID=new Map();KEYM=new Map();FRI=new Map();
+  USERS.forEach(u=>{UID.set(u.id,u);KEYM.set(keyOf(u.regName||u.name||""),u)});
+  USERS.forEach(x=>{if(!x.referredBy)return;const r=refOf(x);if(r){if(!FRI.has(r.id))FRI.set(r.id,[]);FRI.get(r.id).push(x)}});
+  FRI.forEach(a=>a.sort((p,q)=>(p.createdAt||0)-(q.createdAt||0)))}
+const frOf=u=>FRI.get(u.id)||[];
+const chipsOf=a=>a.map(x=>`<span class="nmc">${esc(x.name||"")}</span>`).join("");
+function freeWhy(u){const fb=S.freeBuy||3,fr=S.freeRef||3,gb=Math.floor((u.purchases||0)/fb),gr=Math.floor((u.refCount||0)/fr),L=[],ok=frOf(u).filter(x=>x.refDone);
+  if(gb>0)L.push(`🛍️ أكملت <b>${gb*fb}</b> مشتريات موثّقة`);
+  if(gr>0){const n=ok.slice(0,gr*fr);L.push(`👭 صديقاتها اللي اشترن: ${n.length?chipsOf(n):`<b>${gr*fr}</b> صديقات`}`)}
+  return L}
+function nextWhy(u){const fb=S.freeBuy||3,fr=S.freeRef||3,gb=Math.floor((u.purchases||0)/fb),used=u.freeUsed||0;
+  if(used<gb)return`إكمالج ${fb} مشتريات موثّقة`;
+  const g=used-gb,n=frOf(u).filter(x=>x.refDone).slice(g*fr,(g+1)*fr).map(x=>x.name||"");
+  return n.length?`شراء صديقاتج: ${n.join("، ")}`:`دعوتج ${fr} صديقات واشترين`}
 function pendingOf(){const L=[];
   PEND.forEach(s=>L.push({k:isV(s)?"ver":s.type==="share"?"share":"buy",ts:s.ts,uid:s.uid,s}));
   PRED.forEach(r=>L.push({k:r.kind==="free"?"free":"red",ts:r.ts,uid:r.uid,r}));
   USERS.forEach(u=>{if(u.referredBy&&!u.refDone){const r=refOf(u);if(r&&(u.purchases||0)>=1)L.push({k:"ref",ts:u.createdAt||0,uid:u.id,u,r})}});
   return L.sort((a,b)=>a.ts-b.ts)}
+function setHTML(el,html){const m={};el.querySelectorAll("input[data-k]").forEach(i=>m[i.dataset.k]=i.value);el.innerHTML=html;el.querySelectorAll("input[data-k]").forEach(i=>{if(i.dataset.k in m)i.value=m[i.dataset.k]})}
 function reqCard(it,inDet){
-  const u=uBy(it.uid),[lbl,cls]=KIND[it.k],mult=u?tierOf(u.lifetime||0).m:1;
-  const top=`<div class="ih">${inDet?"<span></span>":`<a class="nm" data-a="openCust" data-id="${esc(it.uid)}">${u&&u.verified?CH:""}${esc(u?u.name||"":"")}</a>`}<span class="tg ${cls}">${lbl}</span></div><div class="mut" style="margin-bottom:.3rem">${it.ts?fmt(it.ts):""}</div>`;
+  const u=uBy(it.uid),[lbl,cls]=KIND[it.k],mult=u?tierOf(u.lifetime||0).m:1,nm=u?u.name||"":"";
+  const top=`<div class="ih">${inDet?`<span class="mut">${ago(it.ts)}</span>`:`<a class="who" data-a="openCust" data-id="${esc(it.uid)}"><span class="av">${ini(nm)}</span><span><b>${u&&u.verified?CH:""}${esc(nm)}</b><small class="mut">${ago(it.ts)}</small></span></a>`}<span class="tg ${cls}">${lbl}</span></div>`;
   let body="";
   if(it.k==="buy"||it.k==="share"){const s=it.s,base=it.k==="share"?S.share:S.purchase;
     body=`${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in"><div class="acts"><span class="mut">النقاط</span><input type="number" data-k="${it.k}_${s.id}" value="${Math.round(base*mult)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div>`}
   else if(it.k==="ver"){const s=it.s,v=parseV(s);
     body=`<div class="row"><span class="mut">${v.m==="wa"?"📱 رقم الهاتف":"📷 يوزر انستغرام"}</span><b dir="ltr">${v.m==="ig"?"@":""}${esc(v.v)}</b></div><div class="acts"><span class="mut">النقاط</span><input type="number" data-k="ver_${s.id}" value="${S.verify||0}"><button class="btn sm ok" data-a="apprV" data-id="${s.id}">موافقة وتوثيق</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div>`}
   else if(it.k==="ref"){
-    body=`<div>دعتها: <b>${esc(it.r.name||"")}</b> · اشترت أول قطعة</div><div class="acts"><button class="btn sm ok" data-a="refOk" data-id="${it.u.id}">منح +${S.ref} للاثنتين</button><button class="btn sm ghost" data-a="refNo" data-id="${it.u.id}">تجاهل</button></div>`}
-  else if(it.k==="red"){const r=it.r;
-    body=`<div>${esc(r.title)} — <b>${r.cost}</b> نقطة</div><div class="mut">رصيدها: ${u?u.points:"؟"}${u&&u.points<r.cost?" ⚠️ لا يكفي":""}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div>`}
-  else{const r=it.r;
-    body=`<div>تطالب بقطعتها المجانية</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">${FREEDONE}</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div>`}
-  return`<div class="item">${top}${body}</div>`}
-function renderDet(){
+    body=`<div class="why"><b>السبب:</b><br>👭 دعتها <span class="nmc">${esc(it.r.name||"")}</span> وهي اشترت أول قطعة</div><div class="acts"><button class="btn sm ok" data-a="refOk" data-id="${it.u.id}">منح +${S.ref} للاثنتين</button><button class="btn sm ghost" data-a="refNo" data-id="${it.u.id}">تجاهل</button></div>`}
+  else if(it.k==="red"){const r=it.r,ab=/عباية/.test(r.title);
+    body=`<div class="why"><b>السبب:</b><br>${ab?`💰 جمعت <b>${nf(u?u.points:0)}</b> نقطة وتبدّل <b>${r.cost}</b> منها بعباية مجانية`:`💰 تبدّل <b>${r.cost}</b> نقطة بـ ${esc(r.title)}`}${u&&u.points<r.cost?"<br>⚠️ رصيدها الحالي لا يكفي":""}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div>`}
+  else{const r=it.r,w=u?freeWhy(u):[];
+    body=`<div class="why"><b>تطالب بقطعتها المجانية بسبب:</b><br>${w.join("<br>")||"—"}</div><div class="mut">القطع المتاحة لها: <b>${u?freeAvail(u):0}</b></div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">${FREEDONE}</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div>`}
+  return`<div class="item k-${it.k}">${top}${body}</div>`}
+function renderDet(L){
   if(!DET)return;const u=uBy(DET);if(!u){A.backList();return}
-  const t=tierOf(u.lifetime||0),av=freeAvail(u),fb=S.freeBuy||3,fr=S.freeRef||3,L=pendingOf().filter(i=>i.uid===u.id),rf=u.referredBy?refOf(u):null;
-  $("dHead").innerHTML=`<h2>${u.verified?CH:""}${esc(u.name||"")}</h2><div class="mut" dir="ltr">${esc(ph(u))}</div><span class="badge" style="margin-top:.5rem">${esc(tn(t.n))}</span><div class="pts">${u.points}</div><div class="mut">نقطة</div>
-  <div class="stats3"><div><b>${u.purchases||0}</b><div class="mut">مشتريات</div></div><div><b>${u.refCount||0}</b><div class="mut">دعوات</div></div><div><b>${u.lifetime||0}</b><div class="mut">إجمالي النقاط</div></div></div>
-  ${u.referredBy?`<p class="mut" style="margin-top:.8rem">دعتها: ${rf?esc(rf.name||""):"غير مسجلة"}${u.refDone?" ✓":(u.purchases||0)>=1?"":" · بانتظار أول شراء"}</p>`:""}`;
-  setHTML($("dReq"),`<div class="card"><h3>بانتظار موافقتج${L.length?`<i class="dot s">${L.length}</i>`:""}</h3>${L.length?L.map(i=>reqCard(i,true)).join(""):`<p class="mut c">ما أكو طلبات معلقة</p>`}</div>`);
-  $("dFree").innerHTML=`<h3>🎁 القطع المجانية</h3>
+  L=(L||pendingOf()).filter(i=>i.uid===u.id);
+  const t=tierOf(u.lifetime||0),av=freeAvail(u),fb=S.freeBuy||3,fr=S.freeRef||3,AB=S.abaya||500,rf=u.referredBy?refOf(u):null,fl=frOf(u),w=freeWhy(u);
+  $("dHead").innerHTML=`<div class="av lg">${ini(u.name)}</div><h2>${u.verified?CH:""}${esc(u.name||"")}</h2><div class="mut" dir="ltr">${esc(ph(u))}</div><span class="badge" style="margin-top:.5rem">${esc(tn(t.n))}</span><div class="pts">${nf(u.points)}</div><div class="mut">نقطة</div>
+  <div class="stats3"><div><b>${u.purchases||0}</b><div class="mut">مشتريات</div></div><div><b>${u.refCount||0}</b><div class="mut">دعوات</div></div><div><b>${nf(u.lifetime)}</b><div class="mut">إجمالي النقاط</div></div></div>
+  ${rf?`<p class="mut" style="margin-top:.8rem">دعتها: <span class="nmc">${esc(rf.name||"")}</span>${u.refDone?" ✓":(u.purchases||0)>=1?"":" · بانتظار أول شراء"}</p>`:""}`;
+  setHTML($("dReq"),`<div class="sec">بانتظار موافقتج${L.length?`<i class="dot s">${L.length}</i>`:""}</div>${L.length?L.map(i=>reqCard(i,true)).join(""):`<div class="card c mut">ما أكو طلبات معلقة ✅</div>`}`);
+  $("dFree").innerHTML=`<div class="sec">🎁 القطع المجانية</div>
   <div class="row"><span>متاحة الآن</span><b>${av}</b></div>
   <div class="row"><span>${CH}تم تسليمها</span><b>${u.freeUsed||0}</b></div>
+  ${av>0?`<div class="why"><b>سبب الاستحقاق:</b><br>${w.join("<br>")||"—"}</div>`:""}
   <div class="row"><span class="mut">مشتريات للقطعة القادمة</span><b>${(u.purchases||0)%fb} / ${fb}</b></div>
-  <div class="row"><span class="mut">دعوات للقطعة القادمة</span><b>${(u.refCount||0)%fr} / ${fr}</b></div>
-  ${av>0?`<button class="btn ok" data-a="giveFree" data-id="${u.id}">${FREEDONE}</button>`:""}`}
-function renderA(){
+  <div class="row"><span class="mut">صديقات للقطعة القادمة</span><b>${(u.refCount||0)%fr} / ${fr}</b></div>
+  <div class="row"><span class="mut">نقاط للعباية</span><b>${Math.min(u.points,AB)} / ${AB}</b></div>
+  ${av>0?`<button class="btn ok" data-a="giveFree" data-id="${u.id}">${FREEDONE}</button>`:""}
+  <div class="sec">👭 الصديقات اللي دعتهن (${fl.length})</div>
+  ${fl.length?fl.map(x=>`<div class="row"><span>${x.verified?CH:""}${esc(x.name||"")}</span><span class="mut">${x.refDone?"✓ احتُسبت":(x.purchases||0)>=1?"اشترت · بانتظار المنح":"ما اشترت بعد"}</span></div>`).join(""):`<p class="mut c">ما دعت أحد بعد</p>`}`}
+function renderA(){if(RAF)return;RAF=requestAnimationFrame(()=>{RAF=0;drawA()})}
+function drawA(){
   const L=pendingOf();
+  $("aStats").innerHTML=[[USERS.length,"عدد الزبونات"],[L.length,"طلبات معلقة"],[nf(USERS.reduce((a,u)=>a+(u.lifetime||0),0)),"نقاط ممنوحة"],[USERS.reduce((a,u)=>a+(u.freeUsed||0),0),"قطع مجانية مسلّمة"]].map(([v,l])=>`<div class="stt"><b>${v}</b><span>${l}</span></div>`).join("");
   $("reqN").textContent=L.length;$("reqN").classList.toggle("hidden",!L.length);
-  setHTML($("aReq"),L.length?`<p class="mut" style="margin-bottom:.6rem">${L.length} طلب بانتظار موافقتج</p>`+L.map(i=>reqCard(i)).join(""):`<div class="card c"><div style="font-size:2.2rem">✅</div><p class="mut">ما أكو طلبات، كلشي تمام</p></div>`);
-  const q=$("srch").value.trim(),cnt={};L.forEach(i=>cnt[i.uid]=(cnt[i.uid]||0)+1);
-  $("cusTitle").textContent=`${USERS.length} زبونة · ${USERS.filter(u=>u.verified).length} موثقة`;
-  const rows=USERS.filter(u=>!q||((u.wa||"")+(u.phone||"")+(u.ig||"")+(u.name||"")).includes(q)).sort((a,b)=>(a.name||"").localeCompare(b.name||"","ar"));
-  $("aCus").innerHTML=rows.length?rows.map(u=>`<div class="nrow" data-a="openCust" data-id="${u.id}"><span>${u.verified?CH:""}${esc(u.name||"")}</span>${cnt[u.id]?`<i class="dot s">${cnt[u.id]}</i>`:""}</div>`).join(""):`<p class="mut c" style="padding:1rem">ما أكو نتائج</p>`;
-  renderDet();
+  if(DET){renderDet(L);return}
+  if(CUR==="tReq"){const C={};L.forEach(i=>C[i.k]=(C[i.k]||0)+1);if(FILT!=="all"&&!C[FILT])FILT="all";
+    $("aChips").innerHTML=L.length?[["all","الكل",L.length],...Object.keys(KIND).filter(k=>C[k]).map(k=>[k,KIND[k][0],C[k]])].map(([k,n,c])=>`<button class="chip ${FILT===k?"on":""}" data-a="filt" data-t="${k}">${n} · ${c}</button>`).join(""):"";
+    const V=FILT==="all"?L:L.filter(i=>i.k===FILT);
+    setHTML($("aReq"),V.length?V.map(i=>reqCard(i)).join(""):`<div class="card c"><div style="font-size:2.2rem">✅</div><p class="mut">ما أكو طلبات، كلشي تمام</p></div>`)}
+  if(CUR==="tCus"){const q=$("srch").value.trim(),cnt={};L.forEach(i=>cnt[i.uid]=(cnt[i.uid]||0)+1);
+    $("cusTitle").textContent=`${USERS.length} زبونة · ${USERS.filter(u=>u.verified).length} موثقة · ${nf(USERS.reduce((a,u)=>a+(u.lifetime||0),0))} نقطة ممنوحة`;
+    const rows=USERS.filter(u=>!q||((u.wa||"")+(u.phone||"")+(u.ig||"")+(u.name||"")).includes(q)).sort((a,b)=>(a.name||"").localeCompare(b.name||"","ar"));
+    $("aCus").innerHTML=rows.length?rows.map(u=>`<div class="nrow" data-a="openCust" data-id="${u.id}"><span class="who2"><span class="av sm">${ini(u.name)}</span><span>${u.verified?CH:""}${esc(u.name||"")}</span></span>${cnt[u.id]?`<i class="dot s">${cnt[u.id]}</i>`:""}</div>`).join(""):`<p class="mut c" style="padding:1rem">ما أكو نتائج</p>`}
 }
-function goTab(id){DET=null;EID=null;CUR=id;document.querySelectorAll(".tp").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x.dataset.t===id));scrollTo({top:0})}
+function goTab(id){DET=null;EID=null;CUR=id;document.querySelectorAll(".tp").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x.dataset.t===id));$("aStats").classList.toggle("hidden",id==="tSet");drawA();scrollTo({top:0})}
 async function sendFree(uid){
-  const pr=PRED.find(r=>r.uid===uid&&r.kind==="free");
+  const pr=PRED.find(r=>r.uid===uid&&r.kind==="free"),u0=uBy(uid),why=u0?nextWhy(u0):"",msg=FREEMSG+(why?" — بسبب "+why:"");
   try{await runTransaction(db,async tx=>{const ur=doc(db,"users",uid),us=await tx.get(ur);if(!us.exists())throw new Error("الحساب غير موجود");const x=us.data();if(freeAvail(x)<1)throw new Error("لا توجد قطعة مجانية متاحة لهذه الزبونة");
     let rr=null,rs=null;if(pr){rr=doc(db,"redemptions",pr.id);rs=await tx.get(rr)}
     tx.update(ur,{freeUsed:(x.freeUsed||0)+1});
     if(rs&&rs.exists()&&rs.data().status==="pending")tx.update(rr,{status:"approved"});
-    tx.set(doc(collection(db,"transactions")),{uid,phone:x.phone||"",amount:0,reason:FREEMSG,ts:Date.now()})});
-    toast("تم ✅ سُجّلت القطعة المجانية وتوصلها إشعار")}catch(e){toast(e.message)}}
+    tx.set(doc(collection(db,"transactions")),{uid,phone:x.phone||"",amount:0,reason:msg,ts:Date.now()})});
+    toast("تم ✅ سُجّلت القطعة وتوصلها إشعار")}catch(e){toast(e.message)}}
 $("srch").oninput=renderA;
 setType("purchase");
 function fillSettings(o=S){$("sW").value=o.welcome;$("sP").value=o.purchase;$("sS").value=o.share;$("sRef").value=o.ref;$("sV").value=o.verify??10;$("sFB").value=o.freeBuy||3;$("sFR").value=o.freeRef||3;$("sAb").value=o.abaya||500;
@@ -479,8 +542,9 @@ const A={
       REG=false}catch(e2){REG=false;toast(errMsg(e2))}}},
   openCust(d){const u=uBy(d.id);if(!u)return;BACK=CUR;DET=u.id;EID=u.id;
     $("eNm").value=u.name||"";$("eReg").value=u.regName||u.name||"";$("ePts").value=u.points;$("eLife").value=u.lifetime;$("ePur").value=u.purchases||0;$("eRefN").value=u.refCount||0;$("eFree").value=u.freeUsed||0;$("eWhy").value="";$("editCard").open=false;
-    document.querySelectorAll(".tp").forEach(x=>x.classList.toggle("hidden",x.id!=="tDet"));renderDet();scrollTo({top:0})},
+    document.querySelectorAll(".tp").forEach(x=>x.classList.toggle("hidden",x.id!=="tDet"));$("aStats").classList.add("hidden");renderDet();scrollTo({top:0})},
   backList(){goTab(BACK)},
+  filt(d){FILT=d.t;drawA()},
   async giveFree(d){const u=uBy(d.id);if(!u)return;if(!confirm("تأكيد إرسال القطعة المجانية إلى "+(u.name||"")+"؟"))return;await sendFree(u.id)},
   async redeemAbaya(){const AB=S.abaya||500;if(!P||P.points<AB)return;if(REDS.some(x=>x.status==="pending"))return toast("عندج طلب قيد المراجعة");if(!confirm(`استبدال ${AB} نقطة بعباية؟`))return;
     try{await addDoc(collection(db,"redemptions"),{uid:ME.uid,phone:P.phone||"",title:"عباية مجانية 🎁",cost:AB,status:"pending",ts:Date.now()});toast("تم إرسال طلبج للإدارة ✅")}catch(e){toast("تعذر الإرسال")}},
