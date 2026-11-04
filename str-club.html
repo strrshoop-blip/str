@@ -188,7 +188,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div id="tReq" class="tp">
     <div id="aStats" class="card" style="display:flex;justify-content:space-around;text-align:center"></div>
     <div class="card"><h3>👭 الإحالات</h3><div id="aRef"></div></div>
-    <div class="card"><h3>طلبات النقاط</h3><div id="aSub"></div></div>
+    <div class="card"><h3>طلبات النقاط والتوثيق</h3><div id="aSub"></div></div>
     <div class="card"><h3>طلبات الاستبدال</h3><div id="aRed"></div></div>
   </div>
   <div id="tCus" class="tp hidden">
@@ -264,6 +264,9 @@ const keyOf=n=>n.replace(/\s+/g," ").trim().replace(/[\u064B-\u065F\u0640]/g,"")
 const hash=s=>{let a=3735928559,b=1103547991;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(4294967296*(2097151&b)+(a>>>0)).toString(36)};
 const cred=n=>{const k=keyOf(n);return{em:"n"+hash(k)+DOM,pw:"str-"+k}};
 const nameOk=n=>n.trim().split(/\s+/).length>=3&&n.trim().length>=8;
+const isV=x=>typeof x.note==="string"&&x.note.startsWith("VERIFY|");
+const parseV=x=>{const a=x.note.split("|");return{m:a[1],v:a.slice(2).join("|")}};
+const VREASON="توثيق الزبونة كزبونة رسمية في نظام ستر لتحصل على معاملة خاصة";
 const ph=u=>u.wa||u.phone||(u.ig?"@"+u.ig:"");
 const CH=`<span class="vchk" style="margin-inline-start:0;margin-inline-end:.4rem">✓</span>`;
 let REFQ=null,verKey="",VM="wa";
@@ -324,15 +327,15 @@ function renderC(){
   const btn=con?`<a class="btn" href="${con}" target="_blank" rel="noopener">📲 أرسلي سكرين نقاطج للصفحة</a>`:"";
   $("cRew").innerHTML=[...S.rewards].sort((a,b)=>a.c-b.c).map(r=>{const i=S.rewards.indexOf(r),free=/مجان/.test(r.t);return`<div class="row ${free?"free":""}"><span>${free?"🎁 ":""}${esc(r.t)}</span><button class="btn sm" data-a="redeem" data-i="${i}" ${P.points<r.c?"disabled":""}>${r.c} نقطة</button></div>`}).join("");
   $("cRewNote").innerHTML=`<p class="mut" style="margin-top:.8rem">بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا لتأكيد الخصم.</p>${btn}`;
-  const nowT=Date.now(),tl=[...TX].sort((x,y)=>y.ts-x.ts),rw=x=>`<div class="row"><span>${esc(x.reason)}${nowT-x.ts<172800000&&x.amount>0?`<span class="new">جديد</span>`:""}<br><small class="mut">${fmt(x.ts)}</small></span><b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b></div>`;
+  const pv=SUBS.find(x=>isV(x)&&x.status==="pending"),nowT=Date.now(),tl=[...TX].sort((x,y)=>y.ts-x.ts),rw=x=>`<div class="row"><span>${esc(x.reason)}${nowT-x.ts<172800000&&x.amount>0?`<span class="new">جديد</span>`:""}<br><small class="mut">${fmt(x.ts)}</small></span><b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b></div>`;
   $("cPts").innerHTML=`<h3>💰 نقاطج وشلون حصلتيها</h3><p class="mut" style="margin-bottom:.4rem">مجموع اللي حصلتيه: <b style="color:#fff">${P.lifetime}</b> نقطة</p>${tl.length?tl.slice(0,5).map(rw).join("")+(tl.length>5?`<details style="margin-top:.4rem"><summary class="mut" style="cursor:pointer">عرض الكل (${tl.length})</summary>${tl.slice(5).map(rw).join("")}</details>`:""):`<p class="mut c">ما أكو نقاط بعد، ابدئي بجمع نقاطج 🎁</p>`}`;
-  $("cVerS").innerHTML=P.verified?`<h3>حسابج <span class="vchk">✓</span></h3><div class="c"><span class="badge">زبونة رسمية موثّقة</span></div>`:`<h3>توثيق الحساب</h3><p class="mut">وثّقي حسابج وخذي +${S.verify||0} نقطة وتصيرين زبونة رسمية.</p><button class="btn" data-a="goVerify">وثّقي حسابج ✔</button>`;
-  const vk=P.verified?"v"+(P.wa||"")+(P.ig||""):"n";
-  if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:`<h3>✔ وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">اختاري طريقة وحدة واكتبيها، وحسابج يتوثّق والنقاط تنضاف لج تلقائياً.</p><div class="seg" id="vSeg"><button class="on" data-a="vseg" data-t="wa">📱 رقم الهاتف</button><button data-a="vseg" data-t="ig">📷 يوزر انستغرام</button></div><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" data-a="verify">وثّقي حسابي 🎁</button>`}
+  $("cVerS").innerHTML=P.verified?`<h3>حسابج <span class="vchk">✓</span></h3><div class="c"><span class="badge">زبونة رسمية موثّقة</span></div>`:`<h3>توثيق الحساب</h3>${pv?`<p class="mut">⏳ طلب توثيقج وصل للإدارة وقيد المراجعة.</p>`:`<p class="mut">وثّقي حسابج وخذي +${S.verify||0} نقطة وتصيرين زبونة رسمية.</p><button class="btn" data-a="goVerify">وثّقي حسابج ✔</button>`}`;
+  const vk=P.verified?"v"+(P.wa||"")+(P.ig||""):pv?"p":"n";
+  if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:pv?`<h3>⏳ طلب التوثيق وصل للإدارة</h3><p class="mut">راح تنضاف النقاط ويظهر ✓ بحسابج أول ما نوافق.</p><div class="row"><span class="mut">${parseV(pv).m==="wa"?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${parseV(pv).m==="ig"?"@":""}${esc(parseV(pv).v)}</b></div>`:`<h3>✔ وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">اختاري طريقة وحدة واكتبيها، وحسابج يتوثّق والنقاط تنضاف لج تلقائياً.</p><div class="seg" id="vSeg"><button class="on" data-a="vseg" data-t="wa">📱 رقم الهاتف</button><button data-a="vseg" data-t="ig">📷 يوزر انستغرام</button></div><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" id="vBtn" data-a="verify">وثّقي حسابي 🎁</button>`}
   $("cTerms").innerHTML=(S.terms||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥";
   const h=[];
-  SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?"قيد المراجعة":"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
+  SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${isV(s)?"طلب توثيق الحساب":s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?"قيد المراجعة":"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
   REDS.forEach(r=>h.push({ts:r.ts,x:`${r.kind==="free"?"طلب":"استبدال:"} ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?`الكود: <b style="color:var(--gold)">${esc(r.code)}</b>`:"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
   h.sort((a,b)=>b.ts-a.ts);
   $("cHist").innerHTML=h.length?h.map(i=>`<div class="row"><span>${i.x}</span><span class="mut">${fmt(i.ts)}</span></div>`).join(""):`<p class="mut c">لا توجد طلبات بعد</p>`;
@@ -343,7 +346,7 @@ $("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=a
 
 /* ---------- Admin ---------- */
 function renderA(){
-  $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid),m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
+  $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid);if(isV(s)){const{m:vm,v:vv}=parseV(s);return`<div class="item" style="border-color:#fff"><b>${u&&u.verified?CH:""}${esc(u?u.name||"":"")}</b> <span class="mut">· ✔ طلب توثيق حساب · ${fmt(s.ts)}</span><div class="row"><span class="mut">${vm==="wa"?"📱 رقم الهاتف":"📷 يوزر انستغرام"}</span><b dir="ltr">${vm==="ig"?"@":""}${esc(vv)}</b></div><div class="warn" style="margin:.5rem 0">السبب: ${VREASON}</div>${u?`<div class="mut">المستوى: ${esc(tn(tierOf(u.lifetime).n))} · نقاطها: ${u.points} · مشترياتها: ${u.purchases||0}</div>`:""}<div class="acts"><input type="number" id="pa_${s.id}" value="${S.verify||0}"><button class="btn sm ok" data-a="apprV" data-id="${s.id}">موافقة وتوثيق</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}const m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
     return`<div class="item"><b>${u&&u.verified?CH:""}${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
     <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join(""):`<p class="mut c">لا توجد طلبات معلقة</p>`;
   $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${(USERS.find(x=>x.id===r.uid)||{}).verified?CH:""}${esc((USERS.find(x=>x.id===r.uid)||{}).name||r.phone||"")}</b><div>${esc(r.title)}${r.kind==="free"?" (من اختيارها)":` — ${r.cost} نقطة`}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
@@ -409,13 +412,31 @@ const A={
     catch(e){toast(e.code?errMsg(e):e.message)}},
   goVerify(){A.ctab({t:"cpV"})},
   vseg(d){VM=d.t;document.querySelectorAll("#vSeg button").forEach(x=>x.classList.toggle("on",x.dataset.t===d.t));const i=$("vIn");i.value="";i.type=VM==="wa"?"tel":"text";i.inputMode=VM==="wa"?"numeric":"text";i.placeholder=VM==="wa"?"07xxxxxxxxx":"@username"},
-  async verify(){if(!P||P.verified)return;const v=$("vIn").value.trim(),g=S.verify||0;let upd;
+  async verify(){if(!P||P.verified)return;
+    if(SUBS.some(x=>isV(x)&&x.status==="pending"))return toast("طلب توثيقج وصل للإدارة ✔");
+    const v=$("vIn").value.trim(),g=S.verify||0;let upd;
     if(VM==="wa"){const w=norm(v);if(!w)return toast("رقم الهاتف غير صحيح، مثال: 07xxxxxxxxx");upd={wa:w,phone:w}}
     else{const ig=v.replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^@/,"").replace(/[\/?].*$/,"");if(!/^[A-Za-z0-9._]{2,30}$/.test(ig))return toast("اكتبي يوزر الانستغرام بشكل صحيح، مثال: @str.shoop");upd={ig}}
-    try{await runTransaction(db,async tx=>{const r=doc(db,"users",ME.uid),sn=await tx.get(r);if(!sn.exists())throw new Error("الحساب غير موجود");const u=sn.data();if(u.verified)throw new Error("حسابج موثّق مسبقاً");
-      tx.update(r,{...upd,verified:true,points:u.points+g,lifetime:u.lifetime+g});
-      if(g>0)tx.set(doc(collection(db,"transactions")),{uid:ME.uid,phone:upd.wa||"",amount:g,reason:"مكافأة توثيق الحساب ✔",ts:Date.now()})});
-      toast("تم توثيق حسابج ✅ حصلتي على +"+g+" نقطة");A.ctab({t:"cp1"})}catch(e){toast(e.message)}},
+    const val=upd.wa||upd.ig,bt=$("vBtn");if(bt)bt.disabled=true;
+    try{
+      try{await runTransaction(db,async tx=>{const r=doc(db,"users",ME.uid),sn=await tx.get(r);if(!sn.exists())throw new Error("الحساب غير موجود");const u=sn.data();if(u.verified)throw new Error("حسابج موثّق مسبقاً");
+          tx.update(r,{...upd,verified:true,points:u.points+g,lifetime:u.lifetime+g});
+          if(g>0)tx.set(doc(collection(db,"transactions")),{uid:ME.uid,phone:upd.wa||"",amount:g,reason:"مكافأة توثيق الحساب ✔",ts:Date.now()})});
+        toast("تم توثيق حسابج ✅ حصلتي على +"+g+" نقطة")}
+      catch(e){if(!(e.code==="permission-denied"||/permission/i.test(e.message||"")))throw e;
+        await addDoc(collection(db,"submissions"),{uid:ME.uid,phone:P.phone||"",type:"share",note:"VERIFY|"+VM+"|"+val,image:"",status:"pending",ts:Date.now()});
+        toast("وصل طلب توثيقج للإدارة ✔ تنضاف النقاط أول ما توافق")}
+      A.ctab({t:"cp1"})}
+    catch(e){toast(e.code?"تعذر الإرسال: "+e.code:e.message)}
+    if(bt)bt.disabled=false},
+  async apprV(d){const s=PEND.find(x=>x.id===d.id);if(!s||!isV(s))return;const{m,v}=parseV(s),amt=Math.max(0,parseInt($("pa_"+d.id).value)||0);
+    try{await runTransaction(db,async tx=>{const sr=doc(db,"submissions",s.id),ss=await tx.get(sr),ur=doc(db,"users",s.uid),us=await tx.get(ur);
+      if(ss.data().status!=="pending")throw new Error("تمت معالجته مسبقاً");if(!us.exists())throw new Error("الحساب غير موجود");const u=us.data();
+      if(u.verified){tx.update(sr,{status:"approved",points:0});return}
+      tx.update(ur,{...(m==="wa"?{wa:v,phone:v}:{ig:v}),verified:true,points:u.points+amt,lifetime:u.lifetime+amt});
+      tx.update(sr,{status:"approved",points:amt});
+      if(amt>0)tx.set(doc(collection(db,"transactions")),{uid:s.uid,phone:m==="wa"?v:"",amount:amt,reason:"مكافأة توثيق الحساب ✔",ts:Date.now()})});
+      toast("تم توثيق الحساب ✅")}catch(e){toast(e.message)}},
   exportCsv(){const rows=[["الاسم","واتساب","انستغرام","موثقة","المستوى","الرصيد","إجمالي النقاط","المشتريات"],...USERS.map(u=>[u.name||"",u.wa||"",u.ig||"",u.verified?"نعم":"لا",tn(tierOf(u.lifetime).n),u.points,u.lifetime,u.purchases])];
     const csv="\ufeff"+rows.map(r=>r.map(v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(",")).join("\n");
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="str-customers.csv";a.click()},
