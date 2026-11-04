@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>معمل ستر لبيع العبائات | ستر</title>
 <meta name="theme-color" content="#050505">
@@ -94,6 +95,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .seg .on{background:#fff;color:#000;border-color:#fff}
 .prog{margin-top:.9rem}.pl{display:flex;justify-content:space-between;font-size:.9rem}
 .vchk{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;border-radius:50%;background:#fff;color:#000;font-size:.75rem;font-weight:800;vertical-align:middle;margin-inline-start:.35rem;line-height:1}
+.new:empty{display:none}
 .new{display:inline-block;background:#16a34a;color:#fff;border-radius:20px;padding:0 8px;font-size:.7rem;margin-inline-start:.4rem}
 </style>
 </head>
@@ -187,8 +189,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
   <div id="tReq" class="tp">
     <div id="aStats" class="card" style="display:flex;justify-content:space-around;text-align:center"></div>
+    <div class="card" style="border-color:#fff"><h3>✔ طلبات توثيق الحساب <span class="new" id="vReqN" style="background:#dc2626"></span></h3><div id="aVer"></div></div>
     <div class="card"><h3>👭 الإحالات</h3><div id="aRef"></div></div>
-    <div class="card"><h3>طلبات النقاط والتوثيق</h3><div id="aSub"></div></div>
+    <div class="card"><h3>طلبات النقاط</h3><div id="aSub"></div></div>
     <div class="card"><h3>طلبات الاستبدال</h3><div id="aRed"></div></div>
   </div>
   <div id="tCus" class="tp hidden">
@@ -225,7 +228,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <label>شروط النقاط والخصم (سطر لكل شرط، تظهر للزبونة)</label><textarea id="sTerms" style="min-height:140px"></textarea>
     <button class="btn ghost" data-a="resetSet">استرجاع القيم الافتراضية</button>
     <button class="btn" data-a="saveSet">حفظ الإعدادات</button></div></div>
-</section>
+<p class="c mut" style="margin:1rem 0">نسخة 6</p></section>
 </main>
 <nav id="cNav" class="hidden"><button class="on" data-a="ctab" data-t="cp1"><span>🏠</span>الرئيسية</button><button data-a="ctab" data-t="cp2"><span>📤</span>أرسلي طلب</button><button data-a="ctab" data-t="cp3"><span>🎁</span>المكافآت</button><button data-a="ctab" data-t="cp4"><span>👤</span>حسابي</button></nav>
 <div id="toast"></div>
@@ -329,13 +332,13 @@ function renderC(){
   $("cRewNote").innerHTML=`<p class="mut" style="margin-top:.8rem">بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا لتأكيد الخصم.</p>${btn}`;
   const pv=SUBS.find(x=>isV(x)&&x.status==="pending"),nowT=Date.now(),tl=[...TX].sort((x,y)=>y.ts-x.ts),rw=x=>`<div class="row"><span>${esc(x.reason)}${nowT-x.ts<172800000&&x.amount>0?`<span class="new">جديد</span>`:""}<br><small class="mut">${fmt(x.ts)}</small></span><b class="${x.amount>0?"pos":"neg"}" dir="ltr">${x.amount>0?"+":""}${x.amount}</b></div>`;
   $("cPts").innerHTML=`<h3>💰 نقاطج وشلون حصلتيها</h3><p class="mut" style="margin-bottom:.4rem">مجموع اللي حصلتيه: <b style="color:#fff">${P.lifetime}</b> نقطة</p>${tl.length?tl.slice(0,5).map(rw).join("")+(tl.length>5?`<details style="margin-top:.4rem"><summary class="mut" style="cursor:pointer">عرض الكل (${tl.length})</summary>${tl.slice(5).map(rw).join("")}</details>`:""):`<p class="mut c">ما أكو نقاط بعد، ابدئي بجمع نقاطج 🎁</p>`}`;
-  $("cVerS").innerHTML=P.verified?`<h3>حسابج <span class="vchk">✓</span></h3><div class="c"><span class="badge">زبونة رسمية موثّقة</span></div>`:`<h3>توثيق الحساب</h3>${pv?`<p class="mut">⏳ طلب توثيقج وصل للإدارة وقيد المراجعة.</p>`:`<p class="mut">وثّقي حسابج وخذي +${S.verify||0} نقطة وتصيرين زبونة رسمية.</p><button class="btn" data-a="goVerify">وثّقي حسابج ✔</button>`}`;
+  $("cVerS").innerHTML=P.verified?`<h3>حسابج <span class="vchk">✓</span></h3><div class="c"><span class="badge">زبونة رسمية موثّقة</span></div>`:`<h3>توثيق الحساب</h3>${pv?`<p class="mut">⏳ تم إرسال طلب توثيق الحساب، بانتظار مراجعة الإدارة.</p>`:`<p class="mut">وثّقي حسابج وخذي +${S.verify||0} نقطة وتصيرين زبونة رسمية.</p><button class="btn" data-a="goVerify">وثّقي حسابج ✔</button>`}`;
   const vk=P.verified?"v"+(P.wa||"")+(P.ig||""):pv?"p":"n";
-  if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:pv?`<h3>⏳ طلب التوثيق وصل للإدارة</h3><p class="mut">راح تنضاف النقاط ويظهر ✓ بحسابج أول ما نوافق.</p><div class="row"><span class="mut">${parseV(pv).m==="wa"?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${parseV(pv).m==="ig"?"@":""}${esc(parseV(pv).v)}</b></div>`:`<h3>✔ وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">اختاري طريقة وحدة واكتبيها، وحسابج يتوثّق والنقاط تنضاف لج تلقائياً.</p><div class="seg" id="vSeg"><button class="on" data-a="vseg" data-t="wa">📱 رقم الهاتف</button><button data-a="vseg" data-t="ig">📷 يوزر انستغرام</button></div><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" id="vBtn" data-a="verify">وثّقي حسابي 🎁</button>`}
+  if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:pv?`<h3>⏳ تم إرسال طلب توثيق الحساب</h3><p class="mut">بانتظار مراجعة طلبك من قبل الإدارة. أول ما توافق يظهر ✓ بحسابج وتنضاف النقاط.</p><div class="row"><span class="mut">${parseV(pv).m==="wa"?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${parseV(pv).m==="ig"?"@":""}${esc(parseV(pv).v)}</b></div>`:`<h3>✔ وثّقي حسابج +${S.verify||0} نقطة</h3><p class="mut">اختاري طريقة وحدة واكتبيها، وحسابج يتوثّق والنقاط تنضاف لج تلقائياً.</p><div class="seg" id="vSeg"><button class="on" data-a="vseg" data-t="wa">📱 رقم الهاتف</button><button data-a="vseg" data-t="ig">📷 يوزر انستغرام</button></div><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" id="vBtn" data-a="verify">وثّقي حسابي 🎁</button>`}
   $("cTerms").innerHTML=(S.terms||[]).map(x=>`<li>${esc(x)}</li>`).join("");
-  $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥";
+  $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥ · نسخة 6";
   const h=[];
-  SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${isV(s)?"طلب توثيق الحساب":s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?"قيد المراجعة":"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
+  SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${isV(s)?"طلب توثيق الحساب":s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?(isV(s)?"بانتظار مراجعة طلبك من قبل الإدارة":"قيد المراجعة"):"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
   REDS.forEach(r=>h.push({ts:r.ts,x:`${r.kind==="free"?"طلب":"استبدال:"} ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?`الكود: <b style="color:var(--gold)">${esc(r.code)}</b>`:"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
   h.sort((a,b)=>b.ts-a.ts);
   $("cHist").innerHTML=h.length?h.map(i=>`<div class="row"><span>${i.x}</span><span class="mut">${fmt(i.ts)}</span></div>`).join(""):`<p class="mut c">لا توجد طلبات بعد</p>`;
@@ -346,9 +349,10 @@ $("img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=a
 
 /* ---------- Admin ---------- */
 function renderA(){
-  $("aSub").innerHTML=PEND.length?PEND.sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid);if(isV(s)){const{m:vm,v:vv}=parseV(s);return`<div class="item" style="border-color:#fff"><b>${u&&u.verified?CH:""}${esc(u?u.name||"":"")}</b> <span class="mut">· ✔ طلب توثيق حساب · ${fmt(s.ts)}</span><div class="row"><span class="mut">${vm==="wa"?"📱 رقم الهاتف":"📷 يوزر انستغرام"}</span><b dir="ltr">${vm==="ig"?"@":""}${esc(vv)}</b></div><div class="warn" style="margin:.5rem 0">السبب: ${VREASON}</div>${u?`<div class="mut">المستوى: ${esc(tn(tierOf(u.lifetime).n))} · نقاطها: ${u.points} · مشترياتها: ${u.purchases||0}</div>`:""}<div class="acts"><input type="number" id="pa_${s.id}" value="${S.verify||0}"><button class="btn sm ok" data-a="apprV" data-id="${s.id}">موافقة وتوثيق</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}const m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
+  const subRows=L=>[...L].sort((a,b)=>a.ts-b.ts).map(s=>{const u=USERS.find(x=>x.id===s.uid);if(isV(s)){const{m:vm,v:vv}=parseV(s);return`<div class="item" style="border-color:#fff"><b>${u&&u.verified?CH:""}${esc(u?u.name||"":"")}</b> <span class="mut">· ✔ طلب توثيق حساب · ${fmt(s.ts)}</span><div class="row"><span class="mut">${vm==="wa"?"📱 رقم الهاتف":"📷 يوزر انستغرام"}</span><b dir="ltr">${vm==="ig"?"@":""}${esc(vv)}</b></div><div class="warn" style="margin:.5rem 0">السبب: ${VREASON}</div>${u?`<div class="mut">المستوى: ${esc(tn(tierOf(u.lifetime).n))} · نقاطها: ${u.points} · مشترياتها: ${u.purchases||0}</div>`:""}<div class="acts"><input type="number" id="pa_${s.id}" value="${S.verify||0}"><button class="btn sm ok" data-a="apprV" data-id="${s.id}">موافقة وتوثيق</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}const m=u?tierOf(u.lifetime).m:1,base=s.type==="share"?S.share:S.purchase;
     return`<div class="item"><b>${u&&u.verified?CH:""}${esc(u&&u.name?u.name+" · ":"")}${esc(s.phone)}</b> <span class="mut">· ${s.type==="share"?"مشاركة":"شراء"} · ${fmt(s.ts)}</span>${s.note&&s.note!=="—"?`<div class="mut">${esc(s.note)}</div>`:""}<img src="${esc(s.image)}" alt="" data-a="zoom" style="cursor:zoom-in">
-    <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join(""):`<p class="mut c">لا توجد طلبات معلقة</p>`;
+    <div class="acts"><input type="number" id="pa_${s.id}" value="${Math.round(base*m)}"><button class="btn sm ok" data-a="appr" data-id="${s.id}">موافقة</button><button class="btn sm no" data-a="rej" data-id="${s.id}">رفض</button></div></div>`}).join("");
+  {const nv=PEND.filter(isV),np=PEND.filter(x=>!isV(x));$("aSub").innerHTML=np.length?subRows(np):`<p class="mut c">لا توجد طلبات معلقة</p>`;$("aVer").innerHTML=nv.length?subRows(nv):`<p class="mut c">لا توجد طلبات توثيق</p>`;$("vReqN").textContent=nv.length||""}
   $("aRed").innerHTML=PRED.length?PRED.map(r=>`<div class="item"><b>${(USERS.find(x=>x.id===r.uid)||{}).verified?CH:""}${esc((USERS.find(x=>x.id===r.uid)||{}).name||r.phone||"")}</b><div>${esc(r.title)}${r.kind==="free"?" (من اختيارها)":` — ${r.cost} نقطة`}</div><div class="acts"><button class="btn sm ok" data-a="apprR" data-id="${r.id}">موافقة وإصدار كود</button><button class="btn sm no" data-a="rejR" data-id="${r.id}">رفض</button></div></div>`).join(""):`<p class="mut c">لا توجد طلبات استبدال</p>`;
   const q=$("srch").value.trim();
   $("cnt").textContent=USERS.length;$("vcnt").textContent=USERS.filter(u=>u.verified).length;
@@ -425,7 +429,7 @@ const A={
         toast("تم توثيق حسابج ✅ حصلتي على +"+g+" نقطة")}
       catch(e){if(!(e.code==="permission-denied"||/permission/i.test(e.message||"")))throw e;
         await addDoc(collection(db,"submissions"),{uid:ME.uid,phone:P.phone||"",type:"share",note:"VERIFY|"+VM+"|"+val,image:"",status:"pending",ts:Date.now()});
-        toast("وصل طلب توثيقج للإدارة ✔ تنضاف النقاط أول ما توافق")}
+        toast("تم إرسال طلب توثيق الحساب ✔ بانتظار مراجعة طلبك من قبل الإدارة")}
       A.ctab({t:"cp1"})}
     catch(e){toast(e.code?"تعذر الإرسال: "+e.code:e.message)}
     if(bt)bt.disabled=false},
