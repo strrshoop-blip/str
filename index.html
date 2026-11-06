@@ -796,7 +796,13 @@ function tailorById(id){ return state.tailors.find(t=>t.id===id); }
 function modelCost(m){
   if(!m) return 0;
   if(m.unitCost!=null && m.unitCost!=='') return num(m.unitCost);
-  return num(m.fabricCost)+num(m.sewingCost)+num(m.accessoriesCost)+num(m.packagingCost)+num(m.otherCost);
+  return num(m.fabricCost)+num(m.sewingCost)+num(m.cuttingCost)+num(m.factoryCost)+num(m.accessoriesCost)+num(m.packagingCost)+num(m.otherCost);
+}
+function nextModelCode(){
+  let mx = num(state.settings.modelSeq);
+  state.models.forEach(m=>{ if(/^\d+$/.test(String(m.code||'').trim())) mx = Math.max(mx, parseInt(m.code,10)); });
+  state.settings.modelSeq = mx + 1;
+  return String(mx + 1);
 }
 function modelProfitPerPiece(m){ return num(m.sellingPrice) - modelCost(m); }
 function modelWholesaleProfitPerPiece(m){ return num(m.wholesalePrice!=null && m.wholesalePrice!==''?m.wholesalePrice:m.sellingPrice) - modelCost(m); }
@@ -1673,7 +1679,7 @@ function resolveWorkModelId(){
     if(!name) return {ok:false, msg:'الرجاء إدخال اسم الموديل الجديد، أو اختر "بدون تحديد"'};
     const newModel = {
       id: uid(), name,
-      code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
+      code: nextModelCode(),
       images: [...pendingWorkModelImages],
       fabricCost:0, sewingCost:0, accessoriesCost:0, packagingCost:0, otherCost:0,
       sellingPrice:0, notes:''
@@ -2186,6 +2192,7 @@ function renderModels(){
   return `
   <div class="page-head">
     <div><h1>الموديلات</h1><div class="desc">إدارة موديلات المنتجات وتكاليفها وصورها</div></div>
+    <button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button>
   </div>
   <div class="model-grid">
     ${state.models.map(m=>{
@@ -2205,7 +2212,6 @@ function renderModels(){
         </div>
       </div>`;
     }).join('')}
-    <button class="add-model-card" onclick="openModelModal()"><span style="font-size:26px">+</span> إضافة موديل جديد</button>
   </div>`;
 }
 function openModelDetail(id){ currentDetail = id; render(); }
@@ -2219,14 +2225,23 @@ function openModelModal(id){
     bodyHtml:`
       <div class="form-grid2">
         <div class="form-row"><label>اسم الموديل</label><input type="text" id="f_name" value="${esc(item?.name||'')}"></div>
-        <div class="form-row"><label>كود الموديل</label><input type="text" id="f_code" value="${esc(item?.code||'')}" placeholder="مثال: A01"></div>
+        <div class="form-row"><label>رقم الموديل</label><input type="text" id="f_code" value="${esc(item?.code||'')}" ${item?'':'readonly'} placeholder="${item?'':'يتولد تلقائياً (تسلسل)'}"><div class="hint">${item?'تقدر تعدله إذا احتجت.':'يتعين تلقائياً بالتسلسل: 1، 2، 3...'}</div></div>
       </div>
       <div class="form-row">
         <label>الصور</label>
         <input type="file" id="f_images" accept="image/*" multiple onchange="handleImageUpload(event)">
         <div class="gallery" id="galleryPreview">${galleryPreviewHtml()}</div>
       </div>
-      <div class="form-row"><label>كلفة إنتاج القطعة</label><input type="number" class="cost-field" id="f_unitcost" value="${item? (modelCost(item)||'') : ''}" oninput="updateModelCompute()"></div>
+      <div class="section-title" style="margin:6px 0 0;font-size:14px;">مكونات كلفة القطعة</div>
+      <div class="form-grid2">
+        <div class="form-row"><label>سعر القماش</label><input type="number" class="cost-part" id="f_c_fabric" value="${item?.fabricCost||''}" oninput="onCostPartInput()"></div>
+        <div class="form-row"><label>كلفة الخياط</label><input type="number" class="cost-part" id="f_c_sewing" value="${item?.sewingCost||''}" oninput="onCostPartInput()"></div>
+        <div class="form-row"><label>كلفة الفصال</label><input type="number" class="cost-part" id="f_c_cutting" value="${item?.cuttingCost||''}" oninput="onCostPartInput()"></div>
+        <div class="form-row"><label>مصاريف المعمل</label><input type="number" class="cost-part" id="f_c_factory" value="${item?.factoryCost||''}" oninput="onCostPartInput()"></div>
+        <div class="form-row"><label>اللوازم</label><input type="number" class="cost-part" id="f_c_acc" value="${item?.accessoriesCost||''}" oninput="onCostPartInput()"></div>
+        <div class="form-row"><label>مصاريف أخرى</label><input type="number" class="cost-part" id="f_c_other" value="${item?.otherCost||''}" oninput="onCostPartInput()"></div>
+      </div>
+      <div class="form-row"><label>كلفة إنتاج القطعة (المجموع)</label><input type="number" class="cost-field" id="f_unitcost" value="${item? (modelCost(item)||'') : ''}" oninput="updateModelCompute()"><div class="hint">تتحسب تلقائياً من المكونات فوق، وتقدر تعدلها يدوياً.</div></div>
       <div class="form-grid2">
         <div class="form-row"><label>سعر البيع بالجملة</label><input type="number" class="cost-field" id="f_wholesale" value="${item?.wholesalePrice||''}" oninput="updateModelCompute()"></div>
         <div class="form-row"><label>سعر البيع بالمفرد</label><input type="number" class="cost-field" id="f_sell" value="${item?.sellingPrice||''}" oninput="updateModelCompute()"></div>
@@ -2239,10 +2254,14 @@ function openModelModal(id){
     `,
     onSave(){
       const name = document.getElementById('f_name').value.trim();
-      const code = document.getElementById('f_code').value.trim();
-      if(!name || !code) return toast('الرجاء إدخال اسم وكود الموديل');
+      let code = document.getElementById('f_code').value.trim();
+      if(!name) return toast('الرجاء إدخال اسم الموديل');
+      if(!code) code = nextModelCode();
+      const cp = id=>num(document.getElementById(id).value);
       const data = {
         name, code,
+        fabricCost:cp('f_c_fabric'), sewingCost:cp('f_c_sewing'), cuttingCost:cp('f_c_cutting'),
+        factoryCost:cp('f_c_factory'), accessoriesCost:cp('f_c_acc'), otherCost:cp('f_c_other'),
         images: pendingImages,
         unitCost:num(document.getElementById('f_unitcost').value),
         wholesalePrice:num(document.getElementById('f_wholesale').value),
@@ -2271,6 +2290,12 @@ function handleImageUpload(evt){
     };
     compressImageInto(file, reader);
   });
+}
+function onCostPartInput(){
+  const ids = ['f_c_fabric','f_c_sewing','f_c_cutting','f_c_factory','f_c_acc','f_c_other'];
+  const sum = ids.reduce((s,i)=>s+num(document.getElementById(i).value),0);
+  document.getElementById('f_unitcost').value = sum || '';
+  updateModelCompute();
 }
 function updateModelCompute(){
   const cost = num(document.getElementById('f_unitcost').value);
@@ -2535,7 +2560,7 @@ function openSaleModal(id, presetChannel){
         const newName = document.getElementById('f_newModelName').value.trim();
         if(!newName) return toast('الرجاء إدخال اسم الموديل الجديد، أو اختر "بدون موديل"');
         const newModel = {
-          id: uid(), name: newName, code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
+          id: uid(), name: newName, code: nextModelCode(),
           images: [...pendingSaleNewModelImages],
           unitCost: num(document.getElementById('f_newModelCost').value),
           wholesalePrice: unitPrice,
@@ -3112,7 +3137,7 @@ function openCustomerDebtModal(id){
         const newName = document.getElementById('f_newModelName').value.trim();
         if(!newName) return toast('الرجاء إدخال اسم الموديل الجديد، أو اختر "بدون موديل"');
         const newModel = {
-          id: uid(), name: newName, code: 'M-' + Date.now().toString(36).slice(-4).toUpperCase(),
+          id: uid(), name: newName, code: nextModelCode(),
           images: [...pendingDebtNewModelImages],
           unitCost: num(document.getElementById('f_newModelCost').value),
           wholesalePrice: unitPrice,
