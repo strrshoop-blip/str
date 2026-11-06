@@ -421,6 +421,15 @@
   .usd-box b{font-size:13px;}
   .rate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media (max-width:520px){.rate-chip{padding:6px 10px;font-size:12px;} .rate-grid{grid-template-columns:1fr;} .theme-btn{padding:6px 10px;}}
+
+  #lightbox{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;animation:fadeIn .18s ease-out;}
+  #lightbox img{max-width:94vw;max-height:90vh;object-fit:contain;border-radius:10px;transition:transform .2s;cursor:zoom-in;user-select:none;}
+  #lightbox img.zoomed{transform:scale(1.9);cursor:zoom-out;}
+  #lightbox button{position:absolute;min-height:0;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #lightbox button:hover{background:rgba(255,255,255,.22);}
+  #lightbox .lb-x{top:16px;left:16px;} #lightbox .lb-prev{right:16px;top:50%;} #lightbox .lb-next{left:16px;top:50%;}
+  #lightbox .lb-cnt{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#fff;font-size:13px;opacity:.8;}
+  .model-card .thumb img,.gallery img{cursor:zoom-in;}
 </style>
 </head>
 <body>
@@ -4379,6 +4388,35 @@ function usdSettingsCard(){
     <div class="btn-row"><button class="btn primary" onclick="openUsdModal()">تعديل السعر / تحويل عملة</button></div>
   </div>`;
 }
+
+
+/* عرض الصور بالحجم الكامل */
+let _lb = {list:[], i:0};
+function lbShow(){
+  let el = document.getElementById('lightbox');
+  if(!el){ el = document.createElement('div'); el.id = 'lightbox'; document.body.appendChild(el); el.addEventListener('click', e=>{ if(e.target===el) lbClose(); }); }
+  const multi = _lb.list.length>1;
+  el.innerHTML = '<button class="lb-x" onclick="lbClose()" aria-label="إغلاق">×</button>' +
+    (multi ? '<button class="lb-prev" onclick="lbStep(-1)" aria-label="السابق">›</button><button class="lb-next" onclick="lbStep(1)" aria-label="التالي">‹</button><div class="lb-cnt">'+(_lb.i+1)+' / '+_lb.list.length+'</div>' : '') +
+    '<img alt="" onclick="this.classList.toggle(\'zoomed\')">';
+  el.querySelector('img').src = _lb.list[_lb.i];
+}
+function lbStep(d){ _lb.i = (_lb.i + d + _lb.list.length) % _lb.list.length; lbShow(); }
+function lbClose(){ const el = document.getElementById('lightbox'); if(el) el.remove(); }
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('lightbox')) return;
+  if(e.key==='Escape') lbClose(); else if(e.key==='ArrowLeft') lbStep(1); else if(e.key==='ArrowRight') lbStep(-1);
+});
+document.addEventListener('click', e=>{
+  const img = e.target;
+  if(!img || img.tagName!=='IMG' || img.closest('#lightbox')) return;
+  const scope = img.closest('.gallery, .model-card .thumb');
+  if(!scope || !img.src) return;
+  e.stopPropagation(); e.preventDefault();
+  const imgs = Array.from(scope.querySelectorAll('img')).map(x=>x.src);
+  _lb = {list: imgs, i: Math.max(0, imgs.indexOf(img.src))};
+  lbShow();
+}, true);
 
 function attachDeferredCharts(){ updateRateChip(); }
 
