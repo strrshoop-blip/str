@@ -407,6 +407,20 @@
   .mpick.open .mpick-list{display:block;animation:modalIn .22s var(--ease);}
   .mpick-item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;cursor:pointer;transition:background .15s;} .mpick-item:hover{background:var(--surface-2);} .mpick-item span{font-weight:600;}
   .contract h4{font-size:18px;margin:0 0 6px;} .contract h5{font-size:14.5px;margin:16px 0 6px;color:var(--text);} .contract ul{margin:4px 0;padding-inline-start:20px;} .contract p{margin:6px 0;}
+
+  .tb-actions{display:flex;align-items:center;gap:8px;}
+  .rate-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-strong);color:var(--text);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;min-height:36px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .rate-chip:hover{background:var(--surface-2);border-color:var(--accent);}
+  input[data-fmt]{direction:ltr;text-align:right;}
+  .usd-help{margin-top:4px;}
+  .usd-toggle{min-height:0;background:none;border:none;color:var(--info);font-size:12px;font-weight:600;padding:2px 0;cursor:pointer;font-family:inherit;}
+  .usd-toggle:hover{text-decoration:underline;}
+  .usd-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:var(--radius-sm);}
+  .usd-box.hidden{display:none;}
+  .usd-box .usd-in{width:130px;padding:7px 10px;}
+  .usd-box b{font-size:13px;}
+  .rate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:520px){.rate-chip{padding:6px 10px;font-size:12px;} .rate-grid{grid-template-columns:1fr;} .theme-btn{padding:6px 10px;}}
 </style>
 </head>
 <body>
@@ -434,7 +448,7 @@
     <div class="foot">البيانات محفوظة محلياً على هذا الجهاز</div>
   </aside>
 
-  <div class="main-col"><div class="topbar no-print"><span class="ttl" id="topTitle">ستر · STR</span><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 ليلي</button></div>
+  <div class="main-col"><div class="topbar no-print"><span class="ttl" id="topTitle">ستر · STR</span><span class="tb-actions"><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 ليلي</button></span></div>
   <main id="mainContent"><div style="padding:60px 20px;text-align:center;color:var(--text-faint)">... جارِ تحميل بيانات المعمل ...</div></main></div>
 </div>
 
@@ -481,7 +495,7 @@ const STORAGE_KEY = 'setr_erp_state_v1';
    أول مرة ينقل الموقع بياناتك من main إلى main2 تلقائياً */
 const FIRESTORE_DOC = 'erp_state/main2';
 const LEGACY_FIRESTORE_DOC = 'erp_state/main';
-const CLIENT_VERSION = 'v5';
+const CLIENT_VERSION = 'v6';
 const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('str_device'); if(!d){ d = Math.random().toString(36).slice(2,7); localStorage.setItem('str_device', d); } return d; }catch(e){ return 'dev'; } })();
 let lastSeenRev = null;
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
@@ -721,7 +735,7 @@ function money(n){
   n = Math.round(Number(n)||0);
   return n.toLocaleString('en-US') + ' د.ع';
 }
-function num(v){ const n = Number(v); return isNaN(n) ? 0 : n; }
+function num(v){ const n = Number(String(v==null?'':v).replace(/[,٬\s]/g,'')); return isNaN(n) ? 0 : n; }
 function esc(s){ return (s===undefined||s===null) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function encName(s){ return encodeURIComponent(s==null?'':s).replace(/'/g,'%27'); }
 function inMonth(dateStr, ym){ if(!ym) return true; return (dateStr||'').slice(0,7) === ym; }
@@ -3983,6 +3997,8 @@ function renderSettings(){
     <div class="btn-row" style="margin-top:12px;"><button class="btn primary" onclick="saveShopName()">حفظ</button></div>
   </div>
 
+  ${usdSettingsCard()}
+
   <div class="section-title">🔒 رمز الحماية (PIN)</div>
   <div class="card" style="max-width:420px;">
     <div class="desc" style="margin-bottom:10px;">${state.settings.pin ? 'رمز الحماية مفعّل حالياً.' : 'لا يوجد رمز حماية حالياً — أي شخص يفتح المتصفح يدخل مباشرة.'}</div>
@@ -4187,7 +4203,159 @@ function enhanceModelSelect(sel){
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
-function attachDeferredCharts(){ /* reserved for future canvas-based charts */ }
+
+/* =========================================================
+   فواصل الأرقام + سعر الدولار
+========================================================= */
+function fmtThousands(v){
+  let s = String(v==null?'':v).replace(/[,٬\s]/g,'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/٫/g,'.');
+  if(s===''||s==='-') return s;
+  const neg = s[0]==='-'; if(neg) s = s.slice(1);
+  const hasDot = s.includes('.');
+  const parts = s.split('.');
+  let ip = parts[0].replace(/\D/g,''), fp = parts.slice(1).join('').replace(/\D/g,'');
+  if(ip==='' && !hasDot) return neg?'-':'';
+  ip = (ip||'0').replace(/^0+(?=\d)/,'').replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (neg?'-':'') + ip + (hasDot?'.'+fp:'');
+}
+(function(){
+  const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  Object.defineProperty(HTMLInputElement.prototype,'value',{
+    configurable:true, enumerable:d.enumerable, get(){ return d.get.call(this); },
+    set(v){ if(this.dataset && this.dataset.fmt){ if(typeof v==='number') v = Math.round(v*100)/100; v = fmtThousands(v); } d.set.call(this, v); }
+  });
+})();
+document.addEventListener('input', e=>{
+  const t = e.target;
+  if(!t || !t.dataset || !t.dataset.fmt) return;
+  const old = t.value, pos = t.selectionStart==null ? old.length : t.selectionStart;
+  const before = (old.slice(0,pos).match(/[0-9٠-٩.٫]/g)||[]).length;
+  const nv = fmtThousands(old);
+  if(nv!==old){
+    t.value = nv;
+    let c = 0, p = 0;
+    while(p<nv.length && c<before){ if(/[0-9.]/.test(nv[p])) c++; p++; }
+    try{ t.setSelectionRange(p,p); }catch(_){}
+  }
+}, true);
+const USD_FIELD_IDS = ['f_price','f_amount','f_received','f_unitcost','f_wholesale','f_sell','f_newModelCost'];
+function usdRate(){ return num(state && state.settings && state.settings.usdRate); }
+function enhanceInputs(){
+  document.querySelectorAll('input[type=number]').forEach(i=>{
+    if(i.hasAttribute('step') || /^pp_/.test(i.id)) return;
+    const v = i.value;
+    i.type = 'text'; i.setAttribute('inputmode','decimal'); i.setAttribute('autocomplete','off'); i.dataset.fmt = '1';
+    i.value = v;
+  });
+  document.querySelectorAll('.modal-body input[data-fmt]').forEach(i=>{
+    if(i.dataset.usd || !USD_FIELD_IDS.includes(i.id)) return;
+    const row = i.closest('.form-row'); if(!row) return;
+    i.dataset.usd = '1';
+    const w = document.createElement('div'); w.className = 'usd-help';
+    w.innerHTML = '<button type="button" class="usd-toggle">💵 تحويل من دولار</button><span class="usd-box hidden"><input type="text" inputmode="decimal" data-fmt="1" class="usd-in" placeholder="المبلغ بالدولار $" autocomplete="off"><b class="usd-out"></b><button type="button" class="btn sm usd-use">استخدم</button></span>';
+    row.appendChild(w);
+    const box = w.querySelector('.usd-box'), uin = w.querySelector('.usd-in'), out = w.querySelector('.usd-out');
+    const calc = ()=>{ const r = usdRate(); out.textContent = r>0 ? '= ' + money(num(uin.value)*r) : 'حدد سعر الدولار أولاً (الزر 💵 فوق)'; };
+    w.querySelector('.usd-toggle').onclick = ()=>{ box.classList.toggle('hidden'); if(!box.classList.contains('hidden')){ calc(); uin.focus(); } };
+    uin.addEventListener('input', calc);
+    w.querySelector('.usd-use').onclick = ()=>{
+      const r = usdRate(); if(!(r>0)) return toast('حدد سعر الدولار أولاً');
+      i.value = Math.round(num(uin.value)*r);
+      i.dispatchEvent(new Event('input',{bubbles:true}));
+      box.classList.add('hidden'); uin.value = '';
+    };
+  });
+}
+let _enhQueued = false;
+new MutationObserver(()=>{ if(_enhQueued) return; _enhQueued = true; requestAnimationFrame(()=>{ _enhQueued = false; enhanceInputs(); }); })
+  .observe(document.documentElement,{childList:true,subtree:true});
+
+function usdMode(){ const s = state.settings; return s.usdMode || (num(s.usdRate)>0 ? 'manual' : 'auto'); }
+function updateRateChip(){
+  const c = document.getElementById('rateChip'); if(!c || !state) return;
+  const r = usdRate();
+  c.textContent = r>0 ? '💵 $1 = ' + Math.round(r).toLocaleString('en-US') + ' د.ع' : '💵 حدد سعر الدولار';
+}
+async function fetchUsdRate(){
+  const urls = ['https://open.er-api.com/v6/latest/USD','https://api.exchangerate-api.com/v4/latest/USD'];
+  for(const u of urls){
+    try{
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), 8000);
+      const r = await fetch(u,{signal:ctrl.signal}); clearTimeout(t);
+      const j = await r.json(); const v = num(j && j.rates && j.rates.IQD);
+      if(v>0) return v;
+    }catch(e){}
+  }
+  return null;
+}
+async function refreshUsdRate(force){
+  if(!state) return false;
+  const s = state.settings;
+  if(!force){ if(usdMode()!=='auto') return false; if(s.usdDate===todayISO() && num(s.usdRate)>0) return false; }
+  const v = await fetchUsdRate();
+  if(v){
+    s.usdRate = Math.round(v); s.usdDate = todayISO(); s.usdMode = 'auto';
+    saveState(); updateRateChip();
+    toast('💵 سعر الدولار اليوم: ' + s.usdRate.toLocaleString('en-US') + ' د.ع');
+    return true;
+  }
+  if(force) toast('تعذر جلب سعر الدولار — تأكد من الإنترنت أو اكتب السعر يدوياً');
+  return false;
+}
+function openUsdModal(){
+  const s = state.settings, r = usdRate(), mode = usdMode();
+  openModal({
+    title:'💵 سعر الدولار وتحويل العملة',
+    bodyHtml:`
+      <div class="rate-grid">
+        <div class="form-row"><label>سعر الدولار (د.ع لكل 1$)</label><input type="number" id="u_rate" value="${r||''}" oninput="usdModalCalc()"></div>
+        <div class="form-row"><label>طريقة التحديث</label>
+          <select id="u_mode"><option value="manual" ${mode==='manual'?'selected':''}>يدوي — أنا أكتب السعر</option><option value="auto" ${mode==='auto'?'selected':''}>تلقائي — يتحدث يومياً</option></select>
+        </div>
+      </div>
+      <div class="hint" id="u_info">${s.usdDate ? 'آخر تحديث تلقائي: ' + esc(s.usdDate) + '. ' : ''}السعر التلقائي يجي من مصدر عالمي (غالباً السعر الرسمي) وممكن يختلف عن سعر السوق عندك — إذا تريد سعر السوق اكتبه يدوياً.</div>
+      <div><button type="button" class="btn sm" onclick="usdModalFetch()">⟳ جلب سعر اليوم الآن</button></div>
+      <div class="rate-grid">
+        <div class="form-row"><label>دولار ($)</label><input type="number" id="u_usd" placeholder="0" oninput="usdModalCalc('usd')"></div>
+        <div class="form-row"><label>دينار عراقي (د.ع)</label><input type="number" id="u_iqd" placeholder="0" oninput="usdModalCalc('iqd')"></div>
+      </div>
+      <div class="compute-box"><span>التحويل</span><b id="u_out">—</b></div>`,
+    onSave(){
+      const nr = num(document.getElementById('u_rate').value);
+      const nm = document.getElementById('u_mode').value;
+      if(!(nr>0)) return toast('اكتب سعر دولار صحيح');
+      const changed = Math.round(nr) !== Math.round(usdRate());
+      s.usdRate = nr; s.usdMode = (changed && nm==='auto' && !window._usdFetched) ? 'manual' : nm;
+      if(s.usdMode==='auto') s.usdDate = s.usdDate || todayISO();
+      saveState(); closeModal(); updateRateChip(); if(currentPage==='settings') render();
+      toast('تم حفظ سعر الدولار: ' + Math.round(nr).toLocaleString('en-US') + ' د.ع' + (changed && nm==='auto' && !window._usdFetched ? ' (تحول للوضع اليدوي لأنك غيّرت السعر)' : ''));
+    }
+  });
+  window._usdFetched = false;
+}
+function usdModalCalc(from){
+  const r = num(document.getElementById('u_rate').value), out = document.getElementById('u_out');
+  const u = document.getElementById('u_usd'), q = document.getElementById('u_iqd');
+  if(!(r>0)){ out.textContent = 'اكتب السعر أولاً'; return; }
+  if(from==='usd'){ q.value = Math.round(num(u.value)*r); }
+  else if(from==='iqd'){ u.value = Math.round(num(q.value)/r*100)/100; }
+  out.textContent = '$' + num(u.value).toLocaleString('en-US') + ' = ' + money(num(q.value));
+}
+async function usdModalFetch(){
+  const v = await fetchUsdRate();
+  if(v){ document.getElementById('u_rate').value = Math.round(v); document.getElementById('u_mode').value = 'auto'; window._usdFetched = true; state.settings.usdDate = todayISO(); usdModalCalc('usd'); toast('سعر اليوم: ' + Math.round(v).toLocaleString('en-US') + ' د.ع'); }
+  else toast('تعذر جلب السعر — تأكد من الإنترنت أو اكتبه يدوياً');
+}
+function usdSettingsCard(){
+  const s = state.settings, r = usdRate();
+  return `<div class="section-title">💵 سعر الدولار</div>
+  <div class="card" style="max-width:420px;">
+    <div class="desc" style="margin-bottom:10px;">${r>0 ? 'السعر الحالي: <b>$1 = ' + Math.round(r).toLocaleString('en-US') + ' د.ع</b>' : 'ما محدد سعر دولار.'} — ${usdMode()==='auto' ? 'تحديث تلقائي يومي' + (s.usdDate ? ' (آخر تحديث ' + esc(s.usdDate) + ')' : '') : 'تحديث يدوي'}</div>
+    <div class="btn-row"><button class="btn primary" onclick="openUsdModal()">تعديل السعر / تحويل عملة</button></div>
+  </div>`;
+}
+
+function attachDeferredCharts(){ updateRateChip(); }
 
 /* =========================================================
    LOCK SCREEN
@@ -4234,6 +4402,7 @@ document.addEventListener('keydown', e=>{
   checkLock();
   render();
   attachFirestoreSync();
+  enhanceInputs(); updateRateChip(); refreshUsdRate(false);
   setTheme(document.documentElement.getAttribute('data-theme')||'light');
 })();
 </script>
