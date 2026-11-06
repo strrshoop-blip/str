@@ -3814,9 +3814,8 @@ function renderPartnership(){
   const chart=Object.keys(gm).sort().map(k=>({l:partGran==='day'?k.slice(8):k.slice(partGran==='month'||partGran==='week'?5:0),v:gm[k]}));
   const tot=D.rt.rev+D.wh.rev||1, tp=D.pieces||1;
   const closeBtn=partMonth==='ALL'?'':`<button class="btn primary" onclick="closePartnerMonth('${partMonth}')">${closed?'🔄 تحديث إقفال الشهر':'🔒 إقفال الشهر وتوزيع الأرباح'}</button>`;
-  return `<div class="btn-row no-print" style="margin:0 0 14px;"><button class="btn primary" onclick="navigate('contract')">📜 عقد الشراكة</button></div>
-  <div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات ومصاريف الصفحة فقط — تتحدث الأرقام تلقائياً مع أي عملية بيع أو مصروف تسجله بقناة "الصفحة"</div></div>
-    <div class="toolbar" style="margin:0;"><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
+  return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات ومصاريف الصفحة فقط — تتحدث الأرقام تلقائياً مع أي عملية بيع أو مصروف تسجله بقناة "الصفحة"</div></div>
+    <div class="toolbar" style="margin:0;"><button class="btn primary" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
   <div class="grid stats">
