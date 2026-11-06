@@ -389,6 +389,24 @@
   ::-webkit-scrollbar{width:9px;height:9px;} ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:9px;} ::-webkit-scrollbar-track{background:transparent;}
   .pcard .pn{font-size:19px;} .pcard .big{font-variant-numeric:tabular-nums;font-weight:800;}
   .rule-box{border-right:3px solid var(--accent);}
+
+  /* ===== v9 motion ===== */
+  @keyframes pageIn{from{opacity:0;transform:translateY(12px);filter:blur(4px);}to{opacity:1;transform:none;filter:none;}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:none;}}
+  @keyframes navbar{0%{transform:scaleX(0);opacity:1;}80%{transform:scaleX(1);opacity:1;}100%{transform:scaleX(1);opacity:0;}}
+  body.nav-go::after{content:"";position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent);transform-origin:right;animation:navbar .7s var(--ease) both;z-index:9999;}
+  .sidebar .navlist button{animation:slideIn .5s var(--ease) both;}
+  .sidebar .navlist button:nth-child(2){animation-delay:.04s}.sidebar .navlist button:nth-child(3){animation-delay:.08s}.sidebar .navlist button:nth-child(4){animation-delay:.12s}.sidebar .navlist button:nth-child(5){animation-delay:.16s}.sidebar .navlist button:nth-child(6){animation-delay:.2s}.sidebar .navlist button:nth-child(n+7){animation-delay:.24s}
+  .stat-card.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,color-mix(in srgb,var(--accent) 8%,transparent) 50%,transparent 65%);transform:translateX(120%);animation:shine 5s ease-in-out infinite;pointer-events:none;}
+  @keyframes shine{0%,60%{transform:translateX(120%);}100%{transform:translateX(-120%);}}
+  .tabs button:hover{transform:translateY(-2px);}
+  .mpick{position:relative;} .mpick-btn{width:100%;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);text-align:right;min-height:68px;}
+  .mpick-btn span{flex:1;font-weight:700;} .mpick-btn i{font-style:normal;color:var(--text-faint);}
+  .mpick img,.mpick .mph{width:56px;height:56px;border-radius:9px;object-fit:cover;flex:none;background:var(--surface-3);display:flex;align-items:center;justify-content:center;}
+  .mpick-list{display:none;position:absolute;z-index:60;right:0;left:0;top:calc(100% + 6px);max-height:340px;overflow:auto;background:var(--surface);border:1px solid var(--border-strong);border-radius:14px;box-shadow:var(--shadow);padding:6px;}
+  .mpick.open .mpick-list{display:block;animation:modalIn .22s var(--ease);}
+  .mpick-item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;cursor:pointer;transition:background .15s;} .mpick-item:hover{background:var(--surface-2);} .mpick-item span{font-weight:600;}
+  .contract h4{font-size:18px;margin:0 0 6px;} .contract h5{font-size:14.5px;margin:16px 0 6px;color:var(--text);} .contract ul{margin:4px 0;padding-inline-start:20px;} .contract p{margin:6px 0;}
 </style>
 </head>
 <body>
@@ -475,8 +493,6 @@ function defaultState(){
     cutters:[], cutterWork:[], cutterPayments:[],
     hoodaris:[], hoodariWork:[], hoodariPayments:[],
     models:[], sales:[], profitAdjustments:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
-    pageManagers:[{id:'seed-ahmed', name:'سيد أحمد', notes:'مدير صفحة التواصل الاجتماعي'}],
-    pageManagerFees:[], pageManagerPayments:[],
     notes:[],
     pieceAdjust:{},
     partnership:null
@@ -927,15 +943,6 @@ function periodTotals(from, to){
 function tailorDuesOutstandingTotal(){
   return state.tailors.reduce((s,t)=> s + tailorTotals(t.id).remaining, 0);
 }
-function pageManagerById(id){ return state.pageManagers.find(m=>m.id===id); }
-function pageManagerTotals(managerId){
-  const due = state.pageManagerFees.filter(f=>f.managerId===managerId).reduce((s,f)=>s+num(f.amount),0);
-  const paid = state.pageManagerPayments.filter(p=>p.managerId===managerId).reduce((s,p)=>s+num(p.amount),0);
-  return {due, paid, remaining: due - paid};
-}
-function pageManagerDuesOutstandingTotal(){
-  return state.pageManagers.reduce((s,m)=> s + pageManagerTotals(m.id).remaining, 0);
-}
 
 /* =========================================================
    ROUTER
@@ -943,6 +950,7 @@ function pageManagerDuesOutstandingTotal(){
 const PAGES = [
   {id:'dashboard', label:'الرئيسية', icon:'🏠'},
   {id:'partnership', label:'نظام الشراكة', icon:'🤝'},
+  {id:'contract', label:'عقد الشراكة', icon:'📜'},
   {id:'sales', label:'الوارد / المبيعات', icon:'📦'},
   {id:'models', label:'الموديلات', icon:'👗'},
   {id:'workers', label:'العمال', icon:'👷'},
@@ -977,7 +985,7 @@ function toggleTheme(){ setTheme(document.documentElement.getAttribute('data-the
 function navigate(page){
   currentPage = page; currentDetail = null;
   render();
-  { const m=document.getElementById('mainContent'); m.classList.remove('page-enter'); void m.offsetWidth; m.classList.add('page-enter'); setTimeout(()=>m.classList.remove('page-enter'),900); const pg=PAGES.find(p=>isNavActive(p.id)); const tt=document.getElementById('topTitle'); if(tt) tt.textContent = (pg?pg.icon+' '+pg.label:'')+' · ستر'; }
+  { const m=document.getElementById('mainContent'); m.classList.remove('page-enter'); void m.offsetWidth; m.classList.add('page-enter'); document.body.classList.remove('nav-go'); void document.body.offsetWidth; document.body.classList.add('nav-go'); setTimeout(()=>document.body.classList.remove('nav-go'),800); setTimeout(()=>m.classList.remove('page-enter'),900); const pg=PAGES.find(p=>isNavActive(p.id)); const tt=document.getElementById('topTitle'); if(tt) tt.textContent = (pg?pg.icon+' '+pg.label:'')+' · ستر'; }
   window.scrollTo(0,0);
 }
 function render(){
@@ -995,12 +1003,13 @@ function render(){
   else if(currentPage==='store') main.innerHTML = renderStore();
   else if(currentPage==='debts') main.innerHTML = debtsTabs('debts')+renderDebts();
   else if(currentPage==='customerdebts') main.innerHTML = currentDetail ? renderCustomerDetail(currentDetail) : debtsTabs('customerdebts')+renderCustomerDebts();
-  else if(currentPage==='social') main.innerHTML = currentDetail ? renderPageManagerDetail(currentDetail) : renderSocialPage();
+  else if(currentPage==='social') main.innerHTML = renderSocialPage();
   else if(currentPage==='workers') main.innerHTML = renderWorkers();
   else if(currentPage==='partnership') main.innerHTML = currentDetail ? renderPartnerDetail(currentDetail) : renderPartnership();
   else if(currentPage==='reports') main.innerHTML = renderReports();
   else if(currentPage==='ledger') main.innerHTML = renderLedger();
   else if(currentPage==='notes') main.innerHTML = renderNotesPage();
+  else if(currentPage==='contract') main.innerHTML = renderContract();
   else if(currentPage==='settings') main.innerHTML = renderSettings();
   attachDeferredCharts();
 }
@@ -3364,7 +3373,7 @@ function deleteCustomerDebtPayment(paymentId, debtId){
 }
 
 /* =========================================================
-   SOCIAL PAGE (الصفحة) — مبيعات وصرفيات الصفحة + مستحقات مدير الصفحة
+   SOCIAL PAGE (الصفحة) — مبيعات وصرفيات الصفحة
 ========================================================= */
 let socialMonth = thisMonth();
 function renderSocialPage(){
@@ -3379,15 +3388,13 @@ function renderSocialPage(){
   const expTotal = pageExpenses.reduce((s,x)=>s+num(x.amount),0);
   const adsTotal = pageExpenses.filter(e=>e.type==='إعلانات').reduce((s,x)=>s+num(x.amount),0);
   const net = profit - sumExpensesBySource(pageExpenses,'profit');
-  const managersDue = pageManagerDuesOutstandingTotal();
 
   const salesRows = pageSales.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
   const expenseRows = pageExpenses.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
-  const managers = state.pageManagers.map(m=>({m, tot:pageManagerTotals(m.id)}));
 
   return `
   <div class="page-head">
-    <div><h1>الصفحة</h1><div class="desc">مبيعات ومصاريف صفحة التواصل الاجتماعي، ومستحقات من يديرها</div></div>
+    <div><h1>الصفحة</h1><div class="desc">مبيعات ومصاريف صفحة التواصل الاجتماعي</div></div>
     <div class="toolbar" style="margin:0;">
       <div class="field-inline">
         <label>الفترة</label>
@@ -3405,7 +3412,6 @@ function renderSocialPage(){
     ${statCard('مصاريف الصفحة', money(expTotal), 'neg')}
     ${statCard('من ضمنها إعلانات', money(adsTotal), '')}
     ${statCard('ربح مبيعات الصفحة', money(profit), profit>=0?'pos':'neg')}
-    ${statCard('مستحقات مدير/مدراء الصفحة', money(managersDue), managersDue>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
   </div>
 
   <div class="btn-row" style="margin:22px 0 6px;">
@@ -3435,173 +3441,8 @@ function renderSocialPage(){
         : `<tr class="empty-row"><td colspan="4">لا توجد مصاريف مسجلة للصفحة لهذه الفترة</td></tr>`}
       </tbody>
     </table>
-  </div>
-
-  <div class="section-title"><span class="ic">🧑‍💼</span> من يدير الصفحة</div>
-  <div class="toolbar"><div></div><button class="btn sm" onclick="openPageManagerModal()">+ إضافة شخص</button></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>الاسم</th><th>المستحق الكلي</th><th>المدفوع</th><th>المتبقي</th><th></th></tr></thead>
-      <tbody>
-        ${managers.length? managers.map(({m,tot})=>`
-          <tr style="cursor:pointer" onclick="openPageManagerDetail('${m.id}')">
-            <td><b>${esc(m.name)}</b></td>
-            <td class="num">${money(tot.due)}</td>
-            <td class="num pos">${money(tot.paid)}</td>
-            <td class="num ${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</td>
-            <td onclick="event.stopPropagation()">
-              <div class="btn-row">
-                <button class="btn sm ghost" onclick="openPageManagerModal('${m.id}')">تعديل</button>
-                <button class="btn sm danger" onclick="deletePageManager('${m.id}')">حذف</button>
-              </div>
-            </td>
-          </tr>`).join('') : `<tr class="empty-row"><td colspan="5">ما اكو أشخاص مسجلين لإدارة الصفحة بعد</td></tr>`}
-      </tbody>
-    </table>
   </div>`;
 }
-function openPageManagerModal(id){
-  const item = id ? pageManagerById(id) : null;
-  openModal({
-    title: item?'تعديل بيانات الشخص':'إضافة شخص يدير الصفحة',
-    bodyHtml:`
-      <div class="form-row"><label>الاسم</label><input type="text" id="f_name" value="${esc(item?.name||'')}" placeholder="مثال: سيد أحمد"></div>
-      <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
-    `,
-    onSave(){
-      const name = document.getElementById('f_name').value.trim();
-      if(!name) return toast('الرجاء إدخال الاسم');
-      const data = { name, notes: document.getElementById('f_notes').value.trim() };
-      if(item) Object.assign(item, data);
-      else state.pageManagers.push({id:uid(), ...data});
-      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
-    }
-  });
-}
-function deletePageManager(id){
-  const tot = pageManagerTotals(id);
-  const msg = (tot.due>0 || tot.paid>0)
-    ? 'لهذا الشخص مستحقات أو تسديدات مرتبطة به. حذفه سيحذف كل تلك السجلات أيضاً. متابعة؟'
-    : null;
-  confirmDelete(msg, ()=>{
-    state.pageManagers = state.pageManagers.filter(m=>m.id!==id);
-    state.pageManagerFees = state.pageManagerFees.filter(f=>f.managerId!==id);
-    state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.managerId!==id);
-    currentDetail = null;
-    saveState(); render(); toast('تم الحذف');
-  });
-}
-function openPageManagerDetail(id){ currentDetail = id; render(); }
-function renderPageManagerDetail(id){
-  const m = pageManagerById(id);
-  if(!m){ currentDetail=null; return renderSocialPage(); }
-  const tot = pageManagerTotals(id);
-  const fees = state.pageManagerFees.filter(f=>f.managerId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  const payments = state.pageManagerPayments.filter(p=>p.managerId===id).sort((a,b)=>b.date.localeCompare(a.date));
-
-  return `
-  <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لصفحة الصفحة</button>
-  <div class="detail-head">
-    <div class="titles"><h1>${esc(m.name)}</h1></div>
-    <div class="btn-row">
-      <button class="btn" onclick="openPageManagerFeeModal('${id}')">+ تسجيل مستحق</button>
-      <button class="btn primary" onclick="openPageManagerPaymentModal('${id}')">+ تسديد مبلغ</button>
-    </div>
-  </div>
-  <div class="grid stats">
-    ${statCard('إجمالي المستحق', money(tot.due),'')}
-    ${statCard('إجمالي المدفوع', money(tot.paid),'pos')}
-    ${statCard('المتبقي', money(tot.remaining), tot.remaining>0?'neg':'pos')}
-  </div>
-
-  <div class="section-title"><span class="ic">🧾</span> سجل المستحقات (إدارة الصفحة، إعلانات، وغيرها)</div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>التاريخ</th><th>الوصف</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead>
-      <tbody>
-      ${fees.length? fees.map(f=>`
-        <tr>
-          <td class="muted">${esc(f.date)}</td>
-          <td>${esc(f.description||'—')}</td>
-          <td class="num neg">${money(f.amount)}</td>
-          <td class="muted">${esc(f.notes||'—')}</td>
-          <td><div class="btn-row">
-            <button class="btn sm ghost" onclick="openPageManagerFeeModal('${id}','${f.id}')">تعديل</button>
-            <button class="btn sm danger" onclick="deletePageManagerFee('${f.id}')">حذف</button>
-          </div></td>
-        </tr>`).join('') : `<tr class="empty-row"><td colspan="5">لا يوجد سجل مستحقات بعد</td></tr>`}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section-title"><span class="ic">💵</span> سجل التسديدات</div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead>
-      <tbody>
-      ${payments.length? payments.map(p=>`
-        <tr>
-          <td class="muted">${esc(p.date)}</td>
-          <td class="num pos">${money(p.amount)}</td>
-          <td class="muted">${esc(p.notes||'—')}</td>
-          <td><div class="btn-row">
-            <button class="btn sm ghost" onclick="openPageManagerPaymentModal('${id}','${p.id}')">تعديل</button>
-            <button class="btn sm danger" onclick="deletePageManagerPayment('${p.id}')">حذف</button>
-          </div></td>
-        </tr>`).join('') : `<tr class="empty-row"><td colspan="4">لا توجد تسديدات بعد</td></tr>`}
-      </tbody>
-    </table>
-  </div>`;
-}
-function openPageManagerFeeModal(managerId, feeId){
-  const item = feeId ? state.pageManagerFees.find(f=>f.id===feeId) : null;
-  openModal({
-    title: item?'تعديل مستحق':'تسجيل مستحق جديد',
-    bodyHtml:`
-      <div class="form-row"><label>الوصف</label><input type="text" id="f_desc" value="${esc(item?.description||'')}" placeholder="مثال: إدارة الصفحة شهر 9، أو إعلان ممول"></div>
-      <div class="form-grid2">
-        <div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${item?.amount||''}"></div>
-        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
-      </div>
-      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
-    `,
-    onSave(){
-      const amount = num(document.getElementById('f_amount').value);
-      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
-      const data = {
-        managerId, description: document.getElementById('f_desc').value.trim(),
-        amount, date: document.getElementById('f_date').value || todayISO(),
-        notes: document.getElementById('f_notes').value.trim()
-      };
-      if(item) Object.assign(item, data);
-      else state.pageManagerFees.push({id:uid(), ...data});
-      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
-    }
-  });
-}
-function deletePageManagerFee(id){ confirmDelete(null, ()=>{ state.pageManagerFees = state.pageManagerFees.filter(f=>f.id!==id); saveState(); render(); toast('تم الحذف'); }); }
-function openPageManagerPaymentModal(managerId, payId){
-  const item = payId ? state.pageManagerPayments.find(p=>p.id===payId) : null;
-  openModal({
-    title: item?'تعديل تسديد':'تسديد مبلغ',
-    bodyHtml:`
-      <div class="form-grid2">
-        <div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${item?.amount||''}"></div>
-        <div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div>
-      </div>
-      <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
-    `,
-    onSave(){
-      const amount = num(document.getElementById('f_amount').value);
-      if(amount<=0) return toast('الرجاء إدخال مبلغ صحيح');
-      const data = { managerId, amount, date: document.getElementById('f_date').value || todayISO(), notes: document.getElementById('f_notes').value.trim() };
-      if(item) Object.assign(item, data);
-      else state.pageManagerPayments.push({id:uid(), ...data});
-      saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
-    }
-  });
-}
-function deletePageManagerPayment(id){ confirmDelete(null, ()=>{ state.pageManagerPayments = state.pageManagerPayments.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 /* =========================================================
    REPORTS
@@ -3925,7 +3766,7 @@ function renderWorkers(){
 function PS(){
   if(!state.partnership) state.partnership={
     partners:[{id:'p_ahmed',name:'أحمد نعيم',pct:25},{id:'p_hassan',name:'حسن الفتلاوي',pct:37.5},{id:'p_amjad',name:'أمجد',pct:37.5}],
-    closes:[],adj:[],pays:[],deductMgr:false};
+    closes:[],adj:[],pays:[]};
   return state.partnership;
 }
 let partMonth=thisMonth(), partGran='day';
@@ -3939,15 +3780,14 @@ function pageData(from,to){
   const exps=state.expenses.filter(e=>(e.channel||'shop')==='page' && inRange(e.date,from,to) && expenseSource(e)!=='other');
   const ads=exps.filter(e=>e.type==='إعلانات').reduce((s,e)=>s+num(e.amount),0);
   const other=exps.filter(e=>e.type!=='إعلانات').reduce((s,e)=>s+num(e.amount),0);
-  const mgr=P.deductMgr? (state.pageManagerFees||[]).filter(f=>inRange(f.date,from,to)).reduce((s,f)=>s+num(f.amount),0):0;
-  const net=profit-ads-other-mgr;
+  const net=profit-ads-other;
   const w=ps.filter(s=>s.customerType==='wholesale'), r=ps.filter(s=>s.customerType!=='wholesale');
   const agg=l=>({rev:l.reduce((s,x)=>s+saleRevenue(x),0),pcs:l.reduce((s,x)=>s+num(x.quantity),0),n:l.length});
   const first={}; state.sales.filter(s=>(s.channel||'shop')==='page' && (s.customerName||'').trim()).forEach(s=>{const k=s.customerName.trim(); if(!first[k]||s.date<first[k]) first[k]=s.date;});
   const names=[...new Set(ps.map(s=>(s.customerName||'').trim()).filter(Boolean))];
   const newC=names.filter(k=>inRange(first[k],from,to)).length;
-  const parts=P.partners.map(p=>({id:p.id,name:p.name,pct:num(p.pct),gross:profit*num(p.pct)/100,ads:ads*num(p.pct)/100,exp:(other+mgr)*num(p.pct)/100,net:net*num(p.pct)/100}));
-  return {ps,exps,revenue,profit,ads,other,mgr,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
+  const parts=P.partners.map(p=>({id:p.id,name:p.name,pct:num(p.pct),gross:profit*num(p.pct)/100,ads:ads*num(p.pct)/100,exp:other*num(p.pct)/100,net:net*num(p.pct)/100}));
+  return {ps,exps,revenue,profit,ads,other,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
 }
 function ptTotals(pid){
   const P=PS();
@@ -4017,10 +3857,7 @@ function renderPartnership(){
 
   <div class="section-title"><span class="ic">📦</span> مبيعات الصفحة بهذي الفترة</div>
   <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المنتج</th><th>الزبون</th><th>النوع</th><th>القطع</th><th>الوارد</th></tr></thead><tbody>
-  ${D.ps.length?D.ps.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60).map(s=>`<tr><td class="muted">${esc(s.date)}</td><td>${esc(saleProductLabel(s))}</td><td>${esc(s.customerName||'—')}</td><td><span class="pill ${s.customerType==='wholesale'?'wholesale':'retail'}">${s.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(s.quantity)}</td><td class="num accent">${money(saleRevenue(s))}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات</td></tr>'}</tbody></table></div>
-
-  <div class="section-title"><span class="ic">📜</span> قواعد الحساب (حتى ما يصير خلاف)</div>
-  <div class="rule-box">1) تُحسب فقط مبيعات ومصاريف القناة "الصفحة" — مبيعات المعمل ما تدخل.<br>2) الوارد = المستلم فعلياً من مبيعات الصفحة + تحصيل ديون زبائن الصفحة. الربح يُحسب بنفس نسبة ربح كل عملية.<br>3) الإعلانات (مصاريف الصفحة نوع "إعلانات") تُخصم <b>مرة وحدة فقط</b> من الربح، وتتوزع على الشركاء بنفس نسب الأرباح، فمساهمة كل شريك بالإعلانات = نسبته × الإعلانات.<br>4) المصاريف الأخرى المعتمدة = مصاريف الصفحة غير الإعلانات، عدا المسجلة "غير ذلك (بدون خصم)".<br>5) صافي الأرباح = الأرباح − الإعلانات − المصاريف المعتمدة، وحصة كل شريك = نسبته × الصافي.<br>6) "إقفال الشهر" يثبّت الأرقام بسجل الأشهر ويضيفها لحساب كل شريك. التعديلات والمبالغ الإضافية والاستلام تسجلها من كشف حسابه.<br>${P.deductMgr?'7) مستحقات مدير الصفحة تُخصم قبل التوزيع (مفعّل).':'7) مستحقات مدير الصفحة لا تُخصم من الشراكة (تكدر تفعلها من تعديل النسب).'}</div>`;
+  ${D.ps.length?D.ps.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60).map(s=>`<tr><td class="muted">${esc(s.date)}</td><td>${esc(saleProductLabel(s))}</td><td>${esc(s.customerName||'—')}</td><td><span class="pill ${s.customerType==='wholesale'?'wholesale':'retail'}">${s.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(s.quantity)}</td><td class="num accent">${money(saleRevenue(s))}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات</td></tr>'}</tbody></table></div>`;
 }
 function closePartnerMonth(ym){
   const P=PS();
@@ -4028,7 +3865,7 @@ function closePartnerMonth(ym){
   const [f,t]=mRange(ym), D=pageData(f,t);
   askConfirm(`إقفال ${monthLabelAr(ym)}: صافي الأرباح ${money(D.net)} يتوزع على الشركاء بالنسب. المتابعة؟`,()=>{
     const old=P.closes.find(c=>c.month===ym);
-    const rec={id:old?old.id:uid(),month:ym,date:todayISO(),revenue:D.revenue,profit:D.profit,ads:D.ads,other:D.other+D.mgr,net:D.net,pieces:D.pieces,orders:D.orders,parts:D.parts.map(p=>({id:p.id,name:p.name,pct:p.pct,gross:p.gross,ads:p.ads,exp:p.exp,net:p.net}))};
+    const rec={id:old?old.id:uid(),month:ym,date:todayISO(),revenue:D.revenue,profit:D.profit,ads:D.ads,other:D.other,net:D.net,pieces:D.pieces,orders:D.orders,parts:D.parts.map(p=>({id:p.id,name:p.name,pct:p.pct,gross:p.gross,ads:p.ads,exp:p.exp,net:p.net}))};
     if(old) Object.assign(old,rec); else P.closes.push(rec);
     saveState(); render(); toast('تم إقفال الشهر وتوزيع الأرباح');
   },{title:'إقفال الشهر',yesLabel:'إقفال وتوزيع'});
@@ -4037,13 +3874,12 @@ function deletePartnerClose(id){ confirmDelete('إلغاء إقفال هذا ا�
 function openPartnersModal(){
   const P=PS();
   openModal({title:'الأسماء والنسب',bodyHtml:`${P.partners.map((p,i)=>`<div class="form-grid2"><div class="form-row"><label>الاسم</label><input type="text" id="pn_${i}" value="${esc(p.name)}"></div><div class="form-row"><label>النسبة %</label><input type="number" step="0.01" id="pp_${i}" value="${p.pct}"></div></div>`).join('')}
-    <label style="display:flex;gap:9px;align-items:center;font-size:13.5px;"><input type="checkbox" id="pm_mgr" style="width:auto;margin:0;" ${P.deductMgr?'checked':''}><span>خصم مستحقات مدير الصفحة من صافي الشراكة</span></label>
     <div class="hint">النسبة تُستخدم لتوزيع الأرباح ومساهمة الإعلانات معاً. المجموع لازم يكون 100%. الأشهر المقفلة سابقاً ما تتغير.</div>`,
   onSave(){
     const v=P.partners.map((p,i)=>({name:document.getElementById('pn_'+i).value.trim(),pct:num(document.getElementById('pp_'+i).value)}));
     if(v.some(x=>!x.name)) return toast('الاسم مطلوب');
     if(Math.abs(v.reduce((s,x)=>s+x.pct,0)-100)>0.001) return toast('مجموع النسب لازم يكون 100%');
-    P.partners.forEach((p,i)=>Object.assign(p,v[i])); P.deductMgr=document.getElementById('pm_mgr').checked;
+    P.partners.forEach((p,i)=>Object.assign(p,v[i]));
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
@@ -4103,14 +3939,27 @@ function renderDebtsHub(){
 /* ===== المحل (قريباً) ===== */
 function renderStore(){
   const img=document.querySelector('.sidebar .brand .mark img'); const src=img?img.src:'';
-  return `<div class="page-head"><div><h1>المحل</h1><div class="desc">قسم المحل الخاص بالشركاء</div></div></div>
-  <div class="card" style="text-align:center;padding:48px 20px;">
-    ${src?`<img src="${src}" alt="STR" style="width:120px;max-width:40%;height:auto;filter:var(--logo-filter);margin-bottom:18px;">`:''}
-    <div class="pill wholesale" style="font-size:15px;padding:7px 18px;">🚧 الافتتاح قريباً</div>
-    <p class="muted" style="max-width:520px;margin:18px auto 0;line-height:2;">هنا راح تكون <b>أرباح ومصاريف المحل</b>، مع <b>تقسيم وتوزيع النسب بين الشركاء</b> بنفس أسلوب نظام الشراكة: إقفال شهري، حصة كل شريك، وكشف حساب مفصّل.</p>
+  return `<div style="min-height:calc(100vh - 200px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;">
+    ${src?`<img src="${src}" alt="STR" style="width:300px;max-width:75%;height:auto;filter:var(--logo-filter);margin-bottom:34px;">`:''}
+    <div style="font-family:'Cairo',sans-serif;font-size:26px;font-weight:800;letter-spacing:.5px;color:var(--text);">الافتتاح قريباً</div>
   </div>`;
 }
 
+
+function renderContract(){
+  const P=PS(), li=P.partners.map(p=>`<li>${esc(p.name)}: ${pctTxt(p.pct)}.</li>`).join('');
+  return `<div class="page-head"><div><h1>عقد الشراكة <span class="muted" style="font-size:.6em;font-weight:600;">(قواعد توزيع النسب)</span></h1><div class="desc">اتفاقية الشراكة بين الشركاء — النسب تتحدث تلقائياً من "تعديل الأسماء والنسب" بصفحة نظام الشراكة</div></div></div>
+  <div class="rule-box contract">
+    <h4>اتفاقية الشراكة – STR | ستر</h4>
+    <h5>أولاً: نسب الشراكة والأرباح</h5><ul>${li}</ul><p>تشمل النسب جميع مبيعات الصفحة، مفرداً وجملة.</p>
+    <h5>ثانياً: مسؤوليات الشركاء</h5>
+    <p><b>أحمد نعيم – التسويق والإدارة الرقمية</b></p><ul><li>إدارة مواقع التواصل الاجتماعي.</li><li>إدارة الحملات الإعلانية والتسويقية.</li><li>إعداد المحتوى والتصاميم الإعلانية.</li><li>تطوير الأنظمة الرقمية للمشروع.</li></ul>
+    <p><b>حسن الفتلاوي وأمجد – الإدارة التشغيلية</b></p><ul><li>إدارة المعمل والإنتاج.</li><li>الإشراف على المبيعات والزبائن.</li><li>متابعة المخزون والطلبات.</li><li>تنظيم العمل اليومي وضمان جودة المنتجات.</li></ul>
+    <h5>ثالثاً: تكاليف الإعلانات</h5><p>تُوزّع تكاليف الإعلانات بين الشركاء:</p><ul>${li}</ul>
+    <h5>رابعاً: آلية توزيع الأرباح</h5><p>يُحتسب صافي الربح بعد خصم تكلفة البضاعة والإعلانات والمصاريف التشغيلية المعتمدة، ثم يوزع حسب نسب الشراكة أعلاه.</p>
+    <p><b>ضوابط مالية:</b> تُخصم المصاريف مرة واحدة فقط، وتُوثق جميع الإيرادات والمصروفات والمساهمات المالية لضمان الشفافية بين الشركاء.</p>
+  </div>`;
+}
 
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
@@ -4318,7 +4167,24 @@ function openModal({title, bodyHtml, onSave}){
         </div>
       </div>
     </div>`;
-  document.getElementById('modalSaveBtn').onclick = onSave;
+  const sb=document.getElementById('modalSaveBtn');
+  if(onSave) sb.onclick = onSave; else { sb.style.display='none'; const c=root.querySelector('.modal-foot .btn.ghost'); if(c) c.textContent='إغلاق'; }
+  root.querySelectorAll('select#f_model').forEach(enhanceModelSelect);
+}
+function enhanceModelSelect(sel){
+  sel.style.display='none';
+  const wrap=document.createElement('div'); wrap.className='mpick';
+  wrap.innerHTML='<button type="button" class="mpick-btn"></button><div class="mpick-list"></div>';
+  sel.insertAdjacentElement('afterend',wrap);
+  const btn=wrap.firstChild, list=wrap.lastChild;
+  const thumb=v=>{ const m=state.models.find(x=>x.id===v); const src=m&&m.images&&m.images[0]; return (src && /^(data:|https?:|blob:)/.test(src)) ? `<img src="${esc(src)}" alt="">` : '<span class="mph">🧵</span>'; };
+  const draw=()=>{ const o=sel.options[sel.selectedIndex]; btn.innerHTML=o?`${thumb(o.value)}<span>${esc(o.textContent)}</span><i>▾</i>`:'<span>اختر الموديل</span><i>▾</i>'; };
+  list.innerHTML=[...sel.options].map((o,i)=>`<div class="mpick-item" data-i="${i}">${thumb(o.value)}<span>${esc(o.textContent)}</span></div>`).join('');
+  btn.onclick=e=>{ e.stopPropagation(); wrap.classList.toggle('open'); };
+  list.onclick=e=>{ const it=e.target.closest('.mpick-item'); if(!it) return; sel.selectedIndex=+it.dataset.i; sel.dispatchEvent(new Event('change')); wrap.classList.remove('open'); draw(); };
+  const off=()=>{ if(!wrap.isConnected) document.removeEventListener('click',off); else wrap.classList.remove('open'); };
+  document.addEventListener('click',off);
+  draw();
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
