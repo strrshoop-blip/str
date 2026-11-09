@@ -979,12 +979,12 @@ function tailorDuesOutstandingTotal(){
 const PAGES = [
   {id:'dashboard', label:'الرئيسية', icon:'🏠'},
   {id:'partnership', label:'نظام الشراكة', icon:'🤝'},
+  {id:'social', label:'الصفحة', icon:'📱'},
   {id:'sales', label:'الوارد / المبيعات', icon:'📦'},
   {id:'models', label:'الموديلات', icon:'👗'},
   {id:'workers', label:'العمال', icon:'👷'},
   {id:'expenses', label:'المصاريف', icon:'💸'},
   {id:'debtshub', label:'الديون', icon:'📒'},
-  {id:'social', label:'الصفحة', icon:'📱'},
   {id:'ledger', label:'الحركات المالية', icon:'💱'},
   {id:'notes', label:'الملاحظات', icon:'📝'},
   {id:'reports', label:'التقارير', icon:'📊'},
@@ -1007,7 +1007,7 @@ function buildNav(){
       <span class="ic">${p.icon}</span><span>${p.label.split(' / ')[0]}</span>
     </button>`).join('');
 }
-function isNavActive(id){ return currentPage===id || (id==='partnership' && currentPage==='contract') || (id==='debtshub' && ['debts','customerdebts'].includes(currentPage)) || (id==='workers' && ['tailors','cutters','hoodaris'].includes(currentPage)); }
+function isNavActive(id){ return currentPage===id || (id==='partnership' && currentPage==='contract') || (id==='debtshub' && ['debts','customerdebts'].includes(currentPage)) || (id==='workers' && ['tailors','cutters','hoodaris','production'].includes(currentPage)); }
 function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('str_theme',t);}catch(e){} const b=document.getElementById('themeBtn'); if(b) b.textContent = t==='dark' ? '🌙 ليلي' : '☀️ نهاري'; const m=document.querySelector('meta[name=theme-color]'); if(m) m.content = t==='dark'?'#09090a':'#f5f5f6'; }
 function toggleTheme(){ setTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); }
 function navigate(page){
@@ -1033,6 +1033,7 @@ function render(){
   else if(currentPage==='customerdebts') main.innerHTML = currentDetail ? renderCustomerDetail(currentDetail) : debtsTabs('customerdebts')+renderCustomerDebts();
   else if(currentPage==='social') main.innerHTML = renderSocialPage();
   else if(currentPage==='workers') main.innerHTML = renderWorkers();
+  else if(currentPage==='production') main.innerHTML = renderProduction();
   else if(currentPage==='partnership') main.innerHTML = currentDetail ? renderPartnerDetail(currentDetail) : renderPartnership();
   else if(currentPage==='reports') main.innerHTML = renderReports();
   else if(currentPage==='ledger') main.innerHTML = renderLedger();
@@ -1104,7 +1105,7 @@ function renderDashboard(){
     ${statCard('وارد المعمل', money(inShop.total), 'pos', `مبيعات ${money(inShop.sales)} · تحصيل ديون ${money(inShop.debts)} · ${inShop.pieces} قطعة · ${inShop.orders} طلب`, false, "navigate('sales')")}
     ${statCard('وارد الصفحة', money(inPage.total), 'pos', `مبيعات ${money(inPage.sales)} · تحصيل ديون ${money(inPage.debts)} · ${inPage.pieces} قطعة · ${inPage.orders} طلب`, false, "navigate('partnership')")}
     ${statCard('إجمالي المصاريف', money(t.expTotal), 'neg', `من الأرباح ${money(t.profitExpTotal)} · من رأس المال ${money(t.capitalExpTotal)} · أخرى ${money(t.otherExpTotal)}`, false, "expenseFilter.month=dashboardMonth;expenseFilter.channel='ALL';navigate('expenses')")}
-    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', all ? 'كل الأشهر · حسب الخياطين' : monthLabelAr(dashboardMonth)+' · حسب الخياطين', false, "openProductionModal()")}
+    ${statCard('القطع المنتجة', t.piecesProduced.toLocaleString('en-US'), '', (all ? 'كل الأشهر' : monthLabelAr(dashboardMonth))+' · هذا الأسبوع: '+weekProduced(weekStartOf(todayISO())).toLocaleString('en-US'), false, "navigate('production')")}
     ${statCard('القطع المباعة', t.piecesSold.toLocaleString('en-US'), '', null, false, "navigate('soldmodels')")}
     ${statCard('مستحقات الخياطين (الكلي)', money(duesTotal), duesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
     ${statCard('مستحقات الفصالين (الكلي)', money(cutterDuesTotal), cutterDuesTotal>0?'neg':'pos', 'رصيد تراكمي غير مرتبط بالفترة')}
@@ -1272,80 +1273,176 @@ function monthOptionsList(selected){
 ========================================================= */
 function pieceAdjustFor(ym){ return num((state.pieceAdjust||{})[ym]); }
 function pieceAdjustInRange(from, to){
-  return Object.keys(state.pieceAdjust||{}).filter(ym=>inRange(ym+'-01', from, to)).reduce((s,ym)=>s+num(state.pieceAdjust[ym]),0);
+  return Object.keys(state.pieceAdjust||{}).filter(ym=>inRange(ym+'-01', from, to)).reduce((s,ym)=>s+num(state.pieceAdjust[ym]),0)
+       + Object.keys(state.pieceAdjustWeek||{}).filter(s=>inRange(s, from, to)).reduce((a,s)=>a+num(state.pieceAdjustWeek[s]),0);
 }
 function sewnPiecesForMonth(ym){
   return state.tailorWork.filter(w=>String(w.date||'').slice(0,7)===ym).reduce((s,w)=>s+num(w.pieceCount),0);
 }
-function producedForMonth(ym){ return Math.max(0, sewnPiecesForMonth(ym) + pieceAdjustFor(ym)); }
+function weekAdjInMonth(ym){ return Object.keys(state.pieceAdjustWeek||{}).filter(s=>s.slice(0,7)===ym).reduce((a,s)=>a+num(state.pieceAdjustWeek[s]),0); }
+function producedForMonth(ym){ return Math.max(0, sewnPiecesForMonth(ym) + pieceAdjustFor(ym) + weekAdjInMonth(ym)); }
 function setProducedForMonth(ym, value){
   if(!state.pieceAdjust) state.pieceAdjust = {};
-  state.pieceAdjust[ym] = Math.max(0, Math.round(num(value))) - sewnPiecesForMonth(ym);
+  state.pieceAdjust[ym] = Math.max(0, Math.round(num(value))) - sewnPiecesForMonth(ym) - weekAdjInMonth(ym);
 }
 function productionMonths(){
   const set = new Set([thisMonth()]);
   state.tailorWork.forEach(w=>{ if(w.date) set.add(String(w.date).slice(0,7)); });
   Object.keys(state.pieceAdjust||{}).forEach(k=>set.add(k));
+  (state.productionMonthsExtra||[]).forEach(k=>set.add(k));
   return [...set].filter(k=>/^\d{4}-\d{2}$/.test(k)).sort().reverse();
 }
-function openProductionModal(){
-  const months = productionMonths();
-  const total = months.reduce((s,ym)=>s+producedForMonth(ym),0);
-  const cur = thisMonth();
-  openModal({
-    title: 'القطع المنتجة — سجل الأشهر',
-    bodyHtml: `
-      <div class="compute-box"><span>المجموع لكل الأشهر</span><span><b>${total.toLocaleString('en-US')} قطعة</b></span></div>
-      <div class="btn-row" style="margin:10px 0;"><button type="button" class="btn primary sm" onclick="openProductionMonthModal()">+ شهر جديد (يبدأ من صفر)</button></div>
-      ${months.map(ym=>{
-        const sewn = sewnPiecesForMonth(ym), adj = pieceAdjustFor(ym), has = Object.prototype.hasOwnProperty.call(state.pieceAdjust||{}, ym);
-        const sub = has ? `محسوب من الخياطين ${sewn.toLocaleString('en-US')}${adj? ' · تعديل '+(adj>0?'+':'−')+Math.abs(adj).toLocaleString('en-US') : ''}` : 'محسوب تلقائياً من شغل الخياطين';
-        return `
-        <div style="border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><b>${monthLabelAr(ym)}</b>${ym===cur?'<span class="pill wholesale">الحالي</span>':''}${ym===dashboardMonth?'<span class="pill retail">معروض بالرئيسية</span>':''}</div>
-            <div style="font-size:22px;font-weight:800;">${producedForMonth(ym).toLocaleString('en-US')} <span style="font-size:12px;color:var(--text-faint);font-weight:400;">قطعة</span></div>
-          </div>
-          <div style="font-size:12px;color:var(--text-faint);margin:4px 0 10px;">${sub}</div>
-          <div class="btn-row">
-            <button type="button" class="btn sm" onclick="productionShowMonth('${ym}')">عرض بالرئيسية</button>
-            <button type="button" class="btn sm" onclick="openProductionEditModal('${ym}')">تعديل</button>
-            <button type="button" class="btn sm danger" onclick="productionReset('${ym}')">تصفير</button>
-            ${has ? `<button type="button" class="btn sm ghost" onclick="productionClearAdjust('${ym}')" title="يرجع الرقم المحسوب من شغل الخياطين">رجوع للمحسوب</button>` : ''}
-          </div>
-        </div>`; }).join('')}
-      <div class="hint">الرقم الأساسي يتحسب تلقائياً من شغل الخياطين المسجل بكل شهر، وكل شهر جديد يبدأ من صفر. "تعديل" أو "تصفير" يضبط رقم الشهر، وأي شغل جديد تسجله بنفس الشهر ينضاف فوقه.</div>
-    `,
-    onSave(){ closeModal(); }
-  });
-  const btn = document.getElementById('modalSaveBtn'); if(btn) btn.textContent = 'إغلاق';
+
+function openProductionModal(){ navigate('production'); }
+
+/* ---- الإنتاج الأسبوعي (الأسبوع من السبت إلى الجمعة) ---- */
+function isoOfDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function addDaysISO(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoOfDate(d); }
+function weekStartOf(iso){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()-((d.getDay()+1)%7)); return isoOfDate(d); }
+function weekEndOf(s){ return addDaysISO(s,6); }
+function fmtShort(iso){ const p=String(iso).split('-'); return Number(p[2])+'/'+Number(p[1]); }
+function weekLabel(s){ return fmtShort(s)+' ← '+fmtShort(weekEndOf(s)); }
+function workIn(list,a,b){ return list.filter(w=>w.date && w.date>=a && w.date<=b); }
+function sewnInRange(a,b){ return workIn(state.tailorWork,a,b).reduce((s,w)=>s+num(w.pieceCount),0); }
+function weekAdjFor(s){ return num((state.pieceAdjustWeek||{})[s]); }
+function weekProduced(s){ return Math.max(0, sewnInRange(s,weekEndOf(s)) + weekAdjFor(s)); }
+function weekCosts(s){
+  const e=weekEndOf(s), c=(l)=>workIn(l,s,e).reduce((a,w)=>a+num(w.pieceCount)*num(w.pricePerPiece),0);
+  const p=(l)=>workIn(l,s,e).reduce((a,w)=>a+num(w.pieceCount),0);
+  return {tailors:c(state.tailorWork),cutters:c(state.cutterWork),hoodaris:c(state.hoodariWork),cutPcs:p(state.cutterWork),hoodPcs:p(state.hoodariWork)};
 }
-function productionShowMonth(ym){ dashboardMonth = ym; closeModal(); render(); window.scrollTo(0,0); }
+function productionWeeks(){
+  const set=new Set([weekStartOf(todayISO())]);
+  [state.tailorWork,state.cutterWork,state.hoodariWork].forEach(l=>l.forEach(w=>{ if(w.date) set.add(weekStartOf(w.date)); }));
+  Object.keys(state.pieceAdjustWeek||{}).forEach(k=>set.add(k));
+  (state.productionWeeks||[]).forEach(k=>set.add(k));
+  return [...set].filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort().reverse();
+}
+let prodTab='weeks', prodWeeksShown=12;
+function renderProduction(){
+  if(typeof currentDetail==='string' && currentDetail.startsWith('m:')) return workersTabs('production')+renderProductionMonth(currentDetail.slice(2));
+  const cw=weekStartOf(todayISO()), weeks=productionWeeks(), months=productionMonths();
+  const cc=weekCosts(cw), cm=thisMonth();
+  const allTotal=months.reduce((s,ym)=>s+producedForMonth(ym),0);
+  const weekRows=weeks.slice(0,prodWeeksShown).map(s=>{
+    const c=weekCosts(s), adj=weekAdjFor(s);
+    return `<tr>
+      <td><b>${weekLabel(s)}</b> ${s===cw?'<span class="pill wholesale">الحالي</span>':''}<div class="muted" style="font-size:11px;">${monthLabelAr(s.slice(0,7))}</div></td>
+      <td class="num"><b style="font-size:17px;">${weekProduced(s).toLocaleString('en-US')}</b>${adj?`<div class="muted" style="font-size:11px;">تعديل ${adj>0?'+':'−'}${Math.abs(adj)}</div>`:''}</td>
+      <td class="num">${money(c.tailors)}</td><td class="num">${money(c.cutters)}</td><td class="num">${money(c.hoodaris)}</td>
+      <td class="num"><b>${money(c.tailors+c.cutters+c.hoodaris)}</b></td>
+      <td><div class="btn-row"><button class="btn sm" onclick="openWeekDetail('${s}')">تفاصيل</button><button class="btn sm" onclick="openWeekEditModal('${s}')">تعديل</button></div></td></tr>`;}).join('');
+  const monthCards=months.map(ym=>{
+    const n=prodMonthWeeks(ym).length;
+    return `<div class="pcard" onclick="productionOpenMonth('${ym}')">
+      <div class="pn"><span>📅 ${monthLabelAr(ym)}</span>${ym===cm?'<span class="pill wholesale">الحالي</span>':''}</div>
+      <div class="big">${producedForMonth(ym).toLocaleString('en-US')} <span style="font-size:13px;color:var(--text-faint);font-weight:400;">قطعة</span></div>
+      <div class="desc" style="font-size:12px;color:var(--text-faint)">${n} أسابيع · اضغط لعرض الأسابيع</div></div>`;}).join('');
+  return workersTabs('production')+`
+  <div class="page-head"><div><h1>الإنتاج الأسبوعي</h1><div class="desc">كل أسبوع (سبت ← جمعة) يبدأ من صفر. تعرف إنتاجك وأجور العمال قبل لا تدفع. الأشهر محفوظة وما تتصفّر، فقط تعديل.</div></div>
+    <div class="btn-row"><button class="btn primary" onclick="openProductionWeekModal()">+ أسبوع جديد</button><button class="btn" onclick="openProductionMonthModal()">+ شهر جديد</button></div></div>
+  <div class="grid stats">
+    ${statCard('إنتاج هذا الأسبوع', weekProduced(cw).toLocaleString('en-US')+' قطعة','accent',weekLabel(cw)+' · أجور الخياطين '+money(cc.tailors),true,"openWeekDetail('"+cw+"')")}
+    ${statCard('إجمالي أجور هذا الأسبوع', money(cc.tailors+cc.cutters+cc.hoodaris),'neg','خياطين + فصالين + هودارية')}
+    ${statCard('إنتاج '+monthLabelAr(cm), producedForMonth(cm).toLocaleString('en-US')+' قطعة','','الشهر الحالي')}
+    ${statCard('إجمالي كل الأشهر', allTotal.toLocaleString('en-US')+' قطعة','','')}
+  </div>
+  <div class="tabs" style="margin-top:18px;"><button type="button" class="${prodTab==='weeks'?'on':''}" onclick="prodTab='weeks';render()">الأسابيع</button><button type="button" class="${prodTab==='months'?'on':''}" onclick="prodTab='months';render()">الأشهر</button></div>
+  ${prodTab==='weeks' ? `<div class="table-wrap"><table>
+      <thead><tr><th>الأسبوع</th><th>القطع المنتجة</th><th>أجور الخياطين</th><th>أجور الفصالين</th><th>أجور الهودارية</th><th>المجموع</th><th></th></tr></thead>
+      <tbody>${weekRows}</tbody></table></div>
+      ${weeks.length>prodWeeksShown?`<div style="text-align:center;margin-top:12px;"><button class="btn" onclick="prodWeeksShown+=12;render()">عرض أسابيع أقدم</button></div>`:''}
+      <div class="hint" style="margin-top:10px;">القطع المنتجة = قطع الخياطين المسجلة بتواريخ الأسبوع. الأجور = القطع × سعر القطعة. "تعديل" يضبط رقم الأسبوع بدون ما يمس سجلات العمال.</div>`
+    : `<div class="grid stats">${monthCards}</div>`}`;
+}
+function productionOpenMonth(ym){ currentDetail='m:'+ym; render(); window.scrollTo(0,0); }
+function prodMonthWeeks(ym){
+  const first=ym+'-01', last=ym+'-'+String(new Date(Number(ym.slice(0,4)),Number(ym.slice(5,7)),0).getDate()).padStart(2,'0');
+  const out=[]; for(let s=weekStartOf(first); s<=last; s=addDaysISO(s,7)){ const a=s<first?first:s, e=weekEndOf(s), b=e>last?last:e; out.push({s,a,b}); }
+  return out;
+}
+function renderProductionMonth(ym){
+  const segs=prodMonthWeeks(ym), cw=weekStartOf(todayISO());
+  const rows=segs.map(g=>{
+    const inM=sewnInRange(g.a,g.b)+(g.s.slice(0,7)===ym?weekAdjFor(g.s):0);
+    const full=weekProduced(g.s), partial=g.a!==g.s||g.b!==weekEndOf(g.s);
+    return `<tr><td><b>${weekLabel(g.s)}</b> ${g.s===cw?'<span class="pill wholesale">الحالي</span>':''}${partial?'<div class="muted" style="font-size:11px;">أسبوع يمتد لشهر ثاني — المحسوب هنا: '+fmtShort(g.a)+' ← '+fmtShort(g.b)+'</div>':''}</td>
+      <td class="num"><b style="font-size:17px;">${Math.max(0,inM).toLocaleString('en-US')}</b></td>
+      <td class="num">${partial?full.toLocaleString('en-US'):'—'}</td>
+      <td><div class="btn-row"><button class="btn sm" onclick="openWeekDetail('${g.s}')">تفاصيل</button><button class="btn sm" onclick="openWeekEditModal('${g.s}')">تعديل</button></div></td></tr>`;}).join('');
+  const madj=pieceAdjustFor(ym);
+  return `<button class="detail-back" onclick="currentDetail=null;prodTab='months';render();">→ رجوع للإنتاج</button>
+  <div class="page-head"><div><h1>${monthLabelAr(ym)}</h1><div class="desc">الشهر محفوظ ما يتصفّر. تقدر تعدل رقمه أو أرقام أسابيعه.</div></div>
+    <div class="btn-row"><button class="btn" onclick="productionShowMonth('${ym}')">عرض بالرئيسية</button><button class="btn primary" onclick="openProductionEditModal('${ym}')">تعديل رقم الشهر</button></div></div>
+  <div class="grid stats">${statCard('إنتاج الشهر', producedForMonth(ym).toLocaleString('en-US')+' قطعة','accent',madj?('منها تعديل شهري '+(madj>0?'+':'−')+Math.abs(madj)):'',true)}
+  ${statCard('عدد الأسابيع', segs.length,'','')}</div>
+  <div class="table-wrap" style="margin-top:14px;"><table><thead><tr><th>الأسبوع</th><th>قطع داخل هذا الشهر</th><th>إجمالي الأسبوع الكامل</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function openWeekDetail(s){
+  const e=weekEndOf(s), per=(list,key,names)=>{ const m={}; workIn(list,s,e).forEach(w=>{ const k=w[key]; m[k]=m[k]||{p:0,c:0}; m[k].p+=num(w.pieceCount); m[k].c+=num(w.pieceCount)*num(w.pricePerPiece); }); return Object.keys(m).map(k=>({name:(names.find(x=>x.id===k)||{}).name||'—',...m[k]})); };
+  const sect=(title,rows)=> rows.length? `<div class="section-title" style="margin:14px 0 8px;font-size:14px;">${title}</div><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>القطع</th><th>المستحق</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="num">${r.p.toLocaleString('en-US')}</td><td class="num">${money(r.c)}</td></tr>`).join('')}<tr><td><b>المجموع</b></td><td class="num"><b>${rows.reduce((a,r)=>a+r.p,0).toLocaleString('en-US')}</b></td><td class="num"><b>${money(rows.reduce((a,r)=>a+r.c,0))}</b></td></tr></tbody></table></div>` : '';
+  const t=per(state.tailorWork,'tailorId',state.tailors), c=per(state.cutterWork,'cutterId',state.cutters), h=per(state.hoodariWork,'hoodariId',state.hoodaris);
+  const mm={}; workIn(state.tailorWork,s,e).forEach(w=>{ const m=modelById(w.modelId); const k=m?m.name+(m.code?' #'+m.code:''):'بدون موديل'; mm[k]=(mm[k]||0)+num(w.pieceCount); });
+  const cs=weekCosts(s);
+  openModal({title:'أسبوع '+weekLabel(s),
+    bodyHtml:`<div class="compute-box"><span>القطع المنتجة</span><span><b>${weekProduced(s).toLocaleString('en-US')} قطعة</b></span></div>
+      <div class="compute-box"><span>إجمالي الأجور المستحقة</span><span><b>${money(cs.tailors+cs.cutters+cs.hoodaris)}</b></span></div>
+      ${sect('🧵 الخياطين',t)}${sect('✂️ الفصالين',c)}${sect('🪡 الهودارية',h)}
+      ${Object.keys(mm).length?`<div class="section-title" style="margin:14px 0 8px;font-size:14px;">👗 القطع حسب الموديل (خياطين)</div>${Object.keys(mm).map(k=>`<div class="compute-box" style="margin-bottom:6px;"><span>${esc(k)}</span><b>${mm[k].toLocaleString('en-US')}</b></div>`).join('')}`:''}
+      ${(!t.length&&!c.length&&!h.length)?'<div class="hint">ما مسجل شغل بهذا الأسبوع.</div>':''}`,
+    onSave(){ closeModal(); }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
+}
+function openWeekEditModal(s){
+  const sewn=sewnInRange(s,weekEndOf(s)), has=Object.prototype.hasOwnProperty.call(state.pieceAdjustWeek||{},s);
+  openModal({title:'تعديل إنتاج أسبوع '+weekLabel(s),
+    bodyHtml:`<div class="form-row"><label>عدد القطع المنتجة بهذا الأسبوع</label><input type="number" id="f_pieces" value="${weekProduced(s)}"></div>
+      <div class="hint">المحسوب من شغل الخياطين: ${sewn.toLocaleString('en-US')} قطعة. الرقم اللي تكتبه يصير رقم الأسبوع، وأي شغل جديد بنفس الأسبوع ينضاف فوقه.</div>
+      ${has?`<div style="margin-top:10px;"><button type="button" class="btn sm ghost" onclick="weekClearAdjust('${s}')">رجوع للرقم المحسوب</button></div>`:''}`,
+    onSave(){
+      const v=document.getElementById('f_pieces').value; if(v===''||num(v)<0) return toast('اكتب عدد صحيح');
+      if(!state.pieceAdjustWeek) state.pieceAdjustWeek={};
+      state.pieceAdjustWeek[s]=Math.round(num(v))-sewn;
+      saveState(); closeModal(); render(); toast('تم تعديل الأسبوع');
+    }});
+}
+function weekClearAdjust(s){ if(state.pieceAdjustWeek) delete state.pieceAdjustWeek[s]; saveState(); closeModal(); render(); toast('رجع الرقم المحسوب'); }
+function openProductionWeekModal(){
+  const ws=productionWeeks(), nextStart=addDaysISO(ws[0]>weekStartOf(todayISO())?ws[0]:weekStartOf(todayISO()),7);
+  openModal({title:'إضافة أسبوع جديد',
+    bodyHtml:`<div class="form-grid2"><div class="form-row"><label>أي يوم من الأسبوع</label><input type="date" id="f_wd" value="${nextStart}"></div>
+      <div class="form-row"><label>القطع (اختياري)</label><input type="number" id="f_wn" placeholder="يبدأ من صفر"></div></div>
+      <div class="hint">الأسبوع من السبت إلى الجمعة، ويبدأ من صفر. إذا تركت القطع فارغة يتحسب تلقائياً من شغل الخياطين.</div>`,
+    onSave(){
+      const d=document.getElementById('f_wd').value; if(!d) return toast('اختر التاريخ');
+      const s=weekStartOf(d);
+      if(!state.productionWeeks) state.productionWeeks=[];
+      if(!state.productionWeeks.includes(s)) state.productionWeeks.push(s);
+      const v=document.getElementById('f_wn').value;
+      if(v!==''){ if(!state.pieceAdjustWeek) state.pieceAdjustWeek={}; state.pieceAdjustWeek[s]=Math.max(0,Math.round(num(v)))-sewnInRange(s,weekEndOf(s)); }
+      prodTab='weeks'; saveState(); closeModal(); render(); toast('تمت إضافة أسبوع '+weekLabel(s));
+    }});
+}
+function productionShowMonth(ym){ dashboardMonth = ym; navigate('dashboard'); }
 function openProductionEditModal(ym){
-  const sewn = sewnPiecesForMonth(ym);
+  const sewn = sewnPiecesForMonth(ym), has = Object.prototype.hasOwnProperty.call(state.pieceAdjust||{}, ym);
   openModal({
     title: 'تعديل القطع المنتجة — ' + monthLabelAr(ym),
     bodyHtml: `
-      <div class="form-row"><label>عدد القطع المنتجة</label><input type="number" min="0" id="f_pieces" value="${producedForMonth(ym)}"></div>
+      <div class="form-row"><label>عدد القطع المنتجة بالشهر</label><input type="number" id="f_pieces" value="${producedForMonth(ym)}"></div>
       <div class="hint">المحسوب من شغل الخياطين لهذا الشهر: ${sewn.toLocaleString('en-US')} قطعة. الرقم اللي تكتبه يصير رقم الشهر، وأي شغل جديد ينضاف فوقه.</div>
-    `,
+      ${has?`<div style="margin-top:10px;"><button type="button" class="btn sm ghost" onclick="productionClearAdjust('${ym}')">رجوع للرقم المحسوب</button></div>`:''}`,
     onSave(){
       const v = document.getElementById('f_pieces').value;
       if(v==='' || num(v)<0) return toast('اكتب عدد صحيح');
       setProducedForMonth(ym, v);
-      saveState(); render(); openProductionModal(); toast('تم تعديل ' + monthLabelAr(ym));
+      saveState(); closeModal(); render(); toast('تم تعديل ' + monthLabelAr(ym));
     }
   });
 }
-function productionReset(ym){
-  askConfirm('تصفير القطع المنتجة لـ ' + monthLabelAr(ym) + '؟ يصير الرقم 0، وأي شغل جديد ينضاف عليه. (شغل الخياطين المسجل ما ينحذف)', ()=>{
-    setProducedForMonth(ym, 0);
-    saveState(); render(); openProductionModal(); toast('تم تصفير ' + monthLabelAr(ym));
-  }, {title:'تصفير', yesLabel:'تصفير'});
-}
 function productionClearAdjust(ym){
   if(state.pieceAdjust) delete state.pieceAdjust[ym];
-  saveState(); render(); openProductionModal(); toast('رجع الرقم المحسوب من شغل الخياطين');
+  saveState(); closeModal(); render(); toast('رجع الرقم المحسوب من شغل الخياطين');
 }
 function openProductionMonthModal(){
   const n = new Date(); const nx = ymOfDate(new Date(n.getFullYear(), n.getMonth()+1, 1));
@@ -1354,16 +1451,17 @@ function openProductionMonthModal(){
     bodyHtml: `
       <div class="form-grid2">
         <div class="form-row"><label>الشهر</label><input type="month" id="f_pm" value="${nx}"></div>
-        <div class="form-row"><label>القطع المنتجة (يبدأ من)</label><input type="number" min="0" id="f_pn" value="0"></div>
+        <div class="form-row"><label>القطع (اختياري)</label><input type="number" id="f_pn" placeholder="يبدأ من صفر"></div>
       </div>
-      <div class="hint">الشهر الجديد يبدأ من 0 ويصير معروض ببطاقة القطع المنتجة بالرئيسية. إذا الشهر موجود وفيه شغل مسجل، يتصفّر وأي شغل جديد ينضاف فوقه.</div>
-    `,
+      <div class="hint">الشهر الجديد يبدأ من صفر ويظهر بقائمة الأشهر. إذا تركت القطع فارغة يتحسب من شغل الخياطين، وما يتصفّر أي شهر موجود.</div>`,
     onSave(){
       const ym = document.getElementById('f_pm').value;
       if(!/^\d{4}-\d{2}$/.test(ym)) return toast('اختر الشهر');
-      setProducedForMonth(ym, document.getElementById('f_pn').value);
-      dashboardMonth = ym;
-      saveState(); closeModal(); render(); toast('تمت إضافة ' + monthLabelAr(ym));
+      if(!state.productionMonthsExtra) state.productionMonthsExtra=[];
+      if(!state.productionMonthsExtra.includes(ym)) state.productionMonthsExtra.push(ym);
+      const v=document.getElementById('f_pn').value;
+      if(v!=='') setProducedForMonth(ym, v);
+      prodTab='months'; saveState(); closeModal(); navigate('production'); toast('تمت إضافة ' + monthLabelAr(ym));
     }
   });
 }
@@ -3790,7 +3888,7 @@ function renderLedger(){
    WORKERS (العمال) — الخياطين + الفصالين + الهودارية بقائمة وحدة
 ========================================================= */
 function workersTabs(cur){
-  const t=[['workers','👷 الكل'],['tailors','🧵 الخياطين'],['cutters','✂️ الفصالين'],['hoodaris','🪡 الهودارية']];
+  const t=[['workers','👷 الكل'],['tailors','🧵 الخياطين'],['cutters','✂️ الفصالين'],['hoodaris','🪡 الهودارية'],['production','📈 الإنتاج الأسبوعي']];
   return `<div class="tabs no-print">${t.map(([id,l])=>`<button type="button" class="${cur===id?'on':''}" onclick="navigate('${id}')">${l}</button>`).join('')}</div>`;
 }
 function renderWorkers(){
@@ -3798,13 +3896,17 @@ function renderWorkers(){
     {id:'tailors',ic:'🧵',name:'الخياطين',n:state.tailors.length,due:tailorDuesOutstandingTotal(),d:'تسجيل القطع والتسديدات'},
     {id:'cutters',ic:'✂️',name:'الفصالين',n:state.cutters.length,due:cutterDuesOutstandingTotal(),d:'أعمال الفصالة والتسديدات'},
     {id:'hoodaris',ic:'🪡',name:'الهودارية',n:state.hoodaris.length,due:hoodariDuesOutstandingTotal(),d:'أعمال الهودارية والتسديدات'}];
+  const cwk=weekStartOf(todayISO());
   const tot=g.reduce((s,x)=>s+x.due,0);
   return `<div class="page-head"><div><h1>العمال</h1><div class="desc">اختار القسم، وبعدها اضغط على أي عامل للدخول لحسابه والتحكم بيه مثل ما كان</div></div></div>
   <div class="grid stats">${statCard('إجمالي مستحقات العمال المتبقية',money(tot),tot>0?'neg':'pos','خياطين + فصالين + هودارية',true)}</div>
   <div class="grid stats" style="margin-top:14px;">${g.map(x=>`<div class="pcard" onclick="navigate('${x.id}')">
     <div class="pn"><span>${x.ic} ${x.name}</span><span class="pill retail">${x.n} عامل</span></div>
     <div class="pr"><span>${x.d}</span><b></b></div>
-    <div class="big ${x.due>0?'neg':'pos'}">${money(x.due)}</div><div class="desc" style="font-size:12px;color:var(--text-faint)">المتبقي عليك</div></div>`).join('')}</div>`;
+    <div class="big ${x.due>0?'neg':'pos'}">${money(x.due)}</div><div class="desc" style="font-size:12px;color:var(--text-faint)">المتبقي عليك</div></div>`).join('')}
+    <div class="pcard" onclick="navigate('production')"><div class="pn"><span>📈 الإنتاج الأسبوعي</span><span class="pill wholesale">هذا الأسبوع</span></div>
+    <div class="pr"><span>قطع كل أسبوع وأجور العمال</span><b></b></div>
+    <div class="big">${weekProduced(cwk).toLocaleString('en-US')} قطعة</div><div class="desc" style="font-size:12px;color:var(--text-faint)">أجور الخياطين: ${money(weekCosts(cwk).tailors)}</div></div></div>`;
 }
 
 /* =========================================================
