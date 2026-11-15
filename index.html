@@ -938,7 +938,7 @@ function allDebtCashEvents(){
     const margin = customerDebtMargin(d);
     const amount = num(p.amount);
     const profit = amount*margin;
-    return {date:p.date, amount, profit, cost:amount-profit, modelId: d?d.modelId:null, debtId:p.customerDebtId};
+    return {id:p.id, date:p.date, amount, profit, cost:amount-profit, modelId: d?d.modelId:null, debtId:p.customerDebtId};
   });
 }
 function debtCashEventsInRange(from,to){ return allDebtCashEvents().filter(e=>inRange(e.date, from, to)); }
@@ -2804,7 +2804,9 @@ function openSaleModal(id, presetChannel){
       if(item) Object.assign(item, data);
       else state.sales.push({id:uid(), ...data});
       saveState(); closeModal(); render();
-      toast(remaining>0 ? `تم الحفظ — سُجّل ${money(remaining)} كدين على ${customerName}` : 'تم الحفظ بنجاح');
+      { const rs=(channel==='page' && PS().resetAt && date<PS().resetAt) ? PS().resetAt : null;
+        if(rs) toast(`تم الحفظ، لكن تاريخ البيع قبل تصفير الشراكة (${rs}) فما يدخل بحساب الشراكة`);
+        else toast(remaining>0 ? `تم الحفظ — سُجّل ${money(remaining)} كدين على ${customerName}` : 'تم الحفظ بنجاح'); }
     }
   });
   updateProfitPreview();
@@ -3991,7 +3993,7 @@ function PS(){
   if(!state.partnership) state.partnership={
     partners:[{id:'p_ahmed',name:'أحمد نعيم',pct:25},{id:'p_hassan',name:'حسن الفتلاوي',pct:37.5},{id:'p_amjad',name:'أمجد',pct:37.5}],
     closes:[],adj:[],pays:[]};
-  const P=state.partnership; if(!Array.isArray(P.archive)) P.archive=[]; if(P.resetAt===undefined) P.resetAt=null;
+  const P=state.partnership; if(!Array.isArray(P.archive)) P.archive=[]; if(P.resetAt===undefined) P.resetAt=null; if(!Array.isArray(P.resetSkip)) P.resetSkip=[];
   return P;
 }
 let partMonth=thisMonth(), partGran='day';
@@ -3999,11 +4001,12 @@ const mRange=m=>[m==='ALL'?null:m+'-01', m==='ALL'?null:m+'-31'];
 function pageData(from,to){
   const P=PS();
   if(P.resetAt && (!from || from<P.resetAt)) from=P.resetAt;
-  const ps=state.sales.filter(s=>(s.channel||'shop')==='page' && inRange(s.date,from,to));
-  const ev=allDebtCashEvents().filter(e=>debtChannel(e.debtId)==='page' && inRange(e.date,from,to));
+  const skip=new Set(P.resetSkip);
+  const ps=state.sales.filter(s=>(s.channel||'shop')==='page' && !skip.has(s.id) && inRange(s.date,from,to));
+  const ev=allDebtCashEvents().filter(e=>debtChannel(e.debtId)==='page' && !skip.has(e.id) && inRange(e.date,from,to));
   const revenue=ps.reduce((s,x)=>s+saleRevenue(x),0)+ev.reduce((s,e)=>s+e.amount,0);
   const profit=ps.reduce((s,x)=>s+saleProfit(x),0)+ev.reduce((s,e)=>s+e.profit,0);
-  const exps=state.expenses.filter(e=>(e.channel||'shop')==='page' && e.type==='إعلانات' && inRange(e.date,from,to));
+  const exps=state.expenses.filter(e=>(e.channel||'shop')==='page' && e.type==='إعلانات' && !skip.has(e.id) && inRange(e.date,from,to));
   const ads=exps.reduce((s,x)=>s+num(x.amount),0);
   const other=0;
   const net=profit-ads-other;
@@ -4051,9 +4054,10 @@ function renderPartnership(){
     ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg')}
     ${statCard('تكاليف الإعلانات',money(D.ads),'neg','تُخصم مرة وحدة بالنسب')}
     ${statCard('عدد المبيعات',D.orders+' عملية بيع','accent',D.pieces+' قطعة مباعة · جملة '+D.wh.n+' · مفرد '+D.rt.n,false,"openPageSalesModal()")}
+    ${statCard('هامش الربح',D.revenue>0?(Math.round(D.profit/D.revenue*1000)/10)+'%':'—','','من الوارد قبل الإعلانات · بعد الإعلانات '+(D.revenue>0?(Math.round(D.net/D.revenue*1000)/10)+'%':'—'))}
+    ${statCard('متوسط قيمة الطلب',D.orders?money(D.revenue/D.orders):'—','','ربح القطعة الواحدة '+(D.pieces?money(D.profit/D.pieces):'—'))}
   </div>
   <div class="btn-row" style="margin:20px 0 6px;">${closeBtn}<button class="btn" onclick="openPartnersModal()">⚙️ تعديل الأسماء والنسب</button><button class="btn" onclick="openSaleModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button><span class="rm-wrap"><button type="button" class="btn rm-more" id="ptMore" onclick="togglePtMenu(event)" title="المزيد">⋯</button><div class="row-menu" id="ptMenu"><button class="btn" onclick="openPageSalesModal()">📦 كل مبيعات الصفحة</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></span></div>
-  ${P.resetAt?`<div class="rule-box" style="margin-bottom:14px;">🧹 أرقام الشراكة تُحسب من تاريخ <b>${esc(P.resetAt)}</b> (آخر تصفير). المبيعات والإعلانات المؤرخة قبله ما تدخل الحساب.</div>`:''}
 
   <div class="section-title"><span class="ic">👥</span> الشركاء — اضغط على أي اسم لكشف حسابه</div>
   <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
@@ -4928,24 +4932,22 @@ function togglePtMenu(e){
 function openPartnerResetModal(){
   document.querySelectorAll('.row-menu.show').forEach(m=>m.classList.remove('show'));
   const P=PS(), today=todayISO();
-  let last='';
-  state.sales.filter(s=>(s.channel||'shop')==='page').forEach(s=>{ if(s.date>last) last=s.date; });
-  state.expenses.filter(e=>(e.channel||'shop')==='page' && e.type==='إعلانات').forEach(e=>{ if(e.date>last) last=e.date; });
-  allDebtCashEvents().filter(e=>debtChannel(e.debtId)==='page').forEach(e=>{ if(e.date>last) last=e.date; });
-  const def = last>=today ? addDaysISO(today,1) : today;
   openModal({title:'🗑 تصفير أرقام الشراكة',
     bodyHtml:`<div class="rule-box" style="margin-bottom:12px;border-color:var(--negative);">
-        تصفير الشراكة يخلي كل الأرقام (المبيعات، الإعلانات، الأرباح، حصص الشركاء) تبدأ من <b>صفر</b>.<br>
-        • مبيعاتك ومصاريفك الأصلية <b>ما تنحذف</b> من النظام (تبقى بالمبيعات والمصاريف والتقارير).<br>
+        تصفير الشراكة يخلي كل الأرقام (المبيعات، الإعلانات، الأرباح، حصص الشركاء) تبدأ من <b>صفر الآن</b>.<br>
+        • كل بيع أو إعلان تسجله <b>بعد التصفير</b> ينضاف عادي حتى لو بنفس اليوم.<br>
+        • مبيعاتك ومصاريفك الأصلية <b>ما تنحذف</b> (تبقى بالمبيعات والمصاريف والتقارير).<br>
         • الأشهر المقفلة والمبالغ المستلمة والتعديلات تنحفظ بأرشيف، وتقدر ترجعها من قائمة ⋯ (استرجاع آخر تصفير).</div>
-      <div class="form-row"><label>تبدأ الشراكة من تاريخ</label><input type="date" id="f_rs" value="${def}"><div class="hint">أي بيع أو إعلان مؤرخ قبل هذا التاريخ ما يدخل الحساب. اخترنا يوم بعد آخر عملية مسجلة حتى ما ترجع الأرقام القديمة.</div></div>
       <div class="form-row"><label>اكتب كلمة «تصفير» للتأكيد</label><input type="text" id="f_rc" placeholder="تصفير" autocomplete="off"></div>`,
     onSave(){
       if(document.getElementById('f_rc').value.trim()!=='تصفير') return toast('اكتب كلمة تصفير للتأكيد');
-      const d=document.getElementById('f_rs').value||today;
-      P.archive.push({id:uid(),at:today,prevResetAt:P.resetAt||null,closes:P.closes,adj:P.adj,pays:P.pays});
-      P.closes=[]; P.adj=[]; P.pays=[]; P.resetAt=d; partMonth=thisMonth();
-      saveState(); closeModal(); render(); toast('تم تصفير أرقام الشراكة — تبدأ من '+d);
+      const d=today, skip=[];
+      state.sales.forEach(x=>{ if((x.channel||'shop')==='page' && x.date>=d) skip.push(x.id); });
+      state.expenses.forEach(x=>{ if((x.channel||'shop')==='page' && x.type==='إعلانات' && x.date>=d) skip.push(x.id); });
+      allDebtCashEvents().forEach(e=>{ if(debtChannel(e.debtId)==='page' && e.date>=d) skip.push(e.id); });
+      P.archive.push({id:uid(),at:today,prevResetAt:P.resetAt||null,prevSkip:P.resetSkip||[],closes:P.closes,adj:P.adj,pays:P.pays});
+      P.closes=[]; P.adj=[]; P.pays=[]; P.resetAt=d; P.resetSkip=[...new Set([...(P.resetSkip||[]),...skip])]; partMonth=thisMonth();
+      saveState(); closeModal(); render(); toast('تم تصفير أرقام الشراكة — الأرقام تبدأ من صفر');
     }});
   const b=document.getElementById('modalSaveBtn'); if(b){ b.textContent='تصفير'; b.classList.remove('primary'); b.classList.add('danger'); }
 }
@@ -4953,7 +4955,7 @@ function restorePartnerReset(){
   document.querySelectorAll('.row-menu.show').forEach(m=>m.classList.remove('show'));
   const P=PS(), a=P.archive[P.archive.length-1]; if(!a) return;
   askConfirm('استرجاع حالة الشراكة قبل تصفير '+a.at+'؟ الأرقام والإقفالات والاستلامات اللي سجلتها بعد التصفير راح تنحذف وترجع القديمة.',()=>{
-    P.closes=a.closes; P.adj=a.adj; P.pays=a.pays; P.resetAt=a.prevResetAt; P.archive.pop();
+    P.closes=a.closes; P.adj=a.adj; P.pays=a.pays; P.resetAt=a.prevResetAt; P.resetSkip=a.prevSkip||[]; P.archive.pop();
     saveState(); render(); toast('تم الاسترجاع');
   },{title:'استرجاع التصفير',yesLabel:'استرجاع'});
 }
@@ -4976,7 +4978,7 @@ function openPageSalesModal(){
     onSave(){ closeModal(); }});
   const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
 }
-function P_RESET_NOTE(){ const r=PS().resetAt; return r?`<div class="hint" style="margin-top:8px;">محسوب من تاريخ آخر تصفير: ${esc(r)}</div>`:''; }
+function P_RESET_NOTE(){ return ''; }
 /* ===== تفاصيل «إجمالي المسدد» بالديون ===== */
 function paidRowsHtml(pays,labelFn){
   return `<div class="table-wrap" style="border:none;"><table><thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>التفاصيل</th></tr></thead><tbody>
