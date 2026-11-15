@@ -3193,7 +3193,7 @@ function renderCustomerDetail(encodedName){
   <div class="grid stats">
     ${statCard('إجمالي كل الديون', money(totals.due),'')}
     ${statCard('إجمالي عدد القطع', totals.qty,'')}
-    ${statCard('إجمالي المسدد', money(totals.paid),'pos','',false,"openCustomerPaidModal('${encodedName}')")}
+    ${statCard('إجمالي المسدد', money(totals.paid),'pos','',false,"openCustomerPaidModal('"+encodedName+"')")}
     ${statCard('إجمالي المتبقي', money(totals.remaining), totals.remaining>0?'accent':'pos')}
   </div>
 
@@ -3538,9 +3538,10 @@ function openCustomerBulkRepayModal(encodedName){
       const date = document.getElementById('f_date').value || todayISO();
       const userNotes = document.getElementById('f_notes').value.trim();
       const alloc = customerBulkAllocation(customerName, amount);
+      const batchId = uid();
       alloc.forEach(a=>{
         state.customerDebtPayments.push({
-          id:uid(), customerDebtId:a.debt.id, amount:a.take, date,
+          id:uid(), batchId:batchId, customerDebtId:a.debt.id, amount:a.take, date,
           notes: 'تحصيل شامل ' + money(amount) + (userNotes ? ' — '+userNotes : '')
         });
       });
@@ -4729,7 +4730,7 @@ async function buildReceiptCanvas(spec){
     ctx.fillStyle = '#000'; ctx.font = '800 30px ' + FONT; if(draw) ctx.fillText(fitText(ctx, spec.name, W-2*P), W-P, y); y += 34;
     if(spec.sub){ ctx.fillStyle = '#777'; ctx.font = '400 14px ' + FONT; if(draw) ctx.fillText(fitText(ctx, spec.sub, W-2*P), W-P, y); y += 26; }
     y += 8;
-    const tw = W-2*P, totalW = spec.cols.reduce((a,c)=>a+c.w,0);
+    const tw = W-2*P, totalW = (spec.cols||[]).reduce((a,c)=>a+c.w,0);
     function table(cols, rows, rowH){
       let x = W-P; const xs = cols.map(c=>{ const w = tw*c.w/totalOf(cols); const r = {x, w}; x -= w; return r; });
       if(draw){ ctx.fillStyle = '#f1f1f1'; ctx.fillRect(P, y, tw, 40); }
@@ -4744,8 +4745,7 @@ async function buildReceiptCanvas(spec){
       });
     }
     function totalOf(cols){ return cols.reduce((a,c)=>a+c.w,0); }
-    table(spec.cols, spec.rows, 42);
-    y += 26;
+    if(spec.cols && spec.cols.length){ table(spec.cols, spec.rows, 42); y += 26; }
     const n = spec.totals.length, gap = 12, bw = (tw - gap*(n-1))/n;
     spec.totals.forEach((t,i)=>{
       const bx = W-P - (i+1)*bw - i*gap;
@@ -4804,29 +4804,23 @@ function receiptShare(){
 function dateAr(){ const d = new Date(); return 'التاريخ: ' + isoOfDate(d) + '  ·  ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 function printCustomerReceipt(encodedName){
   const name = decodeURIComponent(encodedName);
-  const debts = state.customerDebts.filter(d=>(d.customerName||'').trim()===name).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const debts = state.customerDebts.filter(d=>(d.customerName||'').trim()===name);
   if(!debts.length) return toast('ما كو ديون لهذا الزبون');
   const tot = customerDebtGroupTotals(debts);
-  const rows = debts.map(d=>{ const t = customerDebtTotals(d.id); return [d.date||'', d.modelId ? (modelById(d.modelId)?.name||'موديل محذوف') : 'بدون تحديد', num(d.quantity)||'—', money(t.due), money(t.paid), money(t.remaining)]; });
-  const ids = new Set(debts.map(d=>d.id));
-  const pays = state.customerDebtPayments.filter(p=>ids.has(p.customerDebtId)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,12)
-    .map(p=>[p.date||'', money(p.amount), String(p.notes||'').replace(/^تحصيل شامل [\d,]+ د\.ع\s*—?\s*/,'') || '—']);
-  openReceipt({title:'وصل حساب', date:dateAr(), nameLabel:'اسم الزبون', name,
-    cols:[{label:'التاريخ',w:2.2},{label:'الموديل',w:3.4},{label:'العدد',w:1.2,num:true},{label:'المبلغ',w:2.4,num:true},{label:'المدفوع',w:2.4,num:true},{label:'المتبقي',w:2.4,num:true}],
-    rows, totals:[{label:'عدد القطع',value:String(tot.qty)},{label:'الإجمالي',value:money(tot.due)},{label:'المدفوع',value:money(tot.paid)},{label:'المتبقي عليه',value:money(tot.remaining),strong:true}],
-    pays, payTitle:'الدفعات المستلمة'});
+  const pays = groupedCustomerPayments(new Set(debts.map(d=>d.id))).slice(0,10).map(p=>[p.date||'', money(p.amount), p.note || '—']);
+  openReceipt({title:'وصل حساب', date:dateAr(), nameLabel:'اسم الزبون', name, sub:customerModelsLine(debts),
+    totals:[{label:'الدين الكلي',value:money(tot.due)},{label:'المدفوع',value:money(tot.paid)},{label:'المتبقي عليه',value:money(tot.remaining),strong:true}],
+    pays, payTitle:'الدفعات'});
 }
 function printDebtReceipt(debtId){
   const d0 = debtById(debtId); if(!d0) return;
   const name = (d0.creditor||'').trim();
-  const debts = state.debts.filter(d=>(d.creditor||'').trim()===name).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const debts = state.debts.filter(d=>(d.creditor||'').trim()===name);
   const ids = new Set(debts.map(d=>d.id));
-  let due=0, paid=0;
-  const rows = debts.map(d=>{ const t = debtTotals(d.id); due += t.due; paid += t.paid; return [d.date||'', [d.reason,d.location].filter(Boolean).join(' — ') || '—', money(t.due), money(t.paid), money(t.remaining)]; });
-  const pays = state.debtPayments.filter(p=>ids.has(p.debtId)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,12).map(p=>[p.date||'', money(p.amount), p.notes||'—']);
-  openReceipt({title:'وصل دين علينا', date:dateAr(), nameLabel:'الدائن', name,
-    cols:[{label:'التاريخ',w:2.2},{label:'السبب / المكان',w:4},{label:'المبلغ',w:2.4,num:true},{label:'المسدد',w:2.4,num:true},{label:'المتبقي',w:2.4,num:true}],
-    rows, totals:[{label:'الإجمالي',value:money(due)},{label:'المسدد',value:money(paid)},{label:'المتبقي علينا',value:money(due-paid),strong:true}],
+  let due = 0, paid = 0; debts.forEach(d=>{ const t = debtTotals(d.id); due += t.due; paid += t.paid; });
+  const pays = state.debtPayments.filter(p=>ids.has(p.debtId)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,10).map(p=>[p.date||'', money(p.amount), p.notes||'—']);
+  openReceipt({title:'وصل دين علينا', date:dateAr(), nameLabel:'الدائن', name, sub:debts.map(d=>d.reason).filter(Boolean).join(' · '),
+    totals:[{label:'الدين الكلي',value:money(due)},{label:'المسدد',value:money(paid)},{label:'المتبقي علينا',value:money(due-paid),strong:true}],
     pays, payTitle:'التسديدات'});
 }
 
@@ -4979,16 +4973,33 @@ function paidRowsHtml(pays,labelFn){
   return `<div class="table-wrap" style="border:none;"><table><thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>التفاصيل</th></tr></thead><tbody>
     ${pays.length?pays.map((p,i)=>`<tr><td class="muted">${i+1}</td><td class="muted">${esc(p.date||'—')}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${esc(labelFn(p))}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">ما كو دفعات مسجلة</td></tr>'}</tbody></table></div>`;
 }
+
+/* دفعة واحدة = عملية تحصيل واحدة (حتى لو انقسمت داخلياً على أكثر من دين) */
+function groupedCustomerPayments(debtIds){
+  const set = debtIds instanceof Set ? debtIds : new Set(debtIds), g = {}, order = [];
+  state.customerDebtPayments.filter(p=>set.has(p.customerDebtId)).forEach(p=>{
+    const bulk = /^تحصيل شامل/.test(p.notes||'');
+    const key = p.batchId || (bulk ? ('b|' + p.date + '|' + p.notes) : ('p|' + p.id));
+    if(!g[key]){ g[key] = {date:p.date||'', amount:0, parts:0, note:String(p.notes||'').replace(/^تحصيل شامل [\d,]+ د\.ع\s*—?\s*/,'').trim(), bulk:bulk||!!p.batchId}; order.push(key); }
+    g[key].amount += num(p.amount); g[key].parts++;
+  });
+  return order.map(k=>g[k]).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function customerModelsLine(debts){
+  const m = {};
+  debts.forEach(d=>{ const n = d.modelId ? (modelById(d.modelId)?.name || 'موديل محذوف') : 'بدون تحديد'; m[n] = (m[n]||0) + num(d.quantity); });
+  return Object.entries(m).map(([n,q])=>n + (q?' ×'+q:'')).join(' · ');
+}
 function openCustomerPaidModal(encodedName){
-  const name=decodeURIComponent(encodedName);
-  const ids=new Set(state.customerDebts.filter(d=>(d.customerName||'').trim()===name).map(d=>d.id));
-  const pays=state.customerDebtPayments.filter(p=>ids.has(p.customerDebtId)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const total=pays.reduce((s,p)=>s+num(p.amount),0);
-  openModal({title:'💰 مسدّدات '+esc(name),
+  const name = decodeURIComponent(encodedName);
+  const debts = state.customerDebts.filter(d=>(d.customerName||'').trim()===name);
+  const pays = groupedCustomerPayments(new Set(debts.map(d=>d.id)));
+  const total = pays.reduce((s,p)=>s+p.amount,0);
+  openModal({title:'💰 مسدّدات ' + esc(name),
     bodyHtml:`<div class="compute-box"><span>سدّد <b>${pays.length}</b> ${pays.length===1?'مرة':'مرات'}</span><span>المجموع: <b class="pos">${money(total)}</b></span></div>`+
-      paidRowsHtml(pays,p=>{ const d=customerDebtById(p.customerDebtId); const m=d&&d.modelId?(modelById(d.modelId)?.name||''):''; return [m,p.notes].filter(Boolean).join(' — ')||'—'; }),
+      paidRowsHtml(pays, p=>(p.note || (p.bulk ? 'تحصيل' : '—'))),
     onSave(){ closeModal(); }});
-  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
+  const b = document.getElementById('modalSaveBtn'); if(b) b.textContent = 'إغلاق';
 }
 function openCreditorPaidModal(encodedName){
   const name=decodeURIComponent(encodedName);
@@ -5001,10 +5012,15 @@ function openCreditorPaidModal(encodedName){
   const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
 }
 function openAllPaidModal(kind){
-  const isC=kind==='c', g={};
-  const pays=isC?state.customerDebtPayments:state.debtPayments;
-  pays.forEach(p=>{ const d=isC?customerDebtById(p.customerDebtId):debtById(p.debtId); const n=d?String((isC?d.customerName:d.creditor)||'').trim()||'بدون اسم':'محذوف'; const o=g[n]=g[n]||{n:0,sum:0,last:''}; o.n++; o.sum+=num(p.amount); if((p.date||'')>o.last) o.last=p.date||''; });
-  const rows=Object.entries(g).sort((a,b)=>b[1].sum-a[1].sum);
+  const isC = kind==='c', g = {};
+  if(isC){
+    const byC = {};
+    state.customerDebts.forEach(d=>{ const n = String(d.customerName||'').trim() || 'بدون اسم'; (byC[n] = byC[n] || []).push(d.id); });
+    Object.entries(byC).forEach(([n,ids])=>{ const gp = groupedCustomerPayments(new Set(ids)); if(gp.length) g[n] = {n:gp.length, sum:gp.reduce((s,p)=>s+p.amount,0), last:gp[0].date||''}; });
+  } else {
+    state.debtPayments.forEach(p=>{ const d = debtById(p.debtId); const n = d ? (String(d.creditor||'').trim() || 'بدون اسم') : 'محذوف'; const o = g[n] = g[n] || {n:0,sum:0,last:''}; o.n++; o.sum += num(p.amount); if((p.date||'')>o.last) o.last = p.date||''; });
+  }
+  const rows = Object.entries(g).sort((a,b)=>b[1].sum-a[1].sum);
   const total=rows.reduce((s,r)=>s+r[1].sum,0), cnt=rows.reduce((s,r)=>s+r[1].n,0);
   openModal({title:isC?'💰 مَن سدّد من الزبائن':'💸 مَن سدّدنا له',
     bodyHtml:`<div class="compute-box"><span>${rows.length} ${isC?'زبون':'دائن'} · ${cnt} دفعة</span><span>المجموع: <b class="pos">${money(total)}</b></span></div>
