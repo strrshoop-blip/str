@@ -945,6 +945,11 @@ function debtCashEventsInRange(from,to){ return allDebtCashEvents().filter(e=>in
 function totalCustomerDebtCashProfit(){ return allDebtCashEvents().reduce((s,e)=>s+e.profit,0); }
 
 /* الأرباح تُحسب على المبلغ المستلم فعلاً: كل دفعة تأخذ نسبتها من الربح، والمتبقي ينتظر التحصيل */
+/* كلفة القطعة حسب القناة: للصفحة نستعمل «سعر القطعة للصفحة» إذا مكتوب بالموديل، وإلا الكلفة الأصلية */
+function unitCostFor(modelId, channel){
+  const m = modelById(modelId); if(!m) return 0;
+  return (channel==='page' && num(m.pagePrice)>0) ? num(m.pagePrice) : modelCost(m);
+}
 function saleUnitCost(s){ return num(s.costSnapshot!=null?s.costSnapshot:modelCost(modelById(s.modelId))); }
 function saleMargin(s){
   const price = num(s.unitPrice);
@@ -2412,6 +2417,7 @@ function openModelModal(id){
         <div class="form-row"><label>سعر البيع بالجملة</label><input type="number" class="cost-field" id="f_wholesale" value="${item?.wholesalePrice||''}" oninput="updateModelCompute()"></div>
         <div class="form-row"><label>سعر البيع بالمفرد</label><input type="number" class="cost-field" id="f_sell" value="${item?.sellingPrice||''}" oninput="updateModelCompute()"></div>
       </div>
+      <div class="form-row"><label>سعر القطعة للصفحة</label><input type="number" id="f_pageprice" value="${item?.pagePrice||''}" placeholder="مثال: 20000"><div class="hint">السعر اللي يُحسب على الصفحة كأنه كلفة القطعة. مثلاً إذا كتبت 20,000 وبعت القطعة بالصفحة بـ 40,000، يُحسب ربح الصفحة 20,000 فقط. إذا تركته فارغ تنحسب كلفة الموديل الأصلية. يتطبق على المبيعات الجديدة فقط.</div></div>
       <div class="flow-split">
         <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالجملة</span><span class="flow-amt" id="computeProfitWholesale">${item? money(modelWholesaleProfitPerPiece(item)) : money(0)}</span></div>
         <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالمفرد</span><span class="flow-amt" id="computeProfit">${item? money(modelProfitPerPiece(item)) : money(0)}</span></div>
@@ -2432,6 +2438,7 @@ function openModelModal(id){
         unitCost:num(document.getElementById('f_unitcost').value),
         wholesalePrice:num(document.getElementById('f_wholesale').value),
         sellingPrice:num(document.getElementById('f_sell').value),
+        pagePrice:num(document.getElementById('f_pageprice').value),
         notes: document.getElementById('f_notes').value.trim()
       };
       if(item) Object.assign(item, data);
@@ -2755,6 +2762,7 @@ function openSaleModal(id, presetChannel){
       }
       const date = document.getElementById('f_date').value || todayISO();
       const channel = document.getElementById('f_channel').value;
+      if(modelId && selectVal!=='__NEW__') costSnapshot = unitCostFor(modelId, channel);
       const data = {
         modelId, productLabel, quantity, unitPrice, date, channel,
         customerType: document.getElementById('f_stype').value,
@@ -3325,6 +3333,7 @@ function openCustomerDebtModal(id){
         costSnapshot = modelCost(modelById(modelId));
       }
 
+      { const dc=document.getElementById('f_dchannel'); if(modelId && selectVal!=='__NEW__' && dc && !dc.disabled && dc.value==='page') costSnapshot = unitCostFor(modelId,'page'); }
       const profitMargin = amount>0 ? (amount - quantity*costSnapshot) / amount : 0;
 
       const data = {
