@@ -352,7 +352,7 @@ a.walink{display:inline-flex;align-items:center;justify-content:center;width:32p
     <button class="btn" data-a="saveSet">حفظ الإعدادات</button>
     <button class="btn ghost" data-a="resetSet">استرجاع القيم الافتراضية</button>
   </div>
-<p class="c mut" style="margin:1rem 0">نسخة 10</p></section>
+<p class="c mut" style="margin:1rem 0">نسخة 11</p></section>
 </main>
 <nav id="cNav" class="hidden"><button class="on" data-a="ctab" data-t="cp1"><span>🏠</span>الرئيسية</button><button data-a="ctab" data-t="cp3"><span>🎁</span>المكافآت</button><button data-a="ctab" data-t="cp4"><span>👤</span>حسابي</button></nav>
 <div id="toast"></div>
@@ -367,11 +367,11 @@ const app=initializeApp(CFG);
 let auth;try{auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence,browserSessionPersistence]})}catch(e){auth=getAuth(app)}
 const db=getFirestore(app);
 const DOM="@members.str-abaya.app",ADM="@admin.str-club.app";
-const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,abaya:500,ver:6,verify:10,
+const DEF={welcome:50,purchase:35,share:15,ref:50,freeBuy:3,freeRef:3,abaya:500,ver:7,verify:10,
  tiers:[{n:"فضية",min:0,m:1,p:"نقاط على كل شراء"},{n:"ذهبية",min:200,m:1.25,p:"خصم 5% + نقاط أكثر"},{n:"ماسية",min:500,m:1.5,p:"خصم 10% + أولوية بالعروض الجديدة"}],
  rewards:[{t:"خصم 2,500 دينار",c:50},{t:"خصم 5,000 دينار",c:100},{t:"خصم 12,000 دينار",c:200}],
  tag:"@str.shoop",contact:"https://ig.me/m/str.shoop",
- terms:["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","ادعي 3 صديقات، وكل وحدة منهن تشتري قطعة: هم يحصلون على خصومات وإنتي تحصلين قطعة مجانية 🎁","جائزة الدعوة (نقاط) تنضاف لج ولصديقتج بعد ما توثّق أول شراء إلها.","توثيق حسابج برقم الواتساب يعطيج +10 نقاط وتصيرين زبونة رسمية ✔","اجمعي 500 نقطة وبدليها بعباية من اختيارج 🎁","إذا عندج قطعة مجانية اضغطي «مطالبة»، يوصل طلبج للإدارة، وبعد الموافقة تُسجَّل لج وتوصلج إشعار."]};
+ terms:["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","كل 3 مشتريات موثّقة = قطعة مجانية هدية من اختيارنا 🎁","ادعي 3 صديقات، وكل وحدة منهن تشتري قطعة: هم يحصلون على خصومات وإنتي تحصلين قطعة مجانية 🎁","جائزة الدعوة (نقاط) تنضاف لج ولصديقتج بعد ما توثّق أول شراء إلها.","توثيق حسابج برقم الواتساب يعطيج +10 نقاط وتصيرين زبونة رسمية ✔","اجمعي 500 نقطة وبدليها بعباية من اختيارج 🎁","إذا عندج قطعة مجانية اضغطي «مطالبة»، يوصل طلبج للإدارة، وبعد الموافقة تُسجَّل لج وتوصلج إشعار."]};
 const NEWT=["اجمعي 500 نقطة وبدليها بعباية من اختيارج 🎁","إذا عندج قطعة مجانية اضغطي «مطالبة»، يوصل طلبج للإدارة، وبعد الموافقة تُسجَّل لج وتوصلج إشعار."];
 const FREEMSG="تم الحصول على قطعة مجانية 🎁";
 const OLDT=[JSON.stringify(["تُضاف النقاط بعد ما نراجع صورتج، مو فوراً.","بعد الاستبدال: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا حتى نأكد الخصم.","نقاط المشاركة تُضاف بعد ما تنشرين صورتج ستوري وتسوين تاك لصفحتنا.","جائزة دعوة الصديقة: تحصلين إنتي وهي على نقاط بعد ما توثّق أول شراء إلها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 صديقات تدعينهم ويشترن = قطعة مجانية من اختيارج.","توثيق حسابج (واتساب + انستغرام) يعطيج +10 نقاط وتصيرين زبونة رسمية ✔"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كل 3 مشتريات موثّقة = قطعة مجانية من اختيارج.","كل 3 دعوات ناجحة (صديقاتج اشترين) = قطعة مجانية من اختيارج.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعة الإدارة لصورة الشراء، وليس فوراً.","لتثبيت نقاطج والحصول على الخصم: خذي سكرين شوت لصفحة نقاطج وأرسليها لصفحة المتجر.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع عمل تاك لصفحة المتجر وإرسال لقطة لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"]),JSON.stringify(["تُضاف النقاط بعد مراجعتنا للصورة، وليس فوراً.","لتأكيد نقاطج والحصول على الخصم: خذي سكرين شوت لنقاطج وأرسليها لصفحتنا.","نقاط المشاركة تُضاف بعد نشر صورتج ستوري مع تاك لصفحتنا.","جائزة دعوة الصديقة تُمنح بعد توثيق أول شراء لها.","كلما زادت نقاطج ارتفع مستواج وزادت خصوماتج، وتوصلين لقطعة مجانية 🎁"])];
@@ -435,6 +435,7 @@ onAuthStateChanged(auth,async u=>{
     if(!sc.exists())await setDoc(doc(db,"settings","config"),DEF);
     else if((sc.data().ver||1)<5){const d=sc.data(),nw={ver:5,verify:d.verify??DEF.verify,ref:d.ref??DEF.ref,freeBuy:d.freeBuy??DEF.freeBuy,freeRef:d.freeRef??DEF.freeRef};if(d.welcome===10)nw.welcome=50;if(Array.isArray(d.tiers))nw.tiers=d.tiers.map(t=>({...t,n:tn(t.n)}));if(!d.terms||OLDT.includes(JSON.stringify(d.terms)))nw.terms=DEF.terms;await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}
     {const g=await getDoc(doc(db,"settings","config")),d=g.data()||{};if((d.ver||1)<6){const nw={ver:6,abaya:d.abaya||500};if(Array.isArray(d.rewards))nw.rewards=d.rewards.filter(r=>!/قطعة مجانية/.test(r.t));if(Array.isArray(d.terms)&&!d.terms.some(t=>/عباية/.test(t)))nw.terms=[...d.terms,...NEWT];await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}}
+    {const g=await getDoc(doc(db,"settings","config")),d=g.data()||{};if((d.ver||1)<7){const nw={ver:7};if(Array.isArray(d.terms))nw.terms=d.terms.map(t=>t.replace(/قطعة مجانية من اختيارج/g,"قطعة مجانية هدية من اختيارنا 🎁"));await setDoc(doc(db,"settings","config"),nw,{merge:true});await loadSettings()}}
     show("vAdm");goTab("tReq");fillSettings();
     listen(query(collection(db,"submissions"),where("status","==","pending")),r=>{PEND=r;renderA()});
     listen(query(collection(db,"redemptions"),where("status","==","pending")),r=>{PRED=r;renderA()});
@@ -456,12 +457,12 @@ function renderC(){
   const pb=(P.purchases||0)%fb,pr=(P.refCount||0)%fr;
   const pAny=REDS.some(r=>r.status==="pending");
   const wc=used<Math.floor((P.purchases||0)/fb)?`أكملتي ${fb} مشتريات موثّقة 🛍️`:`${fr} من صديقاتج اشترن 👭`;
-  const wh=`<div class="step"><span class="ic cb">🛍️</span><div style="flex:1"><b>${fb} مشتريات موثّقة = قطعة مجانية</b><div class="mut">اشتري ووثّقي ${fb} قطع، والقطعة بعدها مجانية من اختيارج.</div><div class="bar kb"><i style="width:${pb/fb*100}%"></i></div><small class="mut">${pb} / ${fb}</small></div></div>
+  const wh=`<div class="step"><span class="ic cb">🛍️</span><div style="flex:1"><b>${fb} مشتريات موثّقة = قطعة مجانية</b><div class="mut">اشتري ووثّقي ${fb} قطع، والقطعة بعدها مجانية هدية من اختيارنا 🎁</div><div class="bar kb"><i style="width:${pb/fb*100}%"></i></div><small class="mut">${pb} / ${fb}</small></div></div>
   <div class="step"><span class="ic cu">👭</span><div style="flex:1"><b>${fr} صديقات يشترن = قطعة مجانية</b><div class="mut">ادعي صديقاتج برابطج، ولما ${fr} منهن يشترن تحصلين قطعة مجانية.</div><div class="bar kp"><i style="width:${pr/fr*100}%"></i></div><small class="mut">${pr} / ${fr}</small></div></div>
   <div class="step"><span class="ic cg">💰</span><div style="flex:1"><b>${AB} نقطة = عباية مجانية</b><div class="mut">اجمعي ${AB} نقطة من الشراء والستوري والدعوات والتوثيق وبدليها بعباية مجانية، بدون ما تحتاجين تكملين ${fb} مشتريات أو تجيبين صديقات.</div><div class="bar kg"><i style="width:${Math.min(100,P.points/AB*100)}%"></i></div><small class="mut">${Math.min(P.points,AB)} / ${AB}</small></div></div>`;
   $("cWin").innerHTML=`<h3>🎁 كيف تحصلين عباية مجانية؟</h3>`+wh;
   $("cFree").innerHTML=`<h3>🎁 هديتج</h3>
-  ${av>0?`<div class="row free"><span>🎁 قطعة مجانية${av>1?` × ${av}`:""}<br><small class="mut">السبب: ${wc}</small></span>${pend?`<span class="mut">⏳ قيد المراجعة</span>`:`<button class="btn sm" data-a="claimFree">مطالبة</button>`}</div>`:""}
+  ${av>0?`<div class="row free"><span>🎁 قطعة مجانية هدية من اختيارنا${av>1?` × ${av}`:""}<br><small class="mut">السبب: ${wc}</small></span>${pend?`<span class="mut">⏳ قيد المراجعة</span>`:`<button class="btn sm" data-a="claimFree">مطالبة</button>`}</div>`:""}
   ${used>0?`<div class="mut" style="margin:.4rem 0">${CH}تم الحصول على ${used} ${used>1?"قطع":"قطعة"} مجانية</div>`:""}
   <div class="prog"><div class="pl"><span>👑 عباية مجانية</span><b>${Math.min(P.points,AB)} / ${AB} نقطة</b></div><div class="bar kg"><i style="width:${Math.min(100,P.points/AB*100)}%"></i></div></div>
   ${P.points>=AB?`<button class="btn" data-a="redeemAbaya" ${pAny?"disabled":""}>${pAny?"عندج طلب قيد المراجعة":"استبدلي "+AB+" نقطة بعباية 🎁"}</button>`:""}
@@ -481,7 +482,7 @@ function renderC(){
   const vk=P.verified?"v"+(P.wa||"")+(P.ig||""):pv?"p":"n";
   if(vk!==verKey){verKey=vk;VM="wa";$("cVer").innerHTML=P.verified?`<h3>حسابج موثّق <span class="vchk">✓</span></h3><div class="c" style="margin:.7rem 0"><span class="badge vr">زبونة رسمية</span></div><div class="row"><span class="mut">${P.wa?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${P.wa?esc(P.wa):"@"+esc(P.ig)}</b></div>`:pv?`<h3>⏳ تم إرسال طلب توثيق الحساب</h3><p class="mut">بانتظار مراجعة طلبك من قبل الإدارة. أول ما توافق يظهر ✓ بحسابج وتنضاف النقاط.</p><div class="row"><span class="mut">${parseV(pv).m==="wa"?"رقم الهاتف":"يوزر انستغرام"}</span><b dir="ltr">${parseV(pv).m==="ig"?"@":""}${esc(parseV(pv).v)}</b></div>`:`<h3>✔ وثّقي حسابج برقم الواتساب +${S.verify||0} نقطة</h3><p class="mut">اكتبي رقم الواتساب مالج وحسابج يتوثّق والنقاط تنضاف لج تلقائياً. نستخدمه فقط للتواصل وياج.</p><input id="vIn" type="tel" inputmode="numeric" dir="ltr" placeholder="07xxxxxxxxx" autocomplete="off" autocapitalize="off" style="margin-top:.8rem"><button class="btn" id="vBtn" data-a="verify">وثّقي حسابي 🎁</button>`}
   $("cTerms").innerHTML=(S.terms||[]).map(x=>`<li>${esc(x)}</li>`).join("");
-  $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥ · نسخة 10";
+  $("cFoot").textContent="معمل ستر لبيع العبائات · نادي ستر للولاء ♥ · نسخة 11";
   const h=[];
   SUBS.filter(s=>s.status!=="approved").forEach(s=>h.push({ts:s.ts,x:`${isV(s)?"طلب توثيق الحساب":s.type==="share"?"طلب مشاركة":"طلب توثيق شراء"} — ${s.status==="pending"?(isV(s)?"بانتظار مراجعة طلبك من قبل الإدارة":"قيد المراجعة"):"مرفوض"+(s.reason?": "+esc(s.reason):"")}`}));
   REDS.forEach(r=>h.push({ts:r.ts,x:`${r.kind==="free"?"طلب":"استبدال:"} ${esc(r.title)} — ${r.status==="pending"?"قيد المراجعة":r.status==="approved"?(r.code?`الكود: <b style="color:var(--gold)">${esc(r.code)}</b>`:"✓ تم الاستلام"):"مرفوض"+(r.reason?": "+esc(r.reason):"")}`}));
@@ -716,7 +717,7 @@ const A={theme(){window.__setTheme(document.documentElement.getAttribute('data-t
   seg(d){setType(d.t)},
   goSend(d){setType(d.t);A.ctab({t:"cp2"})},
   async claimFree(){if(!P||freeAvail(P)<1)return;if(REDS.some(r=>r.kind==="free"&&r.status==="pending"))return toast("عندج طلب قطعة مجانية قيد المراجعة");
-    try{await addDoc(collection(db,"redemptions"),{uid:ME.uid,phone:P.phone||"",kind:"free",title:"قطعة مجانية 🎁",cost:0,status:"pending",ts:Date.now()});toast("تم إرسال مطالبتج للإدارة ✅ راح نتواصل وياج لاختيار قطعتج 🎁")}catch(e){toast("تعذر الإرسال")}},
+    try{await addDoc(collection(db,"redemptions"),{uid:ME.uid,phone:P.phone||"",kind:"free",title:"قطعة مجانية 🎁",cost:0,status:"pending",ts:Date.now()});toast("تم إرسال مطالبتج للإدارة ✅ راح نتواصل وياج لتسليم هديتج 🎁")}catch(e){toast("تعذر الإرسال")}},
   async admLogin(){const p=norm($("aph").value);if(!p)return toast("رقم هاتف الإدارة غير صحيح");try{await signInWithEmailAndPassword(auth,p+ADM,$("apw").value);try{localStorage.setItem("strAdmPh",$("aph").value)}catch{}}catch(e){toast(errMsg(e))}},
   async send(b){if(!imgData)return toast("اختاري صورة أولاً");
     if(SUBS.filter(s=>s.status==="pending").length>=3)return toast("عندج 3 طلبات قيد المراجعة، يرجى الانتظار");
@@ -755,7 +756,7 @@ const A={theme(){window.__setTheme(document.documentElement.getAttribute('data-t
     const rl=$("sR").value.split("\n").filter(l=>l.trim()).map(l=>{const[t,c]=l.split("|");if(!t||isNaN(+c))throw new Error("صيغة المكافآت غير صحيحة");return{t:t.trim(),c:+c}});
     if(!tl.length||!tl.some(t=>t.min===0))throw new Error("يجب وجود مستوى أول حدّه 0");
     const con=$("sCon").value.trim();if(con&&!/^https:\/\//.test(con))throw new Error("الرابط لازم يبدأ بـ https://");
-    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,freeBuy:+$("sFB").value||3,freeRef:+$("sFR").value||3,statsBase:S.statsBase||{pts:0,free:0},ver:6,abaya:Math.max(1,+$("sAb").value||500),verify:Math.max(0,+$("sV").value||0),tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
+    S={welcome:+$("sW").value,purchase:+$("sP").value,share:+$("sS").value,ref:+$("sRef").value||0,freeBuy:+$("sFB").value||3,freeRef:+$("sFR").value||3,statsBase:S.statsBase||{pts:0,free:0},ver:7,abaya:Math.max(1,+$("sAb").value||500),verify:Math.max(0,+$("sV").value||0),tiers:tl,rewards:rl,tag:$("sTag").value.trim().slice(0,60),contact:con,terms:$("sTerms").value.split("\n").map(x=>x.trim()).filter(Boolean)};
     await setDoc(doc(db,"settings","config"),S);toast("تم حفظ الإعدادات ✅");renderA()}catch(e){toast(e.message)}}
 };
 ["nm"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")A.login()}));$("apw").addEventListener("keydown",e=>{if(e.key==="Enter")A.admLogin()});
