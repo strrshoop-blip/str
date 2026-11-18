@@ -573,6 +573,33 @@
   .dn-c{width:84px;height:84px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.14);} .dn-c b{font-family:'Cairo',sans-serif;font-size:20px;font-weight:800;line-height:1.1;} .dn-c span{font-size:11px;color:var(--text-faint);}
   .dn-leg{flex:1;min-width:140px;display:flex;flex-direction:column;gap:9px;}
   .dn-row{display:grid;grid-template-columns:10px auto 1fr;grid-template-areas:"i l p" ". t t";column-gap:8px;align-items:center;font-size:13px;} .dn-row i{grid-area:i;width:10px;height:10px;border-radius:50%;} .dn-row span{grid-area:l;font-weight:700;} .dn-row em{grid-area:p;font-style:normal;color:var(--text-faint);font-size:12px;text-align:end;} .dn-row b{grid-area:t;font-weight:500;color:var(--text-dim);font-size:12.5px;}
+
+  .pt-top{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-bottom:16px;align-items:stretch;}
+  .pt-quick{display:flex;flex-direction:column;gap:10px;justify-content:center;} .pt-quick .btn{justify-content:center;}
+  .pt-manage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--card-shadow);} .pt-mt{font-weight:800;font-size:13.5px;margin-bottom:10px;color:var(--text-dim);}
+  @media (max-width:760px){.pt-top{grid-template-columns:1fr;} .pt-quick{flex-direction:row;flex-wrap:wrap;}}
+  .rc-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:4px 0 18px;} .rc-sum>div{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);} .rc-sum span{font-size:12px;color:var(--text-dim);} .rc-sum b{font-family:'Cairo',sans-serif;font-size:19px;font-weight:800;} .rc-sum em{font-style:normal;font-size:11px;color:var(--text-faint);}
+  .rc-plot{position:relative;height:240px;margin:6px 0 4px;padding-inline-start:64px;}
+  .rc-grid{position:absolute;inset:22px 0 26px 0;padding-inline-start:64px;} .rc-g{position:absolute;inset-inline:0;border-top:1px dashed var(--border);} .rc-g span{position:absolute;inset-inline-start:-64px;transform:translateY(-50%);font-size:11px;color:var(--text-faint);width:58px;text-align:end;white-space:nowrap;}
+  .rc-grid .rc-g{inset-inline-start:64px;} .rc-grid .rc-g span{inset-inline-start:-64px;}
+  .rc-bars{position:relative;height:100%;display:flex;gap:4px;align-items:stretch;}
+  .rc-b{flex:1;min-width:0;display:flex;flex-direction:column;} .rc-v{height:22px;font-size:10.5px;font-weight:700;text-align:center;white-space:nowrap;color:var(--text-dim);display:flex;align-items:flex-end;justify-content:center;overflow:visible;}
+  .rc-col{flex:1;display:flex;align-items:flex-end;justify-content:center;} .rc-col i{display:block;width:70%;max-width:46px;min-width:6px;border-radius:6px 6px 2px 2px;background:var(--text);opacity:.82;} .rc-b.top .rc-col i{background:var(--info);opacity:1;} .rc-b:hover .rc-col i{opacity:1;}
+  .rc-x{height:26px;font-size:11px;color:var(--text-dim);text-align:center;display:flex;align-items:center;justify-content:center;}
+  .rc-note{font-size:11.5px;color:var(--text-faint);margin-top:8px;}
+  @media (max-width:640px){.rc-v{font-size:9px;} .rc-plot{padding-inline-start:52px;}}
+
+  .ord-line{grid-template-columns:1fr 1fr 1.2fr 40px !important;row-gap:10px;padding:12px !important;}
+  .ord-line .ol-m{grid-column:1/-1 !important;} .ol-m .mpick-btn{min-height:64px !important;} .ol-m .mpick-btn span{font-size:14.5px !important;white-space:normal !important;line-height:1.5;}
+  .ol-m .mpick-list{max-height:320px;} .ol-m .mpick-item span{font-size:14px;white-space:normal;}
+  .ol-f{display:flex;flex-direction:column;gap:4px;min-width:0;margin:0;} .ol-f small{font-size:11.5px;color:var(--text-faint);} .ol-f .ol-t{text-align:start;padding:8px 2px;font-size:15px;}
+  .ol-del{align-self:end;}
+  .gcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--card-shadow);margin-bottom:16px;}
+  .gcard-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;} .gcard-h b{font-size:14.5px;}
+  .gbar{height:14px;border-radius:99px;background:var(--surface-3);overflow:hidden;position:relative;} .gbar i{display:block;height:100%;border-radius:99px;background:var(--text);transition:width .5s var(--ease);} .gbar i.done{background:var(--positive);}
+  .gnums{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--text-dim);} .gnums b{color:var(--text);}
+  .galert{margin-top:12px;padding:10px 14px;border-radius:12px;font-size:13px;font-weight:700;border:1px solid var(--negative);color:var(--negative);background:color-mix(in srgb,var(--negative) 8%,transparent);}
+  .galert.ok{border-color:var(--border);color:var(--text-dim);background:var(--surface-2);font-weight:500;}
 </style>
 </head>
 <body>
@@ -4101,7 +4128,8 @@ function PS(){
   const P=state.partnership; if(!Array.isArray(P.archive)) P.archive=[]; if(P.resetAt===undefined) P.resetAt=null; if(!Array.isArray(P.resetSkip)) P.resetSkip=[];
   if(P.emp===undefined) P.emp={name:'أمير علي',rate:num(P.empRate!=null?P.empRate:1000),from:P.resetAt||null,skip:[...P.resetSkip],pays:[]};
   if(P.emp && !P.emp.v2){ P.emp.v2=true; const st='2026-11-19'; if(!P.emp.from||P.emp.from<st) P.emp.from=st; P.emp.skip=[]; }
-  if(!Array.isArray(P.emps)){ P.emps=P.emp?[Object.assign({id:'e_'+uid()},P.emp)]:[]; P.emp=null; }
+  (P.emps||[]).forEach(e=>{ if(!e.v3){ e.v3=true; e.skip=[]; } });
+  if(!Array.isArray(P.emps)){ P.emps=P.emp?[Object.assign({id:'e_'+uid()},P.emp)]:[]; P.emp=null; (P.emps||[]).forEach(e=>{ if(!e.v3){ e.v3=true; e.skip=[]; } }); }
   return P;
 }
 let partMonth=thisMonth(), partGran='day';
@@ -4116,8 +4144,12 @@ function pageData(from,to){
   const profit=ps.reduce((s,x)=>s+saleProfit(x),0)+ev.reduce((s,e)=>s+e.profit,0);
   const exps=state.expenses.filter(e=>(e.channel||'shop')==='page' && e.type==='إعلانات' && !skip.has(e.id) && inRange(e.date,from,to));
   const ads=exps.reduce((s,x)=>s+num(x.amount),0);
-  const empPieces=ps.filter(s=>s.customerType!=='wholesale').reduce((a,x)=>a+num(x.quantity),0);
-  const wage=(P.emps||[]).reduce((t,e)=>t+(e.pays||[]).filter(p=>inRange(p.date,from,to)).reduce((a,p)=>a+num(p.amount),0),0); /* مسدد للموظفين بهذي الفترة */
+  let wage=0, wagePaid=0, empPcs=0;
+  (P.emps||[]).forEach(e=>{ const sk=new Set(e.skip||[]);
+    let pcs=ps.filter(x=>x.customerType!=='wholesale' && !sk.has(x.id) && (!e.from||x.date>=e.from)).reduce((a,x)=>a+num(x.quantity),0);
+    Object.keys(e.adjs||{}).forEach(k=>{ if((!from||k>=from.slice(0,7)) && (!to||k<=to.slice(0,7))) pcs+=num(e.adjs[k]); });
+    empPcs+=pcs; wage+=pcs*num(e.rate);
+    wagePaid+=(e.pays||[]).filter(p=>inRange(p.date,from,to)).reduce((a,p)=>a+num(p.amount),0); });
   const other=P.empDeduct?wage:0; /* ما تُخصم من الصافي إلا إذا فعّلت الخيار */
   const net=profit-ads-other;
   const w=ps.filter(s=>s.customerType==='wholesale'), r=ps.filter(s=>s.customerType!=='wholesale');
@@ -4126,7 +4158,7 @@ function pageData(from,to){
   const names=[...new Set(ps.map(s=>(s.customerName||'').trim()).filter(Boolean))];
   const newC=names.filter(k=>inRange(first[k],from,to)).length;
   const parts=P.partners.map(p=>({id:p.id,name:p.name,pct:num(p.pct),gross:profit*num(p.pct)/100,ads:ads*num(p.pct)/100,exp:wage*num(p.pct)/100,net:net*num(p.pct)/100}));
-  return {ps,exps,revenue,profit,ads,other,empPieces,wage,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
+  return {ps,exps,revenue,profit,ads,other,empPieces:empPcs,wage,wagePaid,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
 }
 function ptTotals(pid){
   const P=PS();
@@ -4141,6 +4173,16 @@ function donutChart(segs,centerTop,centerSub){
   const stops=tot>0?segs.map(x=>{const a=acc/tot*100; acc+=Math.max(0,x.v); return `${x.c} ${a}% ${acc/tot*100}%`;}).join(','):'var(--surface-3) 0 100%';
   return `<div class="dn-wrap"><div class="dn" style="background:conic-gradient(${stops})"><div class="dn-c"><b>${centerTop}</b><span>${centerSub||''}</span></div></div>
   <div class="dn-leg">${segs.map(x=>`<div class="dn-row"><i style="background:${x.c}"></i><span>${x.l}</span><b>${x.t}</b><em>${tot>0?Math.round(Math.max(0,x.v)/tot*100):0}%</em></div>`).join('')}</div></div>`;
+}
+function absNum(n){ n=Math.round(n); if(n>=1e6){ const m=n/1e6; return (Math.round(m*100)/100)+' مليون'; } if(n>=1e3){ return (Math.round(n/100)/10)+' ألف'; } return String(n); }
+function revChart(rows,unitLabel){
+  const mx=Math.max(...rows.map(r=>r.v),0), tot=rows.reduce((a,r)=>a+r.v,0), act=rows.filter(r=>r.v>0);
+  if(!act.length) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
+  const step=Math.pow(10,Math.floor(Math.log10(mx||1))), top=Math.ceil(mx/step*2)/2*step||1, best=rows.reduce((a,r)=>r.v>a.v?r:a,rows[0]);
+  const grid=[1,.75,.5,.25,0].map(f=>`<div class="rc-g" style="bottom:${f*100}%"><span>${f?absNum(top*f):'0'}</span></div>`).join('');
+  return `<div class="rc-sum"><div><span>إجمالي الوارد</span><b>${money(tot)}</b></div><div><span>أعلى ${unitLabel}</span><b>${money(best.v)}</b><em>${esc(best.full)}</em></div><div><span>معدل ${unitLabel}</span><b>${money(tot/act.length)}</b><em>من ${act.length} ${unitLabel} فيها مبيعات</em></div></div>
+  <div class="rc-plot"><div class="rc-grid">${grid}</div><div class="rc-bars">${rows.map(r=>`<div class="rc-b ${r===best&&r.v>0?'top':''}" title="${esc(r.full)} — ${money(r.v)}"><div class="rc-v">${r.v>0?absNum(r.v):''}</div><div class="rc-col"><i style="height:${r.v>0?Math.max(2,r.v/top*100):0}%"></i></div><div class="rc-x">${esc(r.l)}</div></div>`).join('')}</div></div>
+  <div class="rc-note">كل عمود = ${unitLabel==='يوم'?'وارد يوم':unitLabel==='أسبوع'?'وارد أسبوع (يبدأ السبت)':unitLabel==='شهر'?'وارد شهر':'وارد سنة'} · مرّر على العمود لتشوف التفاصيل</div>`;
 }
 function barChart(items){
   const mx=Math.max(1,...items.map(i=>i.v));
@@ -4158,11 +4200,19 @@ function renderPartnership(){
   const closed=partMonth!=='ALL' ? P.closes.find(c=>c.month===partMonth) : null;
   const changed=closed && (Math.round(closed.net)!==Math.round(D.net) || Math.round(closed.profit)!==Math.round(D.profit));
   const gm={}; D.ps.forEach(s=>{const k=groupKey(s.date,partGran); gm[k]=(gm[k]||0)+saleRevenue(s);});
-  const chart=Object.keys(gm).sort().map(k=>({l:partGran==='day'?k.slice(8):k.slice(partGran==='month'||partGran==='week'?5:0),v:gm[k]}));
+  let keys=Object.keys(gm).sort();
+  if(partGran==='day' && partMonth!=='ALL'){ const y=+partMonth.slice(0,4), m=+partMonth.slice(5,7), last=new Date(y,m,0).getDate(), td=todayISO(); keys=[]; for(let d=1;d<=last;d++){ const k=partMonth+'-'+String(d).padStart(2,'0'); if(k<=td||gm[k]) keys.push(k); } }
+  const unitLabel={day:'يوم',week:'أسبوع',month:'شهر',year:'سنة'}[partGran];
+  const rows=keys.map(k=>({v:gm[k]||0,l:partGran==='day'?String(+k.slice(8)):partGran==='week'?(+k.slice(8))+'/'+(+k.slice(5,7)):partGran==='month'?monthLabelAr(k):k,full:partGran==='day'?k:partGran==='week'?'أسبوع يبدأ '+k:partGran==='month'?monthLabelAr(k):k}));
   const tot=D.rt.rev+D.wh.rev||1, tp=D.pieces||1;
   const closeBtn=partMonth==='ALL'?'':`<button class="btn primary" onclick="closePartnerMonth('${partMonth}')">${closed?'🔄 تحديث إقفال الشهر':'🔒 إقفال الشهر وتوزيع الأرباح'}</button>`;
   return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات الصفحة وإعلاناتها فقط — تتحدث الأرقام تلقائياً. مصاريف الصفحة الثانية (كارتات وغيرها) ما تدخل بالشراكة، فقط الإعلانات تتقاسمونها بالنسب.</div></div>
-    <div class="toolbar" style="margin:0;"><button class="btn primary" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
+    <div class="toolbar" style="margin:0;"><button class="btn" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
+  <div class="pt-top">
+    <div class="pt-quick"><button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button></div>
+    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
+  </div>
+  ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
   <div class="grid stats">
@@ -4170,12 +4220,11 @@ function renderPartnership(){
     ${statCard('مبيعات الصفحة (الوارد)',money(D.revenue),'accent',D.orders+' طلب · '+D.pieces+' قطعة',true,"openPageSalesModal()",PD?deltaBadge(D.revenue,PD.revenue,true):'')}
     ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg','هامش '+(D.revenue>0?(Math.round(D.profit/D.revenue*1000)/10)+'%':'—'),false,null,PD?deltaBadge(D.profit,PD.profit,true):'')}
     ${statCard('تكاليف الإعلانات',money(D.ads),'neg','تُخصم مرة وحدة بالنسب',false,null,PD?deltaBadge(D.ads,PD.ads,false):'')}
-    ${statCard('مستحقات الموظفين (المسددة)',money(D.wage),'neg',P.empDeduct?'تُخصم من صافي الشركاء بالنسب':'تتوزع على الشركاء بالنسب · للعلم، ما تُخصم من الصافي',false,"currentDetail='emps';render();window.scrollTo(0,0)")}
+    ${statCard('مستحقات الموظفين',money(D.wage),'neg',D.empPieces+' قطعة مفرد × أجرة القطعة · مسدد '+money(D.wagePaid)+' · متبقي '+money(Math.max(0,D.wage-D.wagePaid)),false,"currentDetail='emps';render();window.scrollTo(0,0)")}
     ${statCard('عدد المبيعات',D.orders+' عملية بيع','accent','جملة '+D.wh.n+' · مفرد '+D.rt.n,false,"openPageSalesModal()",PD?deltaBadge(D.orders,PD.orders,true):'')}
     ${statCard('القطع المباعة',D.pieces.toLocaleString('en-US'),'','جملة '+D.wh.pcs+' · مفرد '+D.rt.pcs,false,null,PD?deltaBadge(D.pieces,PD.pieces,true):'')}
     ${statCard('متوسط قيمة الطلب',D.orders?money(D.revenue/D.orders):'—','','ربح القطعة '+(D.pieces?money(D.profit/D.pieces):'—'))}
   </div>
-  <div class="btn-row" style="margin:20px 0 6px;">${closeBtn}<button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn" onclick="openPartnersModal()">⚙️ تعديل الأسماء والنسب</button><button class="btn" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button><span class="rm-wrap"><button type="button" class="btn rm-more" id="ptMore" onclick="togglePtMenu(event)" title="المزيد">⋯</button><div class="row-menu" id="ptMenu"><button class="btn" onclick="openPageSalesModal()">📦 كل مبيعات الصفحة</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من صافي الشركاء</button><button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></span></div>
 
   <div class="section-title"><span class="ic">👥</span> الشركاء — اضغط على أي اسم لكشف حسابه</div>
   <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
@@ -4189,8 +4238,8 @@ function renderPartnership(){
   ${(()=>{const T=empsTotal(); return `<div class="section-title"><span class="ic">👥</span> موظفو الصفحة — مستحقاتهم <button class="btn sm" style="margin-inline-start:auto" onclick="currentDetail='emps';render();window.scrollTo(0,0)">إدارة الموظفين ←</button></div>
   <div class="grid stats">${T.list.length?T.list.map(S=>`<div class="pcard" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)"><div class="pn"><span>👤 ${esc(S.E.name)}</span><span class="pill retail">${money(S.rate)} للقطعة</span></div><div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له</div><div class="pr"><span>قطع هذا الشهر</span><b>${S.mPieces}</b></div><div class="pr"><span>مستحق هذا الشهر</span><b>${money(S.mDue)}</b></div></div>`).join(''):`<div class="pcard" onclick="openEmpEditModal()"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظفين. اضغط لإضافة موظف يستحق أجرة على قطع المفرد.</div></div>`}</div>`;})()}
 
-  <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة</div>
-  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${barChart(chart)}</div>
+  <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
+  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel)}</div>
   <div class="grid stats dn-grid" style="margin-top:14px;">
     <div class="card"><div class="dn-title">جملة مقابل مفرد <span>الوارد</span></div>${donutChart([{v:D.wh.rev,c:'var(--text)',l:'جملة',t:money(D.wh.rev)+' · '+D.wh.n+' طلب'},{v:D.rt.rev,c:'var(--info)',l:'مفرد',t:money(D.rt.rev)+' · '+D.rt.n+' طلب'}],D.orders,'طلب')}</div>
     <div class="card"><div class="dn-title">جملة مقابل مفرد <span>القطع</span></div>${donutChart([{v:D.wh.pcs,c:'var(--text)',l:'جملة',t:D.wh.pcs+' قطعة'},{v:D.rt.pcs,c:'var(--info)',l:'مفرد',t:D.rt.pcs+' قطعة'}],D.pieces,'قطعة')}</div>
@@ -4199,7 +4248,7 @@ function renderPartnership(){
 
   <div class="section-title"><span class="ic">🔒</span> سجل إقفال الأشهر</div>
   <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
-  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num">${money(c.wage||0)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
+  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num">${money(c.wage||0)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><div class="btn-row"><button class="btn sm" onclick="printPartnerStatement('${c.month}')">🖨 كشف</button><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></div></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
 
   <div class="section-title"><span class="ic">📣</span> إعلانات الصفحة بهذي الفترة</div>
   <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظات</th></tr></thead><tbody>
@@ -4443,9 +4492,9 @@ function orderBuild(sp){
 function ordRender(){
   const box=document.getElementById('ordLines'); if(!box) return;
   box.innerHTML=orderLines.map((l,i)=>`<div class="ord-line"><div class="ol-m"><select class="o_model" id="o_model_${i}" onchange="ordModel(${i},this.value)">${state.models.map(m=>`<option value="${m.id}" ${m.id===l.modelId?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}</select></div>
-    <input type="number" class="ol-q" min="1" value="${l.qty}" placeholder="العدد" oninput="ordSet(${i},'qty',this.value)">
-    <input type="number" class="ol-p" value="${l.price}" placeholder="السعر" oninput="ordSet(${i},'price',this.value)">
-    <span class="ol-t" id="olt_${i}">${money(num(l.qty)*num(l.price))}</span>${orderLines.length>1?`<button type="button" class="btn sm danger" onclick="ordDel(${i})">✕</button>`:'<span></span>'}</div>`).join('');
+    <label class="ol-f"><small>العدد</small><input type="number" class="ol-q" min="1" value="${l.qty}" placeholder="العدد" oninput="ordSet(${i},'qty',this.value)"></label>
+    <label class="ol-f"><small>سعر القطعة</small><input type="number" class="ol-p" value="${l.price}" placeholder="السعر" oninput="ordSet(${i},'price',this.value)"></label>
+    <div class="ol-f"><small>المجموع</small><span class="ol-t" id="olt_${i}">${money(num(l.qty)*num(l.price))}</span></div>${orderLines.length>1?`<button type="button" class="btn sm danger ol-del" onclick="ordDel(${i})">✕</button>`:'<span></span>'}</div>`).join('');
   box.querySelectorAll('select.o_model').forEach(enhanceModelSelect);
   ordRecalc();
 }
@@ -4479,7 +4528,7 @@ function openOrderModal(orderId,presetChannel){
     <div class="form-grid2"><div class="form-row"><label>قناة البيع</label><select id="o_channel" onchange="ordRecalc()"><option value="shop" ${ch==='shop'?'selected':''}>معمل</option><option value="page" ${ch==='page'?'selected':''}>الصفحة (سوشال ميديا)</option></select></div>
     <div class="form-row"><label>نوع البيع</label><select id="o_type" onchange="ordTypeChange()"><option value="wholesale" ${type==='wholesale'?'selected':''}>جملة</option><option value="retail" ${type!=='wholesale'?'selected':''}>مفرد</option></select></div></div>
     <div class="ord-title">الموديلات بهذي العملية <span class="muted">— تكدر تعدّل سعر كل موديل</span></div>
-    <div class="ord-cols"><span>الموديل</span><span>العدد</span><span>السعر</span><span>المجموع</span><span></span></div>
+    
     <div id="ordLines"></div>
     <button type="button" class="btn sm" onclick="ordAdd()">+ إضافة موديل آخر لنفس العملية</button>
     <div class="compute-box"><span>إجمالي الطلب</span><span><b id="ordTotal"></b> · <b id="ordPieces"></b></span></div>
@@ -4519,9 +4568,38 @@ function openOrderModal(orderId,presetChannel){
 /* =========================================================
    EMPLOYEE (حساب الموظف) — يُستحق على قطع المفرد، حساب منفصل ما يُخصم من الشركاء
 ========================================================= */
-function empFreshStart(E){
-  const d=todayISO(); E.v2=true;
-  E.from=d; E.skip=state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && s.date>=d).map(s=>s.id);
+function empFreshStart(E,skipExisting){
+  const d=todayISO(); E.v2=true; E.v3=true;
+  E.from=d; E.skip=skipExisting?state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && s.date>=d).map(s=>s.id):[]; E.adjs={};
+}
+function printPartnerStatement(ym){
+  const P=PS(), c=P.closes.find(x=>x.month===ym), D=c?null:pageData(ym+'-01',ym+'-31');
+  const R=c?{revenue:c.revenue,profit:c.profit,ads:c.ads,wage:c.wage||0,net:c.net,parts:c.parts||[]}:{revenue:D.revenue,profit:D.profit,ads:D.ads,wage:D.wage,net:D.net,parts:D.parts};
+  openReceipt({prefix:'كشف-شراكة',modalTitle:'🖨 كشف الشراكة — '+monthLabelAr(ym),title:'كشف الشراكة',date:dateAr(),nameLabel:'الشهر',name:monthLabelAr(ym),
+    sub:(c?'مقفل بتاريخ '+c.date:'غير مقفل بعد — أرقام حالية')+' · مبيعات الصفحة وإعلاناتها',
+    cols:[{label:'الشريك',w:3},{label:'النسبة',w:1.5,num:true},{label:'حصته من الأرباح',w:2.6,num:true},{label:'الإعلانات',w:2.2,num:true},{label:'مستحقات موظفين',w:2.6,num:true},{label:'الصافي له',w:2.4,num:true}],
+    rows:R.parts.map(p=>[p.name,pctTxt(p.pct),money(p.gross),'−'+money(p.ads),money(p.exp||0),money(p.net)]),
+    totals:[{label:'الوارد',value:money(R.revenue)},{label:'الأرباح',value:money(R.profit)},{label:'الإعلانات',value:money(R.ads)},{label:'صافي للتوزيع',value:money(R.net),strong:true}],
+    footer:'كشف الشراكة — ستر'});
+}
+function openGoalModal(){
+  const P=PS(), g=P.goal||{};
+  openModal({title:'🎯 هدف المبيعات الشهري',bodyHtml:`<div class="form-row"><label>هدف وارد الصفحة للشهر (دينار)</label><input type="number" id="f_gs" data-fmt value="${g.sales||''}" placeholder="مثال: 5000000"><div class="hint">يظهر شريط تقدم بصفحة الشراكة يبين شكد وصلت من الهدف.</div></div>
+    <div class="form-row"><label>نبّهني إذا الإعلانات تجاوزت (% من الأرباح)</label><input type="number" id="f_ga" value="${g.adsPct||30}" min="1" max="100"><div class="hint">مثلاً 30 يعني: إذا الإعلانات صارت أكثر من 30% من أرباح الصفحة يطلع تنبيه أحمر.</div></div>`,
+  onSave(){ const sales=num(document.getElementById('f_gs').value), adsPct=num(document.getElementById('f_ga').value); P.goal={sales,adsPct:adsPct>0?adsPct:30}; saveState(); closeModal(); render(); toast('تم حفظ الهدف'); }});
+}
+function goalCardHtml(D){
+  const P=PS(), g=P.goal||{}, all=partMonth==='ALL';
+  if(all) return '';
+  if(!g.sales && !g.adsPct) return `<div class="gcard"><div class="gcard-h"><b>🎯 هدف الشهر</b><button class="btn sm primary" onclick="openGoalModal()">حدد هدف شهري</button></div><div class="hint">حدد هدف مبيعات للصفحة، وتنبيه إذا الإعلانات صارت تاكل من الأرباح.</div></div>`;
+  const pct=g.sales>0?D.revenue/g.sales*100:0, left=Math.max(0,g.sales-D.revenue);
+  const isCur=partMonth===thisMonth(); let perDay='';
+  if(isCur && left>0){ const t=new Date(), last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(), rem=Math.max(1,last-t.getDate()+1); perDay=`<span>المطلوب يومياً: <b>${money(left/rem)}</b> (باقي ${rem} يوم)</span>`; }
+  const ar=D.profit>0?D.ads/D.profit*100:(D.ads>0?100:0), lim=num(g.adsPct)||30, over=D.ads>0 && ar>lim;
+  return `<div class="gcard"><div class="gcard-h"><b>🎯 هدف ${monthLabelAr(partMonth)}</b><button class="btn sm" onclick="openGoalModal()">تعديل الهدف</button></div>
+  ${g.sales>0?`<div class="gbar"><i class="${pct>=100?'done':''}" style="width:${Math.min(100,pct)}%"></i></div>
+  <div class="gnums"><span>الوارد: <b>${money(D.revenue)}</b> من ${money(g.sales)}</span><span><b>${Math.round(pct)}%</b>${pct>=100?' ✓ تحقق الهدف':' · متبقي '+money(left)}</span>${perDay}</div>`:''}
+  <div class="galert ${over?'':'ok'}">${over?`⚠️ الإعلانات ${money(D.ads)} = ${Math.round(ar)}% من الأرباح (الحد ${lim}%) — راجع الإعلانات.`:`الإعلانات ${D.ads>0?Math.round(ar)+'% من الأرباح':'0'} — ضمن الحد (${lim}%).`}</div></div>`;
 }
 function togglePtEmpDeduct(){ const P=PS(); P.empDeduct=!P.empDeduct; saveState(); render(); toast(P.empDeduct?'مستحقات الموظفين صارت تُخصم من صافي الشركاء':'مستحقات الموظفين للعلم فقط، ما تُخصم'); }
 function empById(id){ return PS().emps.find(e=>e.id===id); }
@@ -4529,15 +4607,17 @@ function empStats(E){
   if(typeof E==='string') E=empById(E); if(!E) return null;
   const skip=new Set(E.skip||[]);
   const ls=state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && !skip.has(s.id) && (!E.from||s.date>=E.from));
-  const pieces=ls.reduce((a,s)=>a+num(s.quantity),0), rate=num(E.rate), due=pieces*rate;
+  const adjs=E.adjs||{}, adjTotal=Object.values(adjs).reduce((a,v)=>a+num(v),0), tm=thisMonth();
+  const pieces=ls.reduce((a,s)=>a+num(s.quantity),0)+adjTotal, rate=num(E.rate), due=pieces*rate;
   const paid=(E.pays||[]).filter(p=>!E.from||p.date>=E.from).reduce((a,p)=>a+num(p.amount),0);
-  const ms=thisMonth()+'-01', mPieces=ls.filter(s=>s.date>=ms).reduce((a,s)=>a+num(s.quantity),0);
+  const ms=tm+'-01', baseM=ls.filter(s=>s.date>=ms).reduce((a,s)=>a+num(s.quantity),0), mPieces=baseM+num(adjs[tm]);
   const mPaid=(E.pays||[]).filter(p=>p.date>=ms&&(!E.from||p.date>=E.from)).reduce((a,p)=>a+num(p.amount),0);
   const mo={}; ls.forEach(s=>{const k=s.date.slice(0,7); (mo[k]=mo[k]||{m:k,pieces:0,paid:0}).pieces+=num(s.quantity);});
   (E.pays||[]).filter(p=>!E.from||p.date>=E.from).forEach(p=>{const k=p.date.slice(0,7); (mo[k]=mo[k]||{m:k,pieces:0,paid:0}).paid+=num(p.amount);});
+  Object.keys(adjs).forEach(k=>{ (mo[k]=mo[k]||{m:k,pieces:0,paid:0}).pieces+=num(adjs[k]); });
   const months=Object.values(mo).sort((a,b)=>b.m.localeCompare(a.m)).map(x=>({...x,due:x.pieces*rate}));
   const mOrders=ls.filter(s=>s.date>=ms).length;
-  return {E,ls,pieces,rate,due,paid,remaining:due-paid,mPieces,mDue:mPieces*rate,mPaid,months,orders:ls.length,mOrders,carry:due-paid-(mPieces*rate-mPaid)};
+  let excl=state.sales.filter(s=>(s.channel||'shop')==='page' && (!E.from||s.date>=E.from) && s.customerType==='wholesale').length; return {E,ls,pieces,rate,due,paid,remaining:due-paid,baseM,excl,mPieces,mDue:mPieces*rate,mPaid,months,orders:ls.length,mOrders,carry:due-paid-(mPieces*rate-mPaid)};
 }
 function empsTotal(){ const list=PS().emps.map(e=>empStats(e)); return {list,remaining:list.reduce((a,x)=>a+x.remaining,0),mPieces:list.reduce((a,x)=>a+x.mPieces,0),mDue:list.reduce((a,x)=>a+x.mDue,0),paid:list.reduce((a,x)=>a+x.mPaid,0)}; }
 function renderEmployeesPage(){
@@ -4557,7 +4637,7 @@ function renderEmployeeDetail(id){
   const ls=S.ls.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
   return `<div class="page-head"><div><h1>${esc(E.name)} <span class="pill retail">موظف</span> <span class="pill wholesale">${money(S.rate)} للقطعة</span></h1><div class="desc">يستحق أجرة على كل قطعة مفرد تنباع عبر الصفحة. حساب منفصل — ما يُخصم من أرباح الشركاء.</div></div><button class="btn" onclick="currentDetail='emps';render();">← رجوع للموظفين</button></div>
   <div class="grid stats">${statCard('المتبقي له',money(S.remaining),S.remaining>0?'neg':'pos',Math.round(S.carry)!==0?'يشمل '+money(S.carry)+' من أشهر سابقة':'المستحق − المسدد',true)}${statCard('قطع هذا الشهر',S.mPieces+' قطعة','accent',S.mOrders+' طلب · يبدأ من صفر كل شهر')}${statCard('مستحق هذا الشهر',money(S.mDue),'',S.mPieces+' × '+money(S.rate))}${statCard('مسدد هذا الشهر',money(S.mPaid),'pos')}</div>
-  <div class="hint" style="margin:8px 0 0;">يبدأ حسابه من ${esc(E.from||'—')} — المبيعات قبل هذا التاريخ ما تنحسب له.</div>
+  <div class="hint" style="margin:8px 0 0;">يبدأ حسابه من ${esc(E.from||'—')} — المبيعات قبل هذا التاريخ ما تنحسب له.${S.excl?` · ${S.excl} بيع جملة بالصفحة ما يحسب له (الأجرة على المفرد فقط)`:''}</div>
   <div class="btn-row" style="margin:20px 0 6px;"><button class="btn primary" onclick="openEmpPayModal('${E.id}')">+ تسديد مبلغ له</button><button class="btn" onclick="openEmpEditModal('${E.id}')">✏️ تعديل الاسم والأجرة</button><button class="btn" onclick="resetEmp('${E.id}')">🧹 تصفير الحساب</button><button class="btn danger" onclick="deleteEmp('${E.id}')">🗑 حذف الحساب</button></div>
   <div class="section-title"><span class="ic">🗓</span> الأشهر</div>
   <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>القطع</th><th>المستحق</th><th>المسدد</th><th>المتبقي</th></tr></thead><tbody>
@@ -4585,15 +4665,18 @@ function deleteEmpPay(eid,payId){ confirmDelete('حذف هذا التسديد؟'
 function openEmpEditModal(eid){
   const P=PS(), E=eid?empById(eid):null;
   openModal({title:E?'تعديل الموظف':'إضافة موظف',bodyHtml:`<div class="form-row"><label>الاسم</label><input type="text" id="f_en" value="${esc(E?E.name:'')}"></div>
-    <div class="form-row"><label>أجرة القطعة الواحدة (مفرد) بالدينار</label><input type="number" id="f_er" value="${E?E.rate:1000}"><div class="hint">تنطبق على كل قطع المفرد المحتسبة بالحساب الحالي.</div></div>`,
+    <div class="form-row"><label>أجرة القطعة الواحدة (مفرد) بالدينار</label><input type="number" id="f_er" value="${E?E.rate:1000}"><div class="hint">تنطبق على كل قطع المفرد المحتسبة بالحساب الحالي.</div></div>
+    ${E?`<div class="form-row"><label>عدد القطع المحتسبة هذا الشهر</label><input type="number" id="f_ep" value="${empStats(E).mPieces}"><div class="hint">تكدر تصححه يدوياً. ويرجع يزيد تلقائياً مع كل بيع مفرد جديد بالصفحة.</div></div>`:''}`,
   onSave(){
     const name=document.getElementById('f_en').value.trim(), rate=num(document.getElementById('f_er').value);
     if(!name) return toast('اكتب الاسم'); if(rate<0) return toast('الأجرة غير صحيحة');
-    if(!E){ const n={id:'e_'+uid(),name,rate,from:null,skip:[],pays:[]}; empFreshStart(n); P.emps.push(n); } else { E.name=name; E.rate=rate; }
+    if(!E){ const n={id:'e_'+uid(),name,rate,from:null,skip:[],pays:[],adjs:{}}; empFreshStart(n,false); P.emps.push(n); }
+    else { const old=empStats(E), fp=document.getElementById('f_ep'); E.name=name; E.rate=rate;
+      if(fp && fp.value!==''){ if(!E.adjs) E.adjs={}; E.adjs[thisMonth()]=num(fp.value)-old.baseM; } }
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
-function resetEmp(eid){ askConfirm('تصفير حساب الموظف: يبدأ المستحق من صفر من الآن (قطع المفرد السابقة ما تنحسب). التسديدات القديمة تبقى مسجلة. متابعة؟',()=>{ empFreshStart(empById(eid)); saveState(); render(); toast('تم تصفير حساب الموظف'); },{title:'تصفير حساب الموظف',yesLabel:'تصفير'}); }
+function resetEmp(eid){ askConfirm('تصفير حساب الموظف: يبدأ المستحق من صفر من الآن (قطع المفرد السابقة ما تنحسب). التسديدات القديمة تبقى مسجلة. متابعة؟',()=>{ empFreshStart(empById(eid),true); saveState(); render(); toast('تم تصفير حساب الموظف'); },{title:'تصفير حساب الموظف',yesLabel:'تصفير'}); }
 function deleteEmp(eid){ confirmDelete('حذف حساب الموظف نهائياً مع تسديداته؟ أرباح الشركاء ما تتأثر.',()=>{ const P=PS(); P.emps=P.emps.filter(e=>e.id!==eid); currentDetail='emps'; saveState(); render(); toast('تم حذف الحساب'); }); }
 
 function exportModelReportCSV(){
@@ -5192,8 +5275,8 @@ async function buildReceiptCanvas(spec){
   return cv;
 }
 async function openReceipt(spec){
-  window._rcpName = spec.name;
-  openModal({title:'🖨 وصل — ' + esc(spec.name), bodyHtml:'<div id="rcpBox" class="hint" style="text-align:center;padding:30px;">جاري تجهيز الوصل…</div>', onSave(){ closeModal(); }});
+  window._rcpName = spec.name; window._rcpPrefix = spec.prefix||'وصل';
+  openModal({title:spec.modalTitle || ('🖨 وصل — ' + esc(spec.name)), bodyHtml:'<div id="rcpBox" class="hint" style="text-align:center;padding:30px;">جاري تجهيز الوصل…</div>', onSave(){ closeModal(); }});
   const sb = document.getElementById('modalSaveBtn'); if(sb) sb.textContent = 'إغلاق';
   try{
     const cv = await buildReceiptCanvas(spec);
@@ -5204,7 +5287,7 @@ async function openReceipt(spec){
       <img alt="وصل" src="${cv.toDataURL('image/png')}" style="width:100%;border:1px solid var(--border-strong);border-radius:10px;background:#fff;display:block;">`;
   }catch(e){ const box = document.getElementById('rcpBox'); if(box) box.textContent = 'تعذر تجهيز الوصل: ' + e.message; }
 }
-function receiptFileName(){ return 'وصل-' + String(window._rcpName||'').replace(/[\\/:*?"<>|]/g,'') + '-' + todayISO() + '.png'; }
+function receiptFileName(){ return (window._rcpPrefix||'وصل') + '-' + String(window._rcpName||'').replace(/[\\/:*?"<>|]/g,'') + '-' + todayISO() + '.png'; }
 function receiptSave(){ window._rcpCanvas.toBlob(b=>downloadBlob(b, receiptFileName()), 'image/png'); }
 function receiptPrint(){
   const url = window._rcpCanvas.toDataURL('image/png');
