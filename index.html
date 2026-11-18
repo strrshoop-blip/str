@@ -5065,7 +5065,7 @@ function deltaBadge(cur, prev, goodUp){
   cur = num(cur); prev = num(prev);
   if(!cur && !prev) return '';
   let txt, up;
-  if(!prev){ txt = 'جديد'; up = cur>0; }
+  if(!prev) return '';
   else { const p = Math.round((cur-prev)/Math.abs(prev)*100); if(p===0) return '<span class="delta flat">▬ 0%</span>'; up = p>0; txt = (up?'▲ ':'▼ ') + Math.abs(p) + '%'; }
   const good = goodUp ? up : !up;
   return `<span class="delta ${good?'good':'bad'}" title="مقارنة بالشهر الماضي">${txt}</span>`;
