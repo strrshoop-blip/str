@@ -4074,6 +4074,7 @@ function PS(){
     partners:[{id:'p_ahmed',name:'أحمد نعيم',pct:25},{id:'p_hassan',name:'حسن الفتلاوي',pct:37.5},{id:'p_amjad',name:'أمجد',pct:37.5}],
     closes:[],adj:[],pays:[]};
   const P=state.partnership; if(!Array.isArray(P.archive)) P.archive=[]; if(P.resetAt===undefined) P.resetAt=null; if(!Array.isArray(P.resetSkip)) P.resetSkip=[];
+  if(P.emp===undefined) P.emp={name:'أمير علي',rate:num(P.empRate!=null?P.empRate:1000),from:P.resetAt||null,skip:[...P.resetSkip],pays:[]};
   return P;
 }
 let partMonth=thisMonth(), partGran='day';
@@ -4089,8 +4090,8 @@ function pageData(from,to){
   const exps=state.expenses.filter(e=>(e.channel||'shop')==='page' && e.type==='إعلانات' && !skip.has(e.id) && inRange(e.date,from,to));
   const ads=exps.reduce((s,x)=>s+num(x.amount),0);
   const empPieces=ps.filter(s=>s.customerType!=='wholesale').reduce((a,x)=>a+num(x.quantity),0);
-  const wage=empPieces*num(P.empRate!=null?P.empRate:1000);
-  const other=wage;
+  const wage=P.emp?(P.emp.pays||[]).filter(p=>inRange(p.date,from,to)).reduce((a,p)=>a+num(p.amount),0):0;
+  const other=0; /* أجرة الموظف ما تُخصم من الشركاء — حسابها منفصل */
   const net=profit-ads-other;
   const w=ps.filter(s=>s.customerType==='wholesale'), r=ps.filter(s=>s.customerType!=='wholesale');
   const agg=l=>({rev:l.reduce((s,x)=>s+saleRevenue(x),0),pcs:l.reduce((s,x)=>s+num(x.quantity),0),n:l.length});
@@ -4135,12 +4136,12 @@ function renderPartnership(){
     ${statCard('مبيعات الصفحة (الوارد)',money(D.revenue),'accent',D.orders+' طلب · '+D.pieces+' قطعة',false,"openPageSalesModal()")}
     ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg')}
     ${statCard('تكاليف الإعلانات',money(D.ads),'neg','تُخصم مرة وحدة بالنسب')}
-    ${statCard('أجرة الموظف',money(D.wage),'neg',D.empPieces+' قطعة مفرد × '+money(num(P.empRate!=null?P.empRate:1000))+' · تُخصم بالنسب')}
+    ${statCard('أجرة الموظف (المسدَّدة)',money(D.wage),'',D.empPieces+' قطعة مفرد بهذي الفترة · حساب منفصل، ما يُخصم من الشركاء',false,"currentDetail='emp';render();window.scrollTo(0,0)")}
     ${statCard('عدد المبيعات',D.orders+' عملية بيع','accent',D.pieces+' قطعة مباعة · جملة '+D.wh.n+' · مفرد '+D.rt.n,false,"openPageSalesModal()")}
     ${statCard('هامش الربح',D.revenue>0?(Math.round(D.profit/D.revenue*1000)/10)+'%':'—','','من الوارد قبل الإعلانات · بعد الإعلانات '+(D.revenue>0?(Math.round(D.net/D.revenue*1000)/10)+'%':'—'))}
     ${statCard('متوسط قيمة الطلب',D.orders?money(D.revenue/D.orders):'—','','ربح القطعة الواحدة '+(D.pieces?money(D.profit/D.pieces):'—'))}
   </div>
-  <div class="btn-row" style="margin:20px 0 6px;">${closeBtn}<button class="btn" onclick="openPartnersModal()">⚙️ تعديل الأسماء والنسب</button><button class="btn" onclick="openSaleModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button><span class="rm-wrap"><button type="button" class="btn rm-more" id="ptMore" onclick="togglePtMenu(event)" title="المزيد">⋯</button><div class="row-menu" id="ptMenu"><button class="btn" onclick="openPageSalesModal()">📦 كل مبيعات الصفحة</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></span></div>
+  <div class="btn-row" style="margin:20px 0 6px;">${closeBtn}<button class="btn" onclick="openPartnersModal()">⚙️ تعديل الأسماء والنسب</button><button class="btn" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button><span class="rm-wrap"><button type="button" class="btn rm-more" id="ptMore" onclick="togglePtMenu(event)" title="المزيد">⋯</button><div class="row-menu" id="ptMenu"><button class="btn" onclick="openPageSalesModal()">📦 كل مبيعات الصفحة</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></span></div>
 
   <div class="section-title"><span class="ic">👥</span> الشركاء — اضغط على أي اسم لكشف حسابه</div>
   <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
@@ -4150,7 +4151,7 @@ function renderPartnership(){
     <div class="pr"><span>مساهمته بالإعلانات</span><b class="neg">−${money(p.ads)}</b></div>
     ${p.exp?`<div class="pr"><span>حصته من أجرة الموظف</span><b class="neg">−${money(p.exp)}</b></div>`:''}
     <div class="pr"><span>المستلم (كل الفترات)</span><b class="pos">${money(t.paid)}</b></div>
-    <div class="pr"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>`;}).join('')}</div>
+    <div class="pr"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>`;}).join('')}${(()=>{const S=empStats(); return S?`<div class="pcard" onclick="currentDetail='emp';render();window.scrollTo(0,0)"><div class="pn"><span>👤 ${esc(S.E.name)}</span><span class="pill retail">موظف</span></div><div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له</div><div class="pr"><span>قطع المفرد المحتسبة</span><b>${S.pieces}</b></div><div class="pr"><span>المستحق (${money(S.rate)} للقطعة)</span><b>${money(S.due)}</b></div><div class="pr"><span>المسدد</span><b class="pos">${money(S.paid)}</b></div></div>`:`<div class="pcard" onclick="openEmpEditModal(true)"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظف مسجل. اضغط لإضافة موظف يستحق أجرة على قطع المفرد.</div></div>`;})()}</div>
 
   <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة</div>
   <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${barChart(chart)}</div>
@@ -4163,8 +4164,8 @@ function renderPartnership(){
   </div>
 
   <div class="section-title"><span class="ic">🔒</span> سجل إقفال الأشهر</div>
-  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>أجرة الموظف</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
-  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num neg">${money(c.other)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${6+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
 
   <div class="section-title"><span class="ic">📣</span> إعلانات الصفحة بهذي الفترة</div>
   <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظات</th></tr></thead><tbody>
@@ -4189,17 +4190,17 @@ function deletePartnerClose(id){ confirmDelete('إلغاء إقفال هذا ا�
 function openPartnersModal(){
   const P=PS();
   openModal({title:'الأسماء والنسب',bodyHtml:`${P.partners.map((p,i)=>`<div class="form-grid2"><div class="form-row"><label>الاسم</label><input type="text" id="pn_${i}" value="${esc(p.name)}"></div><div class="form-row"><label>النسبة %</label><input type="number" step="0.01" id="pp_${i}" value="${p.pct}"></div></div>`).join('')}
-    <div class="form-row"><label>أجرة الموظف عن كل قطعة مفرد (دينار)</label><input type="number" id="pn_emp" value="${P.empRate!=null?P.empRate:1000}"><div class="hint">تُحسب على قطع المفرد المباعة عبر الصفحة، وتُخصم من صافي الأرباح قبل التوزيع بنفس نسب الشركاء.</div></div>
     <div class="hint">النسبة تُستخدم لتوزيع الأرباح ومساهمة الإعلانات معاً. المجموع لازم يكون 100%. الأشهر المقفلة سابقاً ما تتغير.</div>`,
   onSave(){
     const v=P.partners.map((p,i)=>({name:document.getElementById('pn_'+i).value.trim(),pct:num(document.getElementById('pp_'+i).value)}));
     if(v.some(x=>!x.name)) return toast('الاسم مطلوب');
     if(Math.abs(v.reduce((s,x)=>s+x.pct,0)-100)>0.001) return toast('مجموع النسب لازم يكون 100%');
-    P.partners.forEach((p,i)=>Object.assign(p,v[i])); P.empRate=num(document.getElementById('pn_emp').value);
+    P.partners.forEach((p,i)=>Object.assign(p,v[i]));
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
 function renderPartnerDetail(pid){
+  if(pid==='emp') return renderEmployeeDetail();
   const P=PS(), p=P.partners.find(x=>x.id===pid);
   if(!p){ currentDetail=null; return renderPartnership(); }
   const t=ptTotals(pid), cl=P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month));
@@ -4208,8 +4209,8 @@ function renderPartnerDetail(pid){
   <div class="grid stats">${statCard('المتبقي له',money(t.remaining),t.remaining>0?'neg':'pos','أرباح + تعديلات − مستلم',true)}${statCard('أرباح الأشهر المقفلة',money(t.earned),'pos')}${statCard('مبالغ إضافية / خصومات',money(t.adj),t.adj>=0?'':'neg')}${statCard('المستلم',money(t.paid),'accent')}</div>
   <div class="btn-row" style="margin:20px 0 6px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">+ تسجيل استلام مبلغ</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">+ مبلغ إضافي / خصم</button></div>
   <div class="section-title"><span class="ic">🔒</span> الأشهر المقفلة</div>
-  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>حصته من الأرباح</th><th>مساهمة الإعلانات</th><th>أجرة الموظف</th><th>الصافي له</th></tr></thead><tbody>
-  ${cl.length?cl.map(c=>{const x=(c.parts||[]).find(y=>y.id===pid)||{};return `<tr><td><b>${monthLabelAr(c.month)}</b> <span class="muted">(${pctTxt(x.pct)})</span></td><td class="num">${money(x.gross)}</td><td class="num neg">−${money(x.ads)}</td><td class="num neg">−${money(x.exp)}</td><td class="num pos">${money(x.net)}</td></tr>`;}).join(''):'<tr class="empty-row"><td colspan="5">لا توجد أشهر مقفلة</td></tr>'}</tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>حصته من الأرباح</th><th>مساهمة الإعلانات</th><th>الصافي له</th></tr></thead><tbody>
+  ${cl.length?cl.map(c=>{const x=(c.parts||[]).find(y=>y.id===pid)||{};return `<tr><td><b>${monthLabelAr(c.month)}</b> <span class="muted">(${pctTxt(x.pct)})</span></td><td class="num">${money(x.gross)}</td><td class="num neg">−${money(x.ads)}</td><td class="num pos">${money(x.net)}</td></tr>`;}).join(''):'<tr class="empty-row"><td colspan="4">لا توجد أشهر مقفلة</td></tr>'}</tbody></table></div>
   <div class="section-title"><span class="ic">✏️</span> المبالغ الإضافية والخصومات</div>
   <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>السبب</th><th></th></tr></thead><tbody>
   ${adj.length?adj.map(a=>`<tr><td class="muted">${esc(a.date)}</td><td class="num ${num(a.amount)>=0?'pos':'neg'}">${money(a.amount)}</td><td class="muted">${esc(a.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openPartnerAdjModal('${pid}','${a.id}')">تعديل</button><button class="btn sm danger" onclick="deletePartnerRec('adj','${a.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد</td></tr>'}</tbody></table></div>
@@ -4479,6 +4480,62 @@ function openOrderModal(orderId,presetChannel){
   }});
   ordRender();
 }
+
+/* =========================================================
+   EMPLOYEE (حساب الموظف) — يُستحق على قطع المفرد، حساب منفصل ما يُخصم من الشركاء
+========================================================= */
+function empFreshStart(E){
+  const d=todayISO();
+  E.from=d; E.skip=state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && s.date>=d).map(s=>s.id);
+}
+function empStats(){
+  const E=PS().emp; if(!E) return null;
+  const skip=new Set(E.skip||[]);
+  const ls=state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && !skip.has(s.id) && (!E.from||s.date>=E.from));
+  const pieces=ls.reduce((a,s)=>a+num(s.quantity),0), rate=num(E.rate), due=pieces*rate;
+  const paid=(E.pays||[]).filter(p=>!E.from||p.date>=E.from).reduce((a,p)=>a+num(p.amount),0);
+  return {E,ls,pieces,rate,due,paid,remaining:due-paid};
+}
+function renderEmployeeDetail(){
+  const S=empStats(); if(!S){ currentDetail=null; return renderPartnership(); }
+  const E=S.E, pays=(E.pays||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const ls=S.ls.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
+  return `<div class="page-head"><div><h1>${esc(E.name)} <span class="pill retail">موظف</span> <span class="pill wholesale">${money(S.rate)} للقطعة</span></h1><div class="desc">يستحق أجرة على كل قطعة مفرد تنباع عبر الصفحة. المستحق والتسديد حساب منفصل تماماً — ما يُخصم من أرباح الشركاء ولا يتأثر بيه نظام الشراكة</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
+  <div class="grid stats">${statCard('المتبقي له',money(S.remaining),S.remaining>0?'neg':'pos','المستحق − المسدد',true)}${statCard('المستحق (القطع × الأجرة)',money(S.due),'accent',S.pieces+' قطعة مفرد × '+money(S.rate))}${statCard('المسدد له',money(S.paid),'pos')}${statCard('قطع المفرد المحتسبة',S.pieces+' قطعة','',E.from?'من تاريخ '+E.from:'كل المبيعات')}</div>
+  <div class="btn-row" style="margin:20px 0 6px;"><button class="btn primary" onclick="openEmpPayModal()">+ تسديد مبلغ له</button><button class="btn" onclick="openEmpEditModal()">✏️ تعديل الاسم والسعر</button><button class="btn" onclick="resetEmp()">🧹 تصفير الحساب</button><button class="btn danger" onclick="deleteEmp()">🗑 حذف الحساب</button></div>
+  <div class="section-title"><span class="ic">💵</span> التسديدات</div>
+  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead><tbody>
+  ${pays.length?pays.map(p=>`<tr><td class="muted">${esc(p.date)}${E.from&&p.date<E.from?' <span class="pill retail">قبل التصفير</span>':''}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${esc(p.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openEmpPayModal('${p.id}')">تعديل</button><button class="btn sm danger" onclick="deleteEmpPay('${p.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد تسديدات</td></tr>'}</tbody></table></div>
+  <div class="section-title"><span class="ic">📦</span> قطع المفرد المحتسبة له (آخر 60)</div>
+  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الموديل</th><th>الزبون</th><th>القطع</th><th>أجرتها</th></tr></thead><tbody>
+  ${ls.length?ls.map(s=>`<tr><td class="muted">${esc(s.date)}</td><td>${esc(saleProductLabel(s))}</td><td>${esc(s.customerName||'—')}</td><td class="num">${num(s.quantity)}</td><td class="num">${money(num(s.quantity)*S.rate)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="5">ما اكو مبيعات مفرد محتسبة</td></tr>'}</tbody></table></div>`;
+}
+function openEmpPayModal(id){
+  const S=empStats(); if(!S) return; const E=S.E, it=id?E.pays.find(x=>x.id===id):null;
+  openModal({title:it?'تعديل تسديد':'تسديد مبلغ للموظف',bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">المتبقي له الآن: <b>${money(S.remaining)}</b><br>المبلغ اللي تسدده يتسجل بحساب الموظف فقط، وما يُخصم من أرباح الشركاء.</div>
+    <div class="form-grid2"><div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${it?it.amount:(S.remaining>0?S.remaining:'')}"></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${it?.date||todayISO()}"></div></div>
+    <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(it?.note||'')}</textarea></div>`,
+  onSave(){
+    const amount=num(document.getElementById('f_amount').value); if(amount<=0) return toast('اكتب مبلغ صحيح');
+    const d={amount,date:document.getElementById('f_date').value||todayISO(),note:document.getElementById('f_notes').value.trim()};
+    if(!E.pays) E.pays=[]; if(it) Object.assign(it,d); else E.pays.push({id:uid(),...d});
+    saveState(); closeModal(); render(); toast('تم تسجيل التسديد للموظف');
+  }});
+}
+function deleteEmpPay(id){ confirmDelete('حذف هذا التسديد؟',()=>{ const E=PS().emp; E.pays=E.pays.filter(p=>p.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+function openEmpEditModal(create){
+  const P=PS(), E=create?null:P.emp;
+  openModal({title:create?'إضافة موظف':'تعديل الموظف',bodyHtml:`<div class="form-row"><label>الاسم</label><input type="text" id="f_en" value="${esc(E?E.name:'')}"></div>
+    <div class="form-row"><label>أجرة القطعة الواحدة (مفرد) بالدينار</label><input type="number" id="f_er" value="${E?E.rate:1000}"><div class="hint">تنطبق على كل قطع المفرد المحتسبة بالحساب الحالي، والأشهر المقفلة ما تتغير.</div></div>`,
+  onSave(){
+    const name=document.getElementById('f_en').value.trim(), rate=num(document.getElementById('f_er').value);
+    if(!name) return toast('اكتب الاسم'); if(rate<0) return toast('الأجرة غير صحيحة');
+    if(create){ P.emp={name,rate,from:null,skip:[],pays:[]}; empFreshStart(P.emp); } else { P.emp.name=name; P.emp.rate=rate; }
+    saveState(); closeModal(); render(); toast('تم الحفظ');
+  }});
+}
+function resetEmp(){ askConfirm('تصفير حساب الموظف: يبدأ المستحق من صفر من الآن (قطع المفرد السابقة ما تنحسب). التسديدات القديمة تبقى مسجلة. متابعة؟',()=>{ empFreshStart(PS().emp); saveState(); render(); toast('تم تصفير حساب الموظف'); },{title:'تصفير حساب الموظف',yesLabel:'تصفير'}); }
+function deleteEmp(){ confirmDelete('حذف حساب الموظف نهائياً مع تسديداته؟ أرباح الشركاء ما تتأثر.',()=>{ PS().emp=null; currentDetail=null; saveState(); render(); toast('تم حذف الحساب'); }); }
 
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
