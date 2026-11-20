@@ -688,7 +688,7 @@ function defaultState(){
     cutters:[], cutterWork:[], cutterPayments:[],
     hoodaris:[], hoodariWork:[], hoodariPayments:[],
     models:[], sales:[], profitAdjustments:[], debts:[], debtPayments:[], customerDebts:[], customerDebtPayments:[],
-    materials:[], materialMoves:[], saleSeq:0,
+    materials:[], materialMoves:[], saleSeq:0, returns:[],
     notes:[],
     pieceAdjust:{},
     partnership:null
@@ -736,7 +736,7 @@ async function loadStateAsync(){
 let state = defaultState();
 
 /* ---- وقت تسجيل العمليات ---- */
-const TS_COLLS=['sales','expenses','debts','debtPayments','customerDebts','customerDebtPayments','materialMoves'];
+const TS_COLLS=['sales','expenses','debts','debtPayments','customerDebts','customerDebtPayments','materialMoves','returns'];
 function saleNosAssign(){
   if(!state||!Array.isArray(state.sales)) return;
   let seq=num(state.saleSeq); const byOrder={};
@@ -745,7 +745,7 @@ function saleNosAssign(){
   todo.forEach(x=>{ if(x.orderId && byOrder[x.orderId]){ x.no=byOrder[x.orderId]; return; } x.no=++seq; if(x.orderId) byOrder[x.orderId]=x.no; });
   state.saleSeq=seq;
 }
-function tsMigrate(){ if(!state) return; if(!Array.isArray(state.materials)) state.materials=[]; if(!Array.isArray(state.materialMoves)) state.materialMoves=[]; try{ saleNosAssign(); }catch(e){} if(state._ts) return; TS_COLLS.forEach(k=>(state[k]||[]).forEach(r=>{ if(r && r.createdAt===undefined) r.createdAt=''; })); state._ts=true; }
+function tsMigrate(){ if(!state) return; if(!Array.isArray(state.materials)) state.materials=[]; if(!Array.isArray(state.materialMoves)) state.materialMoves=[]; if(!Array.isArray(state.returns)) state.returns=[]; try{ saleNosAssign(); }catch(e){} if(state._ts) return; TS_COLLS.forEach(k=>(state[k]||[]).forEach(r=>{ if(r && r.createdAt===undefined) r.createdAt=''; })); state._ts=true; }
 function tsStamp(){ try{ saleNosAssign(); }catch(e){} const now=new Date().toISOString(); TS_COLLS.forEach(k=>(state[k]||[]).forEach(r=>{ if(r && r.createdAt===undefined) r.createdAt=now; })); }
 function tmLabel(r){ if(!r||!r.createdAt) return ''; const d=new Date(r.createdAt); if(isNaN(d)) return ''; let h=d.getHours(), m=d.getMinutes(); const ap=h>=12?'م':'ص'; h=h%12||12; return h+':'+String(m).padStart(2,'0')+' '+ap; }
 function dtCell(r){ const t=tmLabel(r); return esc(r.date)+(t?`<div class="tm">🕐 ${t}</div>`:''); }
@@ -1224,6 +1224,7 @@ const PAGES = [
   {id:'dashboard', label:'الرئيسية', icon:'🏠'},
   {id:'partnership', label:'نظام الشراكة', icon:'🤝'},
   {id:'sales', label:'الوارد / المبيعات', icon:'📦'},
+  {id:'returns', label:'المرتجعات', icon:'↩️'},
   {id:'models', label:'الموديلات', icon:'👗'},
   {id:'workers', label:'العمال', icon:'👷'},
   {id:'expenses', label:'المصاريف', icon:'💸'},
@@ -1278,6 +1279,7 @@ function render(){
   else if(currentPage==='hoodaris') main.innerHTML = currentDetail ? renderHoodariDetail(currentDetail) : workersTabs('hoodaris')+renderHoodaris();
   else if(currentPage==='models') main.innerHTML = currentDetail ? renderModelDetail(currentDetail) : renderModels();
   else if(currentPage==='sales') main.innerHTML = renderSales();
+  else if(currentPage==='returns') main.innerHTML = renderReturns();
   else if(currentPage==='debtshub') main.innerHTML = renderDebtsHub();
   else if(currentPage==='store') main.innerHTML = renderStore();
   else if(currentPage==='debts') main.innerHTML = debtsTabs('debts')+renderDebts();
@@ -2562,10 +2564,11 @@ function deleteHoodariPayment(id){ confirmDelete(null, ()=>{ state.hoodariPaymen
 ========================================================= */
 function renderModels(){
   if(modelsTab==='materials') return renderMaterials();
-  return modelsTabs()+`
+  modelsTab='models';
+  return `
   <div class="page-head">
     <div><h1>الموديلات</h1><div class="desc">إدارة موديلات المنتجات وتكاليفها وصورها</div></div>
-    <button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button>
+    <div class="btn-row"><button class="btn" onclick="modelsTab='materials';render();window.scrollTo(0,0)">🧵 اللوازم${lowMaterials().length?` <span class="pill retail" style="color:var(--negative)">${lowMaterials().length}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
   </div>
   ${state.models.length?'':'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
   <div class="model-grid">
@@ -2590,52 +2593,72 @@ function renderModels(){
 }
 
 /* =========================================================
-   الأقمشة واللوازم (مخزون المعمل)
+   اللوازم (أقمشة، خيوط، أزرار، تفاصيل…) — مخزون المعمل
 ========================================================= */
-let modelsTab='models', pendingMatImage='', matFilter='';
+let modelsTab='models', pendingMatImage='', matFilter='', matCat='ALL';
 const MAT_UNITS=['متر','قطعة','كيلو','رول','بكرة','علبة','كرتون','دزينة'];
+const MAT_CATS=['قماش','خيط','أزرار وكبسات','سحابات','بطانة','تطريز وتفاصيل','تغليف','أخرى'];
 function matQty(id){ return state.materialMoves.filter(m=>m.matId===id).reduce((a,m)=>a+(m.type==='in'?1:-1)*num(m.qty),0); }
 function matById(id){ return state.materials.find(m=>m.id===id); }
-function matStatus(m){ const q=matQty(m.id), mn=num(m.min); if(q<=0) return {k:'out',l:'نفذ',c:'neg'}; if(mn>0 && q<=mn) return {k:'low',l:'قارب يخلص',c:'warn'}; return {k:'ok',l:'متوفر',c:'pos'}; }
+function matStatus(m){ const q=matQty(m.id), mn=num(m.min); if(m.need) return {k:'need',l:'مطلوب شراؤه',c:'neg'}; if(q<=0) return {k:'out',l:'نفذ',c:'neg'}; if(mn>0 && q<=mn) return {k:'low',l:'قارب يخلص',c:'warn'}; return {k:'ok',l:'متوفر',c:'pos'}; }
 function lowMaterials(){ return state.materials.filter(m=>matStatus(m).k!=='ok'); }
-function modelsTabs(){ const low=lowMaterials().length; return `<div class="tabs no-print"><button type="button" class="${modelsTab==='models'?'on':''}" onclick="modelsTab='models';render()">👗 الموديلات</button><button type="button" class="${modelsTab==='materials'?'on':''}" onclick="modelsTab='materials';render()">🧵 الأقمشة واللوازم${low?` <span class="pill retail" style="color:var(--negative)">${low}</span>`:''}</button></div>`; }
+function modelsTabs(){ return modelsTab==='materials' ? `<button class="detail-back" onclick="modelsTab='models';render();window.scrollTo(0,0)">→ رجوع للموديلات</button>` : ''; }
+function matFiltered(){ const q=matFilter.trim().toLowerCase(); return state.materials.filter(m=>(!q||String(m.name||'').toLowerCase().includes(q)) && (matCat==='ALL'||(m.cat||'أخرى')===matCat)); }
 function renderMaterials(){
-  const q=matFilter.trim().toLowerCase(), list=state.materials.filter(m=>!q||String(m.name||'').toLowerCase().includes(q));
-  const value=state.materials.reduce((a,m)=>a+Math.max(0,matQty(m.id))*num(m.cost),0), low=lowMaterials();
+  const value=state.materials.reduce((a,m)=>a+Math.max(0,matQty(m.id))*num(m.cost),0), need=state.materials.filter(m=>m.need), low=state.materials.filter(m=>!m.need && matStatus(m).k!=='ok');
+  const cats=['ALL',...MAT_CATS.filter(c=>state.materials.some(m=>(m.cat||'أخرى')===c)),...[...new Set(state.materials.map(m=>m.cat||'أخرى'))].filter(c=>!MAT_CATS.includes(c))];
   return `${modelsTabs()}
-  <div class="page-head"><div><h1>الأقمشة واللوازم</h1><div class="desc">مخزون المعمل: سجّل الداخل والمصروف لكل قماش أو لازمة، وتنبيه لما يقارب يخلص</div></div><button class="btn primary" onclick="openMatModal()">+ إضافة صنف</button></div>
-  <div class="grid stats">${statCard('عدد الأصناف',state.materials.length+' صنف','accent',list.length!==state.materials.length?'المعروض '+list.length:'',true)}${statCard('قيمة المخزون الحالية',money(value),'pos','الكمية × سعر الوحدة',true)}${statCard('قاربت تخلص',low.filter(m=>matStatus(m).k==='low').length+' صنف',low.length?'neg':'', 'عند أو تحت حد التنبيه')}${statCard('نفذت',low.filter(m=>matStatus(m).k==='out').length+' صنف',low.some(m=>matStatus(m).k==='out')?'neg':'', 'الكمية صفر أو أقل')}</div>
-  ${low.length?`<div class="galert">⚠️ يحتاج شراء: ${low.map(m=>esc(m.name)+' ('+matQty(m.id)+' '+esc(m.unit||'')+')').join(' · ')}</div>`:''}
-  <div class="toolbar" style="margin:14px 0;"><input type="search" placeholder="بحث باسم الصنف" value="${esc(matFilter)}" oninput="matFilter=this.value;matListRefresh()" style="min-width:240px"></div>
-  <div id="matList">${matListHtml(list)}</div>`;
+  <div class="page-head"><div><h1>🧵 اللوازم</h1><div class="desc">أقمشتك وخيوطك وأزرارك وكل تفاصيل الموديل: الكمية والسعر، وإذا خلص صنف تضيفه لقائمة الطلب</div></div><button class="btn primary" onclick="openMatModal()">+ إضافة صنف</button></div>
+  <div class="grid stats">${statCard('عدد الأصناف',state.materials.length+' صنف','accent','بالمخزون')}${statCard('قيمة المخزون الحالية',money(value),'pos','الكمية × سعر الوحدة')}${statCard('مطلوب شراؤها',need.length+' صنف',need.length?'neg':'','بقائمة الطلب')}${statCard('قاربت تخلص',low.length+' صنف',low.length?'neg':'','تحت حد التنبيه أو نفذت')}</div>
+  ${need.length?`<div class="gcard" style="margin-top:14px"><div class="gcard-h"><b>🛒 قائمة الطلب (${need.length})</b><span class="btn-row"><button class="btn sm" onclick="copyNeedList()">📋 نسخ</button><button class="btn sm" onclick="shareNeedList()">💬 واتساب</button></span></div>
+    ${need.map(m=>`<div class="pr" style="align-items:center;gap:8px;flex-wrap:wrap"><span><b>${esc(m.name)}</b> <span class="muted">${esc(m.cat||'')}${m.need.note?' · '+esc(m.need.note):''}</span></span><span class="btn-row"><span class="muted">آخر سعر ${money(m.cost)} للوحدة</span><button class="btn sm primary" onclick="openMatMove('${m.id}','in')">✔ اشتريته / وصل</button><button class="btn sm ghost" onclick="clearMatNeed('${m.id}')">إلغاء الطلب</button></span></div>`).join('')}</div>`:''}
+  ${low.length?`<div class="galert">⚠️ قاربت تخلص: ${low.map(m=>esc(m.name)+' ('+matQty(m.id)+' '+esc(m.unit||'')+')').join(' · ')}</div>`:''}
+  <div class="btn-row" style="margin:14px 0 8px">${cats.map(c=>`<button class="btn sm ${matCat===c?'primary':''}" onclick="matCat='${c.replace(/'/g,'')}';render()">${c==='ALL'?'الكل':c} <span class="muted">${c==='ALL'?state.materials.length:state.materials.filter(m=>(m.cat||'أخرى')===c).length}</span></button>`).join('')}</div>
+  <div class="toolbar" style="margin:0 0 14px;"><input type="search" placeholder="بحث باسم الصنف" value="${esc(matFilter)}" oninput="matFilter=this.value;matListRefresh()" style="min-width:240px"></div>
+  <div id="matList">${matListHtml(matFiltered())}</div>`;
 }
-function matListRefresh(){ const q=matFilter.trim().toLowerCase(); const el=document.getElementById('matList'); if(el) el.innerHTML=matListHtml(state.materials.filter(m=>!q||String(m.name||'').toLowerCase().includes(q))); }
+function matListRefresh(){ const el=document.getElementById('matList'); if(el) el.innerHTML=matListHtml(matFiltered()); }
 function matListHtml(list){
-  if(!state.materials.length) return '<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">🧵</div><div style="font-weight:800;margin:8px 0;">ما اكو أصناف بعد</div><div class="desc" style="margin-bottom:14px;">أضف قماش أو لازمة (خيط، أزرار، سحابات...) بسعرها وكميتها، وتكدر تضيف صورة أو تخليها بدون.</div><button class="btn primary" onclick="openMatModal()">+ إضافة أول صنف</button></div>';
+  if(!state.materials.length) return '<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">🧵</div><div style="font-weight:800;margin:8px 0;">ما اكو أصناف بعد</div><div class="desc" style="margin-bottom:14px;">أضف قماش أو خيط أو أزرار أو أي تفصيلة تدخل بالموديل، بسعرها وكميتها. الصورة اختيارية.</div><button class="btn primary" onclick="openMatModal()">+ إضافة أول صنف</button></div>';
   if(!list.length) return '<div class="hint">ما اكو نتائج</div>';
   return `<div class="model-grid">${list.map(m=>{ const q=matQty(m.id), st=matStatus(m), img=m.image?`<img src="${m.image}">`:'<span style="font-size:34px">🧵</span>';
     return `<div class="model-card"><div class="thumb" onclick="openMatLog('${m.id}')" style="cursor:pointer">${img}</div><div class="info">
+      <div class="code">${esc(m.cat||'أخرى')}</div>
       <div class="name" onclick="openMatLog('${m.id}')" style="cursor:pointer">${esc(m.name)}</div>
       <div class="row"><span>المتوفر</span><span class="num ${st.c}"><b style="font-size:18px">${q}</b> ${esc(m.unit||'')} <span class="pill ${st.k==='ok'?'wholesale':'retail'}">${st.l}</span></span></div>
       <div class="row"><span>سعر الوحدة</span><span class="num">${money(m.cost)}</span></div>
       <div class="row"><span>قيمته بالمخزون</span><span class="num">${money(Math.max(0,q)*num(m.cost))}</span></div>
       ${num(m.min)>0?`<div class="row"><span>حد التنبيه</span><span class="num">${num(m.min)} ${esc(m.unit||'')}</span></div>`:''}
-      <div class="btn-row" style="margin-top:10px"><button class="btn sm primary" onclick="openMatMove('${m.id}','in')">+ إدخال</button><button class="btn sm" onclick="openMatMove('${m.id}','out')">− صرف</button><button class="btn sm ghost" onclick="openMatModal('${m.id}')">تعديل</button><button class="btn sm danger" onclick="deleteMat('${m.id}')">حذف</button></div>
+      <div class="btn-row" style="margin-top:10px"><button class="btn sm primary" onclick="openMatMove('${m.id}','in')">+ إدخال</button><button class="btn sm" onclick="openMatMove('${m.id}','out')">− صرف</button>${m.need?`<button class="btn sm ghost" onclick="clearMatNeed('${m.id}')">إلغاء الطلب</button>`:`<button class="btn sm" onclick="openMatFinished('${m.id}')">⛔ خلص — اطلب غيره</button>`}</div>
+      <div class="btn-row" style="margin-top:6px"><button class="btn sm ghost" onclick="openMatModal('${m.id}')">تعديل</button><button class="btn sm danger" onclick="deleteMat('${m.id}')">حذف</button></div>
     </div></div>`; }).join('')}</div>`;
+}
+function needListText(){ return '🛒 مطلوب شراؤه:\n'+state.materials.filter(m=>m.need).map(m=>'• '+m.name+(m.cat?' ('+m.cat+')':'')+(m.need.note?' — '+m.need.note:'')+' — آخر سعر '+money(m.cost)).join('\n'); }
+function copyNeedList(){ const t=needListText(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('اننسخت القائمة'),()=>{ prompt('انسخ القائمة:',t); }); }
+function shareNeedList(){ window.open('https://wa.me/?text='+encodeURIComponent(needListText()),'_blank'); }
+function clearMatNeed(id){ const m=matById(id); if(m){ delete m.need; saveState(); render(); toast('انشال من قائمة الطلب'); } }
+function openMatFinished(id){
+  const m=matById(id); if(!m) return; const q=matQty(id);
+  openModal({title:'⛔ خلص — '+m.name,bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">الصنف يضاف لقائمة الطلب${q>0?`، والمتبقي منه (<b>${q} ${esc(m.unit||'')}</b>) ينسجل صرف حتى يصير المخزون صفر`:''}.</div>
+    <div class="form-row"><label>ملاحظة للطلب (اختياري)</label><textarea id="f_n" placeholder="مثال: أريد نفس اللون، الكمية 100 متر"></textarea></div>`,
+  onSave(){ const q2=matQty(id); if(q2>0) state.materialMoves.push({id:uid(),matId:id,type:'out',qty:q2,cost:m.cost,date:todayISO(),notes:'خلص'}); m.need={date:todayISO(),note:document.getElementById('f_n').value.trim()}; saveState(); closeModal(); render(); toast('انضاف لقائمة الطلب'); }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='أضف لقائمة الطلب';
 }
 function matImgPreview(){ return pendingMatImage?`<img src="${pendingMatImage}" style="max-width:120px;max-height:120px;border-radius:10px;display:block;margin-bottom:8px"><button type="button" class="btn sm danger" onclick="pendingMatImage='';document.getElementById('matImgBox').innerHTML=matImgPreview()">إزالة الصورة</button>`:'<span class="muted">بدون صورة</span>'; }
 function matImgPick(evt){ const f=(evt.target.files||[])[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{ pendingMatImage=e.target.result; document.getElementById('matImgBox').innerHTML=matImgPreview(); }; compressImageInto(f,r); }
 function openMatModal(id){
   const m=id?matById(id):null; pendingMatImage=m?(m.image||''):'';
-  openModal({title:m?'تعديل صنف':'إضافة صنف',bodyHtml:`<div class="form-row"><label>اسم الصنف</label><input type="text" id="f_mn" value="${esc(m?m.name:'')}" placeholder="مثال: قماش كريب أسود، خيط أسود، أزرار"></div>
-    <div class="form-grid2"><div class="form-row"><label>وحدة القياس</label><input type="text" id="f_mu" list="matUnits" value="${esc(m?m.unit:'متر')}"><datalist id="matUnits">${MAT_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist></div>
-    <div class="form-row"><label>سعر الوحدة (دينار)</label><input type="number" id="f_mc" data-fmt value="${m?m.cost:''}"></div></div>
-    <div class="form-grid2">${m?'':`<div class="form-row"><label>الكمية الحالية</label><input type="number" id="f_mq" value="" placeholder="0"></div>`}<div class="form-row"><label>نبهني إذا نزلت عن</label><input type="number" id="f_mm" value="${m&&m.min?m.min:''}" placeholder="مثال: 10"></div></div>
+  openModal({title:m?'تعديل صنف':'إضافة صنف',bodyHtml:`<div class="form-row"><label>اسم الصنف</label><input type="text" id="f_mn" value="${esc(m?m.name:'')}" placeholder="مثال: كريب أسود، خيط أسود، كبسات نحاسية"></div>
+    <div class="form-grid2"><div class="form-row"><label>النوع</label><input type="text" id="f_mt" list="matCats" value="${esc(m?m.cat||'':(matCat!=='ALL'?matCat:'قماش'))}"><datalist id="matCats">${MAT_CATS.map(u=>`<option value="${u}">`).join('')}</datalist><div class="hint">اختر من القائمة أو اكتب نوع جديد</div></div>
+    <div class="form-row"><label>وحدة القياس</label><input type="text" id="f_mu" list="matUnits" value="${esc(m?m.unit:'متر')}"><datalist id="matUnits">${MAT_UNITS.map(u=>`<option value="${u}">`).join('')}</datalist></div></div>
+    <div class="form-grid2"><div class="form-row"><label>سعر الوحدة (دينار)</label><input type="number" id="f_mc" data-fmt value="${m?m.cost:''}"></div>
+    ${m?'':`<div class="form-row"><label>الكمية الحالية</label><input type="number" id="f_mq" value="" placeholder="0"></div>`}</div>
+    <div class="form-row"><label>نبهني إذا نزلت عن</label><input type="number" id="f_mm" value="${m&&m.min?m.min:''}" placeholder="مثال: 10"></div>
     <div class="form-row"><label>الصورة (اختياري)</label><input type="file" accept="image/*" onchange="matImgPick(event)"><div id="matImgBox" style="margin-top:8px">${matImgPreview()}</div></div>
     <div class="form-row"><label>ملاحظات</label><textarea id="f_mnote">${esc(m?m.notes||'':'')}</textarea></div>`,
   onSave(){
     const name=document.getElementById('f_mn').value.trim(); if(!name) return toast('اكتب اسم الصنف');
-    const d={name,unit:document.getElementById('f_mu').value.trim(),cost:num(document.getElementById('f_mc').value),min:num(document.getElementById('f_mm').value),image:pendingMatImage||'',notes:document.getElementById('f_mnote').value.trim()};
+    const d={name,cat:document.getElementById('f_mt').value.trim()||'أخرى',unit:document.getElementById('f_mu').value.trim(),cost:num(document.getElementById('f_mc').value),min:num(document.getElementById('f_mm').value),image:pendingMatImage||'',notes:document.getElementById('f_mnote').value.trim()};
     if(m) Object.assign(m,d);
     else { const nm={id:uid(),...d}; state.materials.push(nm); const q=num((document.getElementById('f_mq')||{}).value); if(q>0) state.materialMoves.push({id:uid(),matId:nm.id,type:'in',qty:q,cost:d.cost,date:todayISO(),notes:'رصيد افتتاحي'}); }
     saveState(); closeModal(); render(); toast('تم الحفظ');
@@ -2652,13 +2675,13 @@ function openMatMove(id,type){
     if(!isIn && qty>matQty(id)) return toast('الكمية أكبر من المتوفر ('+matQty(id)+')');
     const cost=isIn?num(document.getElementById('f_c').value):m.cost;
     state.materialMoves.push({id:uid(),matId:id,type,qty,cost,date:document.getElementById('f_d').value||todayISO(),notes:document.getElementById('f_n').value.trim()});
-    if(isIn && cost>0) m.cost=cost;
+    if(isIn){ if(cost>0) m.cost=cost; delete m.need; }
     saveState(); closeModal(); render(); toast(isIn?'تم الإدخال':'تم الصرف');
   }});
 }
 function openMatLog(id){
   const m=matById(id); if(!m) return; const mv=state.materialMoves.filter(x=>x.matId===id).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-  openModal({title:'حركة — '+m.name,bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">المتوفر: <b>${matQty(id)} ${esc(m.unit||'')}</b> · سعر الوحدة ${money(m.cost)}</div>
+  openModal({title:'حركة — '+m.name,bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">المتوفر: <b>${matQty(id)} ${esc(m.unit||'')}</b> · سعر الوحدة ${money(m.cost)}${m.notes?'<br>'+esc(m.notes):''}</div>
     <div class="btn-row" style="margin-bottom:12px"><button class="btn sm primary" onclick="closeModal();openMatMove('${id}','in')">+ إدخال</button><button class="btn sm" onclick="closeModal();openMatMove('${id}','out')">− صرف</button></div>
     <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>السعر</th><th>ملاحظات</th><th></th></tr></thead><tbody>
     ${mv.length?mv.map(x=>`<tr><td class="muted">${dtCell(x)}</td><td><span class="pill ${x.type==='in'?'wholesale':'retail'}">${x.type==='in'?'إدخال':'صرف'}</span></td><td class="num ${x.type==='in'?'pos':'neg'}">${x.type==='in'?'+':'−'}${num(x.qty)}</td><td class="num">${x.type==='in'?money(x.cost):'—'}</td><td class="muted">${esc(x.notes||'—')}</td><td><button class="btn sm danger" onclick="deleteMatMove('${x.id}','${id}')">حذف</button></td></tr>`).join(''):'<tr class="empty-row"><td colspan="6">ما اكو حركات</td></tr>'}</tbody></table></div>`});
@@ -2914,6 +2937,7 @@ function renderSales(){
           <td class="muted">${esc(s.paymentMethod||'—')}</td>
           <td><div class="btn-row">
             <button class="btn sm ghost" onclick="${s.orderId?`openOrderModal('${s.orderId}')`:`openSaleModal('${s.id}')`}">تعديل</button>
+            <button class="btn sm" onclick="openReturnModal('${s.id}')">↩ راجع</button>
             <button class="btn sm danger" onclick="deleteSale('${s.id}')">حذف</button>
           </div></td>
         </tr>`;
@@ -4777,7 +4801,7 @@ function ptDailyHtml(){
   <div class="grid stats" style="margin-bottom:12px;">${statCard('عدد الطلبات',tot.o+' طلب','accent',list.length+' يوم فيه مبيعات')}${statCard('القطع',tot.p+' قطعة','',list.length?'معدل '+(Math.round(tot.o/list.length*10)/10)+' طلب باليوم':'')}${statCard('الوارد',money(tot.r),'pos')}${statCard('الربح',money(tot.f),tot.f>=0?'pos':'neg')}</div>
   <div class="table-wrap"><table><thead><tr><th></th><th>اليوم</th><th>الطلبات</th><th>القطع</th><th>الوارد</th><th>الربح</th></tr></thead><tbody>
   ${list.length?list.map(g=>{ const dn=AR_DAYS[new Date(g.date+'T12:00:00').getDay()]; return `<tr style="cursor:pointer" onclick="ptToggleDay('${g.date}')"><td class="muted" id="pdc_${g.date}">▸</td><td><b>${esc(g.date)}</b> <span class="muted">${dn}</span></td><td class="num">${g.orders.size}</td><td class="num">${g.pcs}</td><td class="num accent">${money(g.rev)}</td><td class="num ${g.profit>=0?'pos':'neg'}">${money(g.profit)}</td></tr>
-    <tr id="pdd_${g.date}" style="display:none"><td></td><td colspan="5"><table class="sub-table" style="width:100%"><thead><tr><th>الوقت</th><th>المنتج</th><th>الزبون</th><th>النوع</th><th>القطع</th><th>الوارد</th></tr></thead><tbody>${g.list.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(x=>`<tr><td class="muted">${tmLabel(x)||'—'}</td><td>${esc(saleProductLabel(x))}</td><td>${esc(x.customerName||'—')}</td><td><span class="pill ${x.customerType==='wholesale'?'wholesale':'retail'}">${x.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(x.quantity)}</td><td class="num accent">${money(saleRevenue(x))}</td></tr>`).join('')}</tbody></table></td></tr>`; }).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات بهذي الفترة</td></tr>'}</tbody></table></div>
+    <tr id="pdd_${g.date}" style="display:none"><td></td><td colspan="5"><table class="sub-table" style="width:100%"><thead><tr><th>الوقت</th><th>المنتج</th><th>الزبون</th><th>النوع</th><th>القطع</th><th>الوارد</th><th></th></tr></thead><tbody>${g.list.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(x=>`<tr><td class="muted">${tmLabel(x)||'—'}</td><td>${esc(saleProductLabel(x))}</td><td>${esc(x.customerName||'—')}</td><td><span class="pill ${x.customerType==='wholesale'?'wholesale':'retail'}">${x.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(x.quantity)}</td><td class="num accent">${money(saleRevenue(x))}</td><td><button class="btn sm" onclick="event.stopPropagation();openReturnModal('${x.id}')">↩ راجع</button></td></tr>`).join('')}</tbody></table></td></tr>`; }).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات بهذي الفترة</td></tr>'}</tbody></table></div>
   <div class="hint" style="margin-top:6px;">اضغط على أي يوم تشوف طلباته بوقت تسجيل كل طلب.</div>`;
 }
 function togglePtEmpDeduct(){ const P=PS(); P.empDeduct=!P.empDeduct; saveState(); render(); toast(P.empDeduct?'مستحقات الموظفين صارت تُخصم من صافي الشركاء':'مستحقات الموظفين للعلم فقط، ما تُخصم'); }
@@ -5488,6 +5512,72 @@ function receiptShare(){
 /* =========================================================
    بحث شامل + أدوات (نسخة احتياطية / Excel) + تقرير أسبوعي
 ========================================================= */
+
+/* =========================================================
+   المرتجعات
+========================================================= */
+const RETURN_REASONS=['الزبون ما رد على التوصيل','رفض الاستلام عند الوصول','ما عجبه الموديل','المقاس غير مناسب','اللون مختلف عن الصورة','عيب بالقطعة','تأخر التوصيل','السعر غالي بعد ما شاف','ألغى الطلب','تغيّر رأيه'];
+let retFilter={month:'ALL',channel:'ALL'};
+function openReturnModal(saleId){
+  const x=state.sales.find(v=>v.id===saleId); if(!x) return; const q=num(x.quantity), hasDebt=!!(x.orderId?state.sales.filter(v=>v.orderId===x.orderId):[x]).find(v=>v.linkedDebtId);
+  openModal({title:'↩ راجع — '+saleProductLabel(x),bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">${x.no?'بيع رقم '+x.no+' · ':''}${esc(x.date)} · ${esc(x.customerName||'بدون اسم')} · ${q} قطعة · ${money(saleRevenue(x))}<br>عند الحفظ ينحذف من المبيعات وينشال مبلغه وربحه من الإحصائيات، وينحسب بصفحة المرتجعات.${hasDebt?'<br><b>هذا البيع عليه دين:</b> ينخفض الدين بحصة القطع الراجعة. إذا الزبون سدد منه شي عدّله من صفحة الديون.':''}</div>
+    <div class="form-grid2"><div class="form-row"><label>عدد القطع الراجعة</label><input type="number" id="f_rq" min="1" max="${q}" value="${q}"></div><div class="form-row"><label>تاريخ الترجيع</label><input type="date" id="f_rd" value="${todayISO()}"></div></div>
+    <div class="form-row"><label>سبب الترجيع</label><select id="f_rr" onchange="document.getElementById('f_rtbox').style.display=this.value==='__other'?'':'none'">${RETURN_REASONS.map(r=>`<option>${r}</option>`).join('')}<option value="__other">سبب آخر (اكتبه)…</option></select></div>
+    <div class="form-row" id="f_rtbox" style="display:none"><label>اكتب السبب</label><input type="text" id="f_rt" placeholder="السبب بكلماتك"></div>
+    <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_rn"></textarea></div>`,
+  onSave(){
+    const r=num(document.getElementById('f_rq').value); if(r<=0||r>q) return toast('عدد القطع الراجعة لازم بين 1 و '+q);
+    let reason=document.getElementById('f_rr').value, custom=false;
+    if(reason==='__other'){ reason=document.getElementById('f_rt').value.trim(); custom=true; if(!reason) return toast('اكتب سبب الترجيع'); }
+    doReturnSale(saleId,r,reason,custom,document.getElementById('f_rd').value||todayISO(),document.getElementById('f_rn').value.trim());
+    closeModal(); render(); toast('انسجل كراجع وانشال من المبيعات');
+  }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='تأكيد الترجيع';
+}
+function doReturnSale(saleId,r,reason,custom,date,notes){
+  const x=state.sales.find(v=>v.id===saleId); if(!x) return; const q=num(x.quantity), frac=Math.min(1,r/q);
+  const rec={id:uid(),saleId:x.id,orderId:x.orderId||null,no:x.no||null,date,saleDate:x.date,modelId:x.modelId||null,product:saleProductLabel(x),qty:r,amount:Math.round(saleRevenue(x)*frac),profit:Math.round(saleProfit(x)*frac),channel:x.channel||'shop',customerType:x.customerType||'retail',customerName:x.customerName||'',reason,custom:!!custom,notes};
+  state.returns.push(rec);
+  const sibs=x.orderId?state.sales.filter(v=>v.orderId===x.orderId):[x], dId=(sibs.find(v=>v.linkedDebtId)||{}).linkedDebtId||null, remRemoved=num(x.amountRemaining)*frac;
+  const full=frac>=0.9999, others=sibs.filter(v=>v.id!==x.id);
+  if(full){
+    if(x.linkedDebtId && others.length) others[0].linkedDebtId=x.linkedDebtId;
+    state.sales=state.sales.filter(v=>v.id!==x.id);
+  } else {
+    x.quantity=q-r; if(x.amountReceived!=null) x.amountReceived=Math.round(num(x.amountReceived)*(1-frac)); x.amountRemaining=Math.round(num(x.amountRemaining)*(1-frac));
+  }
+  if(dId){ const d=customerDebtById(dId); if(d){ const t=customerDebtTotals(dId), newAmt=num(d.amount)-remRemoved;
+    if(full && !others.length && t.paid<=0){ state.customerDebts=state.customerDebts.filter(v=>v.id!==dId); }
+    else d.amount=Math.max(t.paid,Math.round(newAmt)); } }
+}
+function deleteReturnRec(id){ confirmDelete('حذف سجل المرتجع؟ (ما يرجّع البيع للمبيعات، فقط يشيل السجل من الحساب)',()=>{ state.returns=state.returns.filter(r=>r.id!==id); saveState(); render(); toast('تم الحذف'); }); }
+function renderReturns(){
+  const months=[...new Set([thisMonth(),...state.returns.map(r=>r.date.slice(0,7)),...state.sales.map(s=>s.date.slice(0,7))])].sort().reverse();
+  const inP=d=>retFilter.month==='ALL'||(d||'').slice(0,7)===retFilter.month, chOK=c=>retFilter.channel==='ALL'||(c||'shop')===retFilter.channel;
+  const R=state.returns.filter(r=>inP(r.date)&&chOK(r.channel)).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const S=state.sales.filter(s=>inP(s.date)&&chOK(s.channel));
+  const rq=R.reduce((a,r)=>a+num(r.qty),0), ra=R.reduce((a,r)=>a+num(r.amount),0), rp=R.reduce((a,r)=>a+num(r.profit),0), sq=S.reduce((a,s)=>a+num(s.quantity),0);
+  const rate=(sq+rq)>0?rq/(sq+rq)*100:0;
+  const byR={}; R.forEach(r=>{ const k=r.custom?'سبب آخر':r.reason; (byR[k]=byR[k]||{n:0,q:0,txt:[]}).n++; byR[k].q+=num(r.qty); if(r.custom) byR[k].txt.push(r.reason); });
+  const reasons=Object.entries(byR).sort((a,b)=>b[1].q-a[1].q), tq=reasons.reduce((a,[,v])=>a+v.q,0)||1;
+  const pal=['var(--negative)','var(--text)','var(--info)','#c98a00','var(--text-faint)'];
+  const segs=reasons.slice(0,4).map(([k,v],i)=>({v:v.q,c:pal[i],l:k,t:v.q+' قطعة'})); const rest=reasons.slice(4).reduce((a,[,v])=>a+v.q,0); if(rest) segs.push({v:rest,c:pal[4],l:'أسباب أخرى',t:rest+' قطعة'});
+  const byM={}; R.forEach(r=>{ const k=r.product; (byM[k]=byM[k]||{q:0,a:0}).q+=num(r.qty); byM[k].a+=num(r.amount); });
+  const soldBy={}; S.forEach(s=>{ const k=saleProductLabel(s); soldBy[k]=(soldBy[k]||0)+num(s.quantity); });
+  const models=Object.entries(byM).sort((a,b)=>b[1].q-a[1].q).slice(0,6);
+  const chR=ch=>{ const rr=R.filter(r=>(r.channel||'shop')===ch); return rr.reduce((a,r)=>a+num(r.qty),0); };
+  const msel=`<select onchange="retFilter.month=this.value;render()"><option value="ALL" ${retFilter.month==='ALL'?'selected':''}>كل الفترات</option>${months.map(m=>`<option value="${m}" ${retFilter.month===m?'selected':''}>${monthLabelAr(m)}</option>`).join('')}</select>`;
+  const csel=`<select onchange="retFilter.channel=this.value;render()"><option value="ALL">كل القنوات</option><option value="page" ${retFilter.channel==='page'?'selected':''}>الصفحة</option><option value="shop" ${retFilter.channel==='shop'?'selected':''}>معمل</option></select>`;
+  return `<div class="page-head"><div><h1>المرتجعات</h1><div class="desc">القطع الراجعة وأسباب الترجيع. أي راجع ينحذف من المبيعات والأرباح ويتحسب هنا</div></div><div class="toolbar" style="margin:0">${msel}${csel}</div></div>
+  <div class="grid stats">${statCard('القطع الراجعة',rq+' قطعة',rq?'neg':'',R.length+' عملية ترجيع')}${statCard('قيمة الراجع',money(ra),rq?'neg':'','المبلغ اللي انشال من المبيعات')}${statCard('ربح ضائع',money(rp),rq?'neg':'','ربح القطع الراجعة')}${statCard('نسبة الراجع',(Math.round(rate*10)/10)+'%',rate>15?'neg':'',rq+' من '+(sq+rq)+' قطعة انباعت')}</div>
+  ${retFilter.channel==='ALL'&&R.length?`<div class="hint" style="margin:8px 0 0">الصفحة: ${chR('page')} قطعة راجعة · المعمل: ${chR('shop')} قطعة راجعة</div>`:''}
+  ${R.length?`<div class="grid stats dn-grid" style="margin-top:14px"><div class="card"><div class="dn-title">أكثر أسباب الترجيع <span>حسب القطع</span></div>${donutChart(segs,rq,'قطعة')}</div>
+  <div class="card"><div class="dn-title">ترتيب الأسباب <span>${reasons.length} سبب</span></div>${reasons.map(([k,v])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><b>${esc(k)}</b><span>${v.q} قطعة · ${Math.round(v.q/tq*100)}%</span></div><div class="gbar" style="height:8px;margin-top:4px"><i style="width:${v.q/tq*100}%"></i></div>${v.txt.length?`<div class="muted" style="font-size:11.5px;margin-top:3px">${[...new Set(v.txt)].slice(0,4).map(esc).join(' · ')}</div>`:''}</div>`).join('')}</div>
+  <div class="card"><div class="dn-title">أكثر الموديلات رجوعاً</div>${models.map(([k,v])=>{ const t=v.q+(soldBy[k]||0); return `<div class="pr"><span>${esc(k)}</span><b>${v.q} راجع <span class="muted">(${Math.round(v.q/t*100)}% من ${t})</span></b></div>`; }).join('')}</div></div>`:'<div class="card" style="text-align:center;padding:36px 20px;margin-top:14px"><div style="font-size:32px">↩️</div><div style="font-weight:800;margin:6px 0">ما اكو مرتجعات بهذي الفترة</div><div class="desc">من جدول المبيعات اضغط «↩ راجع» جنب أي بيع وسجّل سبب الترجيع.</div></div>'}
+  <div class="section-title"><span class="ic">↩️</span> سجل المرتجعات</div>
+  <div class="table-wrap"><table><thead><tr><th>تاريخ الترجيع</th><th>الموديل</th><th>الزبون</th><th>القناة</th><th>القطع</th><th>المبلغ</th><th>السبب</th><th></th></tr></thead><tbody>
+  ${R.length?R.map(r=>`<tr><td class="muted">${dtCell(r)}${r.no?`<div class="tm">بيع رقم ${r.no}</div>`:''}</td><td>${esc(r.product)}</td><td>${esc(r.customerName||'—')}</td><td><span class="pill ${(r.channel||'shop')==='page'?'wholesale':'retail'}">${(r.channel||'shop')==='page'?'الصفحة':'معمل'}</span></td><td class="num">${num(r.qty)}</td><td class="num neg">${money(r.amount)}</td><td>${esc(r.reason)}${r.notes?`<div class="tm">${esc(r.notes)}</div>`:''}</td><td><button class="btn sm danger" onclick="deleteReturnRec('${r.id}')">حذف</button></td></tr>`).join(''):'<tr class="empty-row"><td colspan="8">لا توجد مرتجعات</td></tr>'}</tbody></table></div>`;
+}
 let gsQ='';
 function openGlobalSearch(){
   openModal({title:'🔍 بحث شامل',bodyHtml:`<input type="search" id="gs_in" placeholder="اسم زبون، موديل، رقم بيع (مثلاً 15)، دائن، عامل، صنف قماش…" autocomplete="off" style="width:100%;font-size:16px;padding:12px" oninput="gsQ=this.value;gsRender()"><div id="gs_out" style="margin-top:14px;max-height:55vh;overflow:auto"></div>`});
@@ -5535,7 +5625,8 @@ async function exportAllExcel(){
     add('المبيعات',state.sales.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(x=>({'رقم':x.no||'','التاريخ':x.date,'الوقت':tmLabel(x),'المنتج':saleProductLabel(x),'القناة':(x.channel||'shop')==='page'?'الصفحة':'معمل','النوع':x.customerType==='wholesale'?'جملة':'مفرد','الزبون':x.customerName||'','الكمية':num(x.quantity),'سعر الوحدة':num(x.unitPrice),'الوارد':saleRevenue(x),'المستلم':x.amountReceived!=null?num(x.amountReceived):saleRevenue(x),'المتبقي':num(x.amountRemaining),'الربح':Math.round(saleProfit(x)),'طريقة الدفع':x.paymentMethod||'','ملاحظات':x.notes||''})));
     add('المصاريف',state.expenses.map(e=>({'التاريخ':e.date,'الوقت':tmLabel(e),'النوع':e.type,'القناة':(e.channel||'shop')==='page'?'الصفحة':'معمل','المبلغ':num(e.amount),'ملاحظات':e.notes||''})));
     add('الموديلات',state.models.map(m=>({'الكود':m.code,'الاسم':m.name,'التكلفة':modelCost(m),'سعر الجملة':num(m.wholesalePrice),'سعر المفرد':num(m.sellingPrice),'سعر القطعة للصفحة':num(m.pagePrice)})));
-    add('الأقمشة واللوازم',state.materials.map(m=>({'الصنف':m.name,'الوحدة':m.unit||'','سعر الوحدة':num(m.cost),'المتوفر':matQty(m.id),'القيمة':Math.max(0,matQty(m.id))*num(m.cost),'حد التنبيه':num(m.min)||''})));
+    add('المرتجعات',state.returns.map(r=>({'تاريخ الترجيع':r.date,'بيع رقم':r.no||'','الموديل':r.product,'الزبون':r.customerName||'','القناة':(r.channel||'shop')==='page'?'الصفحة':'معمل','القطع':num(r.qty),'المبلغ':num(r.amount),'الربح الضائع':num(r.profit),'السبب':r.reason,'ملاحظات':r.notes||''})));
+    add('اللوازم',state.materials.map(m=>({'الصنف':m.name,'الوحدة':m.unit||'','سعر الوحدة':num(m.cost),'المتوفر':matQty(m.id),'القيمة':Math.max(0,matQty(m.id))*num(m.cost),'حد التنبيه':num(m.min)||''})));
     add('حركات المخزون',state.materialMoves.map(x=>({'التاريخ':x.date,'الصنف':(matById(x.matId)||{}).name||'محذوف','النوع':x.type==='in'?'إدخال':'صرف','الكمية':num(x.qty),'السعر':num(x.cost)||'','ملاحظات':x.notes||''})));
     add('ديون الزبائن',state.customerDebts.map(d=>{ const t=customerDebtTotals(d.id); return {'الزبون':d.customerName,'التاريخ':d.date,'المبلغ الكلي':t.due,'المسدد':t.paid,'المتبقي':t.remaining,'ملاحظات':d.notes||''}; }));
     add('تسديدات الزبائن',state.customerDebtPayments.map(p=>({'التاريخ':p.date,'الزبون':((customerDebtById(p.customerDebtId)||{}).customerName)||'','المبلغ':num(p.amount),'ملاحظات':p.notes||''})));
