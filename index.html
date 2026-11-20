@@ -2926,7 +2926,7 @@ function renderSales(){
         const remaining = num(s.amountRemaining);
         return `<tr>
           <td class="muted">${dtCell(s)}${s.no?`<div class="tm">رقم ${s.no}</div>`:''}</td>
-          <td>${esc(saleProductLabel(s))}${!s.modelId?' <span class="pill retail">بدون موديل</span>':''}${s.orderId?` <span class="pill wholesale" title="طلب فيه عدة موديلات">🧺 ${state.sales.filter(x=>x.orderId===s.orderId).length}</span>`:''}</td>
+          <td>${esc(saleProductLabel(s))}${!s.modelId?' <span class="pill retail">بدون موديل</span>':''}${(s.orderId&&state.sales.filter(x=>x.orderId===s.orderId).length>1)?` <span class="pill wholesale" title="طلب فيه عدة موديلات">🧺 ${state.sales.filter(x=>x.orderId===s.orderId).length}</span>`:''}</td>
           <td><span class="pill ${(s.channel||'shop')==='page'?'wholesale':'retail'}">${(s.channel||'shop')==='page'?'الصفحة':'معمل'}</span></td>
           <td>${esc(s.customerName||'—')}</td>
           <td class="num">${s.quantity}</td>
@@ -4566,7 +4566,7 @@ function buildAlerts(){
 }
 function unreadAlerts(){ const r=state.notifRead||{}; return buildAlerts().filter(a=>!r[a.id]); }
 function refreshBell(){
-  if(state && state.sales && !_auditPrev){ try{ _auditPrev=auditSnap(); }catch(e){} }
+  if(state && state.sales && !_opsPrev){ try{ _opsPrev=opsSnap(); }catch(e){} }
   const b=document.getElementById('bellBadge'); if(!b || !state || !state.sales) return;
   let n=0; try{ n=unreadAlerts().length; }catch(e){}
   b.textContent=n>9?'9+':n; b.style.display=n?'flex':'none';
@@ -4892,7 +4892,7 @@ function openEmpEditModal(eid){
 function resetEmp(eid){ askConfirm('تصفير حساب الموظف: يبدأ المستحق من صفر من الآن (قطع المفرد السابقة ما تنحسب). التسديدات القديمة تبقى مسجلة. متابعة؟',()=>{ empFreshStart(empById(eid),true); saveState(); render(); toast('تم تصفير حساب الموظف'); },{title:'تصفير حساب الموظف',yesLabel:'تصفير'}); }
 function deleteEmp(eid){ confirmDelete('حذف حساب الموظف نهائياً مع تسديداته؟ أرباح الشركاء ما تتأثر.',()=>{ const P=PS(); P.emps=P.emps.filter(e=>e.id!==eid); currentDetail='emps'; saveState(); render(); toast('تم حذف الحساب'); }); }
 
-{ const __ss=saveState; saveState=function(){ try{ auditDiff(); }catch(e){ console.error(e); } return __ss.apply(this,arguments); }; }
+{ const __ss=saveState; saveState=function(){ try{ opsDiff(); }catch(e){ console.error(e); } return __ss.apply(this,arguments); }; }
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
   const sales = state.sales.filter(s=>inRange(s.date,from,to));
@@ -5615,8 +5615,8 @@ function renderReturnsStats(){
   <div class="btn-row" style="margin:6px 0 4px;"><button class="btn sm ghost" onclick="navigate('returns')">📋 سجل المرتجعات التفصيلي</button><span class="muted" style="font-size:12px;align-self:center">تسجّل المرتجع من زر «راجع» بصف أي عملية بيع</span></div>`;
 }
 /* ===== سجل العمليات + فحص السلامة ===== */
-let _auditPrev=null, _warnClose={};
-function auditSnap(){
+let _opsPrev=null, _warnClose={};
+function opsSnap(){
   const m=new Map(), add=(c,id,sig,txt)=>m.set(c+'|'+id,{c,sig,txt}), S=state;
   S.sales.forEach(s=>add('بيع',s.id,[s.quantity,s.unitPrice,s.amountReceived,s.date,s.channel,s.modelId].join('~'),`${saleProductLabel(s)} × ${num(s.quantity)} = ${money(num(s.unitPrice)*num(s.quantity))}${s.customerName?' — '+s.customerName:''}`));
   S.expenses.forEach(e=>add('مصروف',e.id,[e.amount,e.type,e.date,e.channel].join('~'),`${e.type} ${money(e.amount)}`));
@@ -5635,13 +5635,13 @@ function auditSnap(){
   }
   return m;
 }
-function auditDiff(){
-  const cur=auditSnap(); if(!_auditPrev){ _auditPrev=cur; return; }
+function opsDiff(){
+  const cur=opsSnap(); if(!_opsPrev){ _opsPrev=cur; return; }
   const E=[], now=new Date().toISOString();
-  cur.forEach((v,k)=>{ const o=_auditPrev.get(k); if(!o) E.push({t:now,a:'إضافة',c:v.c,d:v.txt}); else if(o.sig!==v.sig) E.push({t:now,a:'تعديل',c:v.c,d:v.txt}); });
-  _auditPrev.forEach((v,k)=>{ if(!cur.has(k)) E.push({t:now,a:'حذف',c:v.c,d:v.txt}); });
-  _auditPrev=cur; if(!E.length) return;
-  const L=state.auditLog||(state.auditLog=[]);
+  cur.forEach((v,k)=>{ const o=_opsPrev.get(k); if(!o) E.push({t:now,a:'إضافة',c:v.c,d:v.txt}); else if(o.sig!==v.sig) E.push({t:now,a:'تعديل',c:v.c,d:v.txt}); });
+  _opsPrev.forEach((v,k)=>{ if(!cur.has(k)) E.push({t:now,a:'حذف',c:v.c,d:v.txt}); });
+  _opsPrev=cur; if(!E.length) return;
+  const L=state.opsLog||(state.opsLog=[]);
   if(E.length>25) L.push({t:now,a:'تغيير',c:'نظام',d:`تغيير كبير (${E.length} عنصر) — مزامنة أو استيراد`}); else L.push(...E);
   if(L.length>400) L.splice(0,L.length-400);
   try{ const P=state.partnership; if(P&&P.closes) P.closes.forEach(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); const key=c.month+':'+Math.round(D.net); if(Math.round(D.net)!==Math.round(c.net) && !_warnClose[key]){ _warnClose[key]=1; toast(`⚠️ أرقام شهر ${c.month} (مقفل بالشراكة) تغيّرت بعد الإقفال — حدّث الإقفال من نظام الشراكة`); } }); }catch(e){}
@@ -5662,7 +5662,7 @@ function integrityIssues(){
   return out;
 }
 function renderSafety(){
-  const I=integrityIssues(), L=(state.auditLog||[]).slice().reverse().slice(0,150);
+  const I=integrityIssues(), L=(state.opsLog||[]).slice().reverse().slice(0,150);
   const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''};
   return `<div class="page-head"><div><h1>الحماية والسجل</h1><div class="desc">فحص تلقائي لأخطاء البيانات، وسجل بكل إضافة وتعديل وحذف حتى تعرف شنو تغيّر ومتى</div></div></div>
   <div class="section-title"><span class="ic">🩺</span> فحص سلامة البيانات</div>
