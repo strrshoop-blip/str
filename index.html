@@ -656,7 +656,7 @@
     <div class="foot">البيانات محفوظة محلياً على هذا الجهاز</div>
   </aside>
 
-  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍<span class="tbt"> بحث</span></button><button type="button" class="theme-btn" onclick="openToolsModal()" title="نسخة احتياطية وتصدير">💾</button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="ليلي / نهاري">🌙<span class="tbt"> ليلي</span></button></span></div>
+  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><button type="button" class="theme-btn" onclick="refreshApp()" title="تحديث الصفحة">🔄<span class="tbt"> تحديث</span></button><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍<span class="tbt"> بحث</span></button><button type="button" class="theme-btn" onclick="openToolsModal()" title="نسخة احتياطية وتصدير">💾</button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="ليلي / نهاري">🌙<span class="tbt"> ليلي</span></button></span></div>
   <main id="mainContent"><div style="padding:60px 20px;text-align:center;color:var(--text-faint)">... جارِ تحميل بيانات المعمل ...</div></main></div>
 </div>
 
@@ -1293,6 +1293,12 @@ function startSbClock(){
   tick(); setInterval(tick,30000);
 }
 function isNavActive(id){ return currentPage===id || (id==='partnership' && currentPage==='contract') || (id==='debtshub' && ['debts','customerdebts','debtlog'].includes(currentPage)) || (id==='workers' && ['tailors','cutters','hoodaris','production'].includes(currentPage)); }
+async function refreshApp(){
+  if(typeof saveQueued!=='undefined' && (saveQueued||saveFailure) && !confirm('اكو تغييرات للحين ما انحفظت. تحديث الصفحة ممكن يضيعها. تكمل؟')) return;
+  try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister())); } if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } }catch(e){}
+  window.removeEventListener('beforeunload',window.__bu||(()=>{}));
+  location.reload();
+}
 function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('str_theme',t);}catch(e){} const b=document.getElementById('themeBtn'); if(b) b.innerHTML = t==='dark' ? '🌙<span class="tbt"> ليلي</span>' : '☀️<span class="tbt"> نهاري</span>'; const m=document.querySelector('meta[name=theme-color]'); if(m) m.content = t==='dark'?'#09090a':'#f5f5f6'; }
 function toggleTheme(){ setTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); }
 function navigate(page){
@@ -2958,17 +2964,20 @@ function renderSales(){
       <tbody>
       ${list.length? list.map(s=>{
         const remaining = num(s.amountRemaining);
+        const sib = s.orderId?state.sales.filter(x=>x.orderId===s.orderId):[s], multi = sib.length>1;
+        const oQ = sib.reduce((a,x)=>a+num(x.quantity),0), oR = sib.reduce((a,x)=>a+saleRevenue(x),0), oP = sib.reduce((a,x)=>a+saleProfit(x),0);
+        const sub = (v,cls)=> multi?`<div class="tm">مجموع الطلب: <b class="${cls||''}">${money(v)}</b></div>`:'';
         return `<tr>
           <td class="muted">${dtCell(s)}${s.no?`<div class="tm">رقم ${s.no}</div>`:''}</td>
-          <td>${esc(saleProductLabel(s))}${!s.modelId?' <span class="pill retail">بدون موديل</span>':''}${(s.orderId&&state.sales.filter(x=>x.orderId===s.orderId).length>1)?` <span class="pill wholesale" title="طلب فيه عدة موديلات">🧺 ${state.sales.filter(x=>x.orderId===s.orderId).length}</span>`:''}</td>
+          <td>${esc(saleProductLabel(s))}${!s.modelId?' <span class="pill retail">بدون موديل</span>':''}${multi?` <span class="pill wholesale" title="طلب فيه ${sib.length} موديلات — مجموع القطع ${oQ}">طلب (${oQ} قطعة)</span>`:''}</td>
           <td><span class="pill ${(s.channel||'shop')==='page'?'wholesale':'retail'}">${(s.channel||'shop')==='page'?'الصفحة':'معمل'}</span></td>
           <td>${esc(s.customerName||'—')}</td>
-          <td class="num">${s.quantity}</td>
+          <td class="num">${s.quantity}${multi?`<div class="tm">من ${oQ}</div>`:''}</td>
           <td class="num">${money(s.unitPrice)}</td>
-          <td class="num accent">${money(saleRevenue(s))}</td>
+          <td class="num accent">${money(saleRevenue(s))}${sub(oR,'accent')}</td>
           <td class="num pos">${money(s.amountReceived!=null?s.amountReceived:saleRevenue(s))}</td>
           <td class="num ${remaining>0?'neg':'muted'}">${remaining>0?money(remaining):'—'}</td>
-          <td class="num ${saleProfit(s)>=0?'pos':'neg'}">${money(saleProfit(s))}</td>
+          <td class="num ${saleProfit(s)>=0?'pos':'neg'}">${money(saleProfit(s))}${sub(oP,oP>=0?'pos':'neg')}</td>
           <td class="muted">${esc(s.paymentMethod||'—')}</td>
           <td><div class="btn-row">
             <button class="btn sm ghost" onclick="${s.orderId?`openOrderModal('${s.orderId}')`:`openSaleModal('${s.id}')`}">تعديل</button>
