@@ -602,6 +602,33 @@
   .galert.ok{border-color:var(--border);color:var(--text-dim);background:var(--surface-2);font-weight:500;}
   .tm{font-size:11px;color:var(--text-faint);margin-top:2px;white-space:nowrap;}
   .sub-table th,.sub-table td{padding:6px 10px;font-size:12.5px;}
+
+/* ===== تحسينات الموبايل v26 ===== */
+@media (max-width:900px){
+  html,body{overflow-x:hidden;max-width:100vw;}
+  .app,.main-col{min-width:0;max-width:100vw;overflow-x:clip;}
+  .main-col>*:not(.topbar){max-width:100%;}
+  #syncBadge{bottom:calc(72px + env(safe-area-inset-bottom)) !important;left:auto !important;right:8px !important;font-size:10px !important;padding:2px 8px !important;opacity:.8;}
+  #toastRoot{bottom:calc(84px + env(safe-area-inset-bottom)) !important;}
+  input,select,textarea{font-size:16px !important;}
+  .btn{min-height:42px;}
+  .table-wrap{max-width:100%;-webkit-overflow-scrolling:touch;}
+  .modal-backdrop{padding:2vh 8px;}
+  .modal{max-width:100%;}
+  .btn-row,.toolbar,.page-head,.head-row{flex-wrap:wrap;}
+  .stat-grid{grid-template-columns:1fr 1fr !important;}
+  .section-title{flex-wrap:wrap;}
+}
+@media (max-width:640px){
+  .tbt{display:none;}
+  .topbar{padding:8px 10px;gap:6px;}
+  .topbar .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw;font-size:14px;}
+  .tb-left{min-width:0;flex:1 1 auto;}
+  .tb-actions{gap:5px;flex:0 0 auto;}
+  .topbar .theme-btn,.topbar .bell,.topbar .rate-chip{min-height:38px;min-width:38px;padding:6px 9px;font-size:13px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;}
+  .stat-grid{grid-template-columns:1fr !important;}
+  h1,.page-title{font-size:22px;}
+}
 </style>
 </head>
 <body>
@@ -629,7 +656,7 @@
     <div class="foot">البيانات محفوظة محلياً على هذا الجهاز</div>
   </aside>
 
-  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍 بحث</button><button type="button" class="theme-btn" onclick="openToolsModal()" title="نسخة احتياطية وتصدير">💾</button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 ليلي</button></span></div>
+  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍<span class="tbt"> بحث</span></button><button type="button" class="theme-btn" onclick="openToolsModal()" title="نسخة احتياطية وتصدير">💾</button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="ليلي / نهاري">🌙<span class="tbt"> ليلي</span></button></span></div>
   <main id="mainContent"><div style="padding:60px 20px;text-align:center;color:var(--text-faint)">... جارِ تحميل بيانات المعمل ...</div></main></div>
 </div>
 
@@ -676,7 +703,7 @@ const STORAGE_KEY = 'setr_erp_state_v1';
    أول مرة ينقل الموقع بياناتك من main إلى main2 تلقائياً */
 const FIRESTORE_DOC = 'erp_state/main2';
 const LEGACY_FIRESTORE_DOC = 'erp_state/main';
-const CLIENT_VERSION = 'v6';
+const CLIENT_VERSION = 'v7'; const CLIENT_NUM = 7;
 const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('str_device'); if(!d){ d = Math.random().toString(36).slice(2,7); localStorage.setItem('str_device', d); } return d; }catch(e){ return 'dev'; } })();
 let lastSeenRev = null;
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
@@ -895,7 +922,13 @@ function saveState(){
         packed._by = DEVICE_ID + ':' + CLIENT_VERSION;
         await Promise.race([db.runTransaction(async tx=>{
           const s = await tx.get(ref);
-          if(s.exists && (s.data()._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
+          if(s.exists){
+            const cd = s.data();
+            const bv = parseInt(String(cd._by||'').split(':')[1].replace(/\D/g,''),10)||0;
+            if(bv > CLIENT_NUM){ const x=new Error('outdated client'); x.code='outdated'; throw x; }
+            if((cd._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
+            Object.keys(cd).forEach(k=>{ if(!(k in packed)) packed[k]=cd[k]; });
+          }
           tx.set(ref, packed);
         }), new Promise((_,rej)=>setTimeout(()=>{ const x=new Error('no response from Firebase'); x.code='timeout'; rej(x); }, 12000))]);
         // نقرأ من السيرفر نفسه للتأكد إن التغيير فعلاً انحفظ ولا أحد كتب فوقه
@@ -931,7 +964,8 @@ function saveState(){
         }
         const code = (e && (e.code||e.message)) || 'unknown';
         const err = lastImageError || e;
-        const why = (e && e.code==='timeout') ? 'Firebase ما رد خلال 12 ثانية، غالباً شي يحجب الاتصال (إضافة حجب إعلانات أو برنامج حماية أو شبكة تمنع firestore.googleapis.com). جربي متصفح ثاني أو عطّلي الإضافات'
+        const why = (e && e.code==='outdated') ? 'نسخة التطبيق عندك قديمة وجهاز ثاني يستخدم نسخة أحدث — حدّث الصفحة (سكّر التطبيق وافتحه من جديد) حتى ما تضيع بيانات مثل المرتجعات'
+                  : (e && e.code==='timeout') ? 'Firebase ما رد خلال 12 ثانية، غالباً شي يحجب الاتصال (إضافة حجب إعلانات أو برنامج حماية أو شبكة تمنع firestore.googleapis.com). جربي متصفح ثاني أو عطّلي الإضافات'
                   : (e && e.code==='verify-failed') ? 'انكتب التغيير بس السيرفر رجّع نسخة ثانية، احتمال جهاز ثاني يكتب فوقه. سكّري الموقع على كل الأجهزة الثانية'
                   : (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بالحفظ، افتحي Rules وخلي allow read, write: if request.auth != null; على كل المستندات'
                   : (/exceeds|size|too large|longer than/i.test(String(e&&e.message)) || lastSavedBytes>900000) ? 'حجم البيانات كبير ('+Math.round(lastSavedBytes/1024)+' KB من 1024)، قللي عدد الصور'
@@ -1259,7 +1293,7 @@ function startSbClock(){
   tick(); setInterval(tick,30000);
 }
 function isNavActive(id){ return currentPage===id || (id==='partnership' && currentPage==='contract') || (id==='debtshub' && ['debts','customerdebts','debtlog'].includes(currentPage)) || (id==='workers' && ['tailors','cutters','hoodaris','production'].includes(currentPage)); }
-function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('str_theme',t);}catch(e){} const b=document.getElementById('themeBtn'); if(b) b.textContent = t==='dark' ? '🌙 ليلي' : '☀️ نهاري'; const m=document.querySelector('meta[name=theme-color]'); if(m) m.content = t==='dark'?'#09090a':'#f5f5f6'; }
+function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('str_theme',t);}catch(e){} const b=document.getElementById('themeBtn'); if(b) b.innerHTML = t==='dark' ? '🌙<span class="tbt"> ليلي</span>' : '☀️<span class="tbt"> نهاري</span>'; const m=document.querySelector('meta[name=theme-color]'); if(m) m.content = t==='dark'?'#09090a':'#f5f5f6'; }
 function toggleTheme(){ setTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); }
 function navigate(page){
   if(page==='materials'){ page='models'; modelsTab='materials'; }
@@ -2896,7 +2930,7 @@ function renderSales(){
   return `
   <div class="page-head">
     <div><h1>الوارد / المبيعات</h1><div class="desc">الوارد: <b>${money(totalRevenue)}</b> &nbsp;·&nbsp; الربح: <b class="${totalProfit>=0?'pos':'neg'}">${money(totalProfit)}</b>${totalRemaining>0?` &nbsp;·&nbsp; متبقٍ على زبائن: <b class="accent">${money(totalRemaining)}</b>`:''}</div></div>
-    <button class="btn primary" onclick="openSaleModal()">+ تسجيل عملية بيع</button>
+    <button class="btn primary" onclick="openSaleModal()">+ تسجيل عملية بيع</button> <button class="btn ghost" onclick="navigate('returns')">↩️ المرتجعات</button>
   </div>
   <div class="toolbar">
     <div class="filters">
@@ -5195,7 +5229,7 @@ function usdMode(){ const s = state.settings; return s.usdMode || (num(s.usdRate
 function updateRateChip(){
   const c = document.getElementById('rateChip'); if(!c || !state) return;
   const r = usdRate();
-  c.textContent = r>0 ? '💵 $1 = ' + Math.round(r).toLocaleString('en-US') + ' د.ع' : '💵 حدد سعر الدولار';
+  c.innerHTML = r>0 ? '💵 <span class="tbt">$1 = </span>' + Math.round(r).toLocaleString('en-US') + '<span class="tbt"> د.ع</span>' : '💵<span class="tbt"> حدد سعر الدولار</span>';
 }
 async function fetchUsdRate(){
   const urls = ['https://open.er-api.com/v6/latest/USD','https://api.exchangerate-api.com/v4/latest/USD'];
