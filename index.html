@@ -1482,7 +1482,7 @@ function renderDashboard(){
   return `
   <div class="page-head">
     <div><h1>لوحة التحكم</h1><div class="desc">نظرة شاملة على أداء المشروع</div></div>
-    <div class="toolbar" style="margin:0;"><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم</button>
+    <div class="toolbar" style="margin:0;">
       <div class="field-inline">
         <label>الفترة</label>
         <select onchange="dashboardMonth=this.value;render();">
@@ -2804,42 +2804,28 @@ function openBulkPriceModal(){
   bulkPreview();
 }
 
-/* ===== ملخص نهاية اليوم ===== */
+/* ===== ملخص يوم الشراكة (مبيعات الصفحة وإعلاناتها فقط) ===== */
 let dsDate='';
-function dailyData(d){
-  const S=state.sales.filter(x=>x.date===d), E=state.expenses.filter(x=>x.date===d), R=(state.returns||[]).filter(x=>x.date===d);
-  const ev=allDebtCashEvents().filter(e=>e.date===d);
-  const orders=new Set(S.map(x=>x.orderId||x.id)).size, pcs=S.reduce((a,x)=>a+num(x.quantity),0);
-  const rev=S.reduce((a,x)=>a+saleRevenue(x),0), profit=S.reduce((a,x)=>a+saleProfit(x),0)+ev.reduce((a,e)=>a+e.profit,0);
-  const coll=ev.reduce((a,e)=>a+e.amount,0), exp=E.reduce((a,x)=>a+num(x.amount),0);
-  const rem=S.reduce((a,x)=>a+num(x.amountRemaining),0);
-  const byM=modelOrderStats(S);
-  const byT={}; E.forEach(x=>{ byT[x.type||'أخرى']=(byT[x.type||'أخرى']||0)+num(x.amount); });
-  const ch=c=>S.filter(x=>(x.channel||'shop')===c).reduce((a,x)=>a+saleRevenue(x),0);
-  return {S,E,R,orders,pcs,rev,profit,coll,exp,rem,byM,byT,page:ch('page'),shop:ch('shop'),ret:R.reduce((a,x)=>a+num(x.qty),0),net:profit-exp};
-}
 function dsPreview(){
-  dsDate=document.getElementById('ds_d').value||todayISO(); const D=dailyData(dsDate), box=document.getElementById('ds_box');
-  box.innerHTML=`<div class="compute-box"><span>${D.orders} طلب · ${D.pcs} قطعة</span><span>الوارد: <b>${money(D.rev)}</b></span></div>
-  <div class="md-kpis"><div class="mk"><small>الربح</small><b class="${D.profit>=0?'pos':'neg'}">${money(D.profit)}</b></div><div class="mk"><small>المصاريف</small><b class="neg">${money(D.exp)}</b></div><div class="mk"><small>الصافي</small><b class="${D.net>=0?'pos':'neg'}">${money(D.net)}</b></div></div>
-  ${D.byM.length?`<div class="hint">${D.byM.slice(0,6).map(o=>esc(o.name)+' × '+o.qty).join(' · ')}</div>`:'<div class="notes-empty">ماكو مبيعات بهذا اليوم</div>'}`;
+  dsDate=document.getElementById('ds_d').value||todayISO(); const D=pageData(dsDate,dsDate), box=document.getElementById('ds_box');
+  box.innerHTML=`<div class="compute-box"><span>${D.orders} طلب · ${D.pieces} قطعة</span><span>الوارد: <b>${money(D.revenue)}</b></span></div>
+  <div class="md-kpis"><div class="mk"><small>الأرباح</small><b class="${D.profit>=0?'pos':'neg'}">${money(D.profit)}</b></div><div class="mk"><small>الإعلانات</small><b class="neg">${money(D.ads)}</b></div><div class="mk"><small>صافي للتوزيع</small><b class="${D.net>=0?'pos':'neg'}">${money(D.net)}</b></div></div>
+  ${D.orders?`<div class="hint">${modelOrderStats(D.ps).slice(0,6).map(o=>esc(o.name)+' × '+o.qty).join(' · ')}</div>`:'<div class="notes-empty">ماكو مبيعات صفحة بهذا اليوم</div>'}`;
 }
 function openDailySummary(){
   if(!dsDate) dsDate=todayISO();
-  openModal({title:'📋 ملخص نهاية اليوم',bodyHtml:`<div class="form-row"><label>اليوم</label><input type="date" id="ds_d" value="${dsDate}" onchange="dsPreview()"></div><div id="ds_box"></div>`,
+  openModal({title:'📋 ملخص يوم الشراكة',bodyHtml:`<div class="form-row"><label>اليوم</label><input type="date" id="ds_d" value="${dsDate}" onchange="dsPreview()"><div class="hint">مبيعات الصفحة وإعلاناتها فقط، وحصة كل شريك.</div></div><div id="ds_box"></div>`,
     onSave(){
-      const d=document.getElementById('ds_d').value||todayISO(); dsDate=d; const D=dailyData(d);
-      closeModal();
-      const rows=D.byM.map(o=>[o.name,String(o.qty),o.wn+' / '+o.rn,money(o.rev),money(o.profit)]);
-      const tot=[{label:'الوارد',value:money(D.rev)},{label:'الأرباح',value:money(D.profit)},{label:'المصاريف',value:money(D.exp)},{label:'الصافي',value:money(D.net),strong:true}];
-      const extra=[]; if(D.page||D.shop) extra.push('الصفحة '+money(D.page)+' · المعمل '+money(D.shop)); if(D.coll) extra.push('تحصيل ديون '+money(D.coll)); if(D.rem>0) extra.push('متبقي على زبائن '+money(D.rem)); if(D.ret) extra.push('قطع راجعة '+D.ret);
-      openReceipt({prefix:'ملخص-يوم',modalTitle:'🖨 ملخص يوم '+d,title:'ملخص اليوم',date:dateAr(),nameLabel:'التاريخ',name:d,
-        sub:D.orders+' طلب · '+D.pcs+' قطعة'+(extra.length?' · '+extra.join(' · '):''),
+      const d=document.getElementById('ds_d').value||todayISO(); dsDate=d; const D=pageData(d,d); closeModal();
+      const rows=modelOrderStats(D.ps).map(o=>[o.name,String(o.qty),o.wn+' / '+o.rn,money(o.rev),money(o.profit)]);
+      openReceipt({prefix:'ملخص-شراكة',modalTitle:'🖨 ملخص الشراكة — '+d,title:'ملخص يوم الشراكة',date:dateAr(),nameLabel:'التاريخ',name:d,
+        sub:D.orders+' طلب · '+D.pieces+' قطعة · جملة '+D.wh.n+' · مفرد '+D.rt.n,
         cols:[{label:'الموديل',w:3.6},{label:'القطع',w:1.4,num:true},{label:'جملة/مفرد',w:2,num:true},{label:'الوارد',w:2.4,num:true},{label:'الربح',w:2.4,num:true}],
-        rows:rows.length?rows:[['ماكو مبيعات','—','—','—','—']], totals:tot,
-        extra:Object.keys(D.byT).length?{title:'المصاريف',cols:[{label:'النوع',w:4},{label:'المبلغ',w:3,num:true}],rows:Object.entries(D.byT).map(([k,v])=>[k,money(v)])}:null,
-        footer:'ملخص نهاية اليوم — ستر',
-        waText:'ملخص '+d+'\nالوارد: '+money(D.rev)+' · الأرباح: '+money(D.profit)+'\nالمصاريف: '+money(D.exp)+' · الصافي: '+money(D.net)});
+        rows:rows.length?rows:[['ماكو مبيعات','—','—','—','—']],
+        totals:[{label:'الوارد',value:money(D.revenue)},{label:'الأرباح',value:money(D.profit)},{label:'الإعلانات',value:money(D.ads)},{label:'صافي للتوزيع',value:money(D.net),strong:true}],
+        extra:{title:'حصة الشركاء من اليوم',cols:[{label:'الشريك',w:4},{label:'النسبة',w:1.6,num:true},{label:'حصته',w:3,num:true}],rows:D.parts.map(p=>[p.name,pctTxt(p.pct),money(p.net)])},
+        footer:'ملخص الشراكة — ستر',
+        waText:'ملخص الشراكة '+d+'\nالوارد: '+money(D.revenue)+' · الأرباح: '+money(D.profit)+'\nالإعلانات: '+money(D.ads)+' · الصافي: '+money(D.net)+'\n'+D.parts.map(p=>p.name+': '+money(p.net)).join('\n')});
     }});
   const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='🖨 إنشاء الصورة';
   dsPreview();
@@ -4684,7 +4670,7 @@ function renderPartnership(){
     <div class="toolbar" style="margin:0;"><button class="btn" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   <div class="pt-top">
     <div class="pt-quick"><button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button></div>
-    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}${(P.archive&&P.archive.length)?`<button class="btn" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button>`:''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
+    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم (صورة)</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}${(P.archive&&P.archive.length)?`<button class="btn" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button>`:''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
   </div>
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
