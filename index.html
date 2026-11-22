@@ -2755,55 +2755,34 @@ function openModelsReport(){
   { const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='820px'; }
   mrPreview();
 }
-/* تعديل أسعار جماعي: يغيّر أسعار الموديلات الافتراضية فقط، ما يلمس المبيعات القديمة ولا الكلفة */
-function bulkNewPrice(old,mode,val,round){
-  old=num(old); let v=mode==='pct'?old*(1+val/100):old+val;
-  if(round>0) v=Math.round(v/round)*round; else v=Math.round(v);
-  return Math.max(0,v);
-}
-function bulkRead(){
-  return {which:document.getElementById('bp_w').value, mode:document.getElementById('bp_m').value, val:num(document.getElementById('bp_v').value), round:num(document.getElementById('bp_r').value),
-    ids:[...document.querySelectorAll('.bp_chk:checked')].map(c=>c.value)};
-}
-function bulkPreview(){
-  const B=bulkRead(), box=document.getElementById('bp_prev'); if(!box) return;
-  const rows=state.models.filter(m=>B.ids.includes(m.id)).map(m=>{
-    const o1=num(m.sellingPrice), n1=B.which==='wholesale'?o1:bulkNewPrice(o1,B.mode,B.val,B.round);
-    const o2=num(m.wholesalePrice||m.sellingPrice), n2=B.which==='retail'?o2:bulkNewPrice(o2,B.mode,B.val,B.round);
-    return {m,o1,n1,o2,n2}; });
-  box.innerHTML=`<div class="table-wrap" style="border:none;max-height:240px;overflow:auto"><table><thead><tr><th>الموديل</th><th>المفرد</th><th>الجملة</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${esc(r.m.name)}</td><td class="num">${r.o1===r.n1?money(r.o1):money(r.o1)+' ← <b class="accent">'+money(r.n1)+'</b>'}</td><td class="num">${r.o2===r.n2?money(r.o2):money(r.o2)+' ← <b class="accent">'+money(r.n2)+'</b>'}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="3">ما اخترت موديلات</td></tr>'}</tbody></table></div>`;
-}
+/* سعر القطعة للصفحة (مفرد / جملة): اكتبه مرة وحدة ويتطبق على كل الموديلات، المبيعات القديمة ما تتغير */
 function bulkUndo(){
   const u=state.priceUndo; if(!u||!u.rows||!u.rows.length) return;
-  askConfirm('تراجع عن آخر تعديل أسعار جماعي ('+u.at+')؟ ترجع أسعار '+u.rows.length+' موديل مثل ما كانت.',()=>{
-    u.rows.forEach(r=>{ const m=modelById(r.id); if(m){ m.sellingPrice=r.s; m.wholesalePrice=r.w; } });
+  askConfirm('ترجع أسعار الصفحة القديمة ('+u.at+') لـ '+u.rows.length+' موديل؟',()=>{
+    u.rows.forEach(r=>{ const m=modelById(r.id); if(m){ m.pagePrice=r.p; m.pagePriceW=r.pw; } });
     state.priceUndo=null; saveState(); closeModal(); render(); toast('رجعت الأسعار القديمة');
   },{title:'تراجع',yesLabel:'تراجع'});
 }
 function openBulkPriceModal(){
   if(!state.models.length) return toast('ماكو موديلات');
-  const u=state.priceUndo;
-  openModal({title:'💲 تعديل أسعار جماعي',bodyHtml:`<div class="rule-box" style="margin-bottom:12px">أداة اختيارية. تغيّر أسعار البيع الافتراضية بالموديلات فقط. <b>ما تغيّر المبيعات القديمة ولا الكلفة ولا الأرباح</b>، وتكدر ترجع عنها بزر «تراجع».</div>
-    <div class="form-grid2"><div class="form-row"><label>أي سعر؟</label><select id="bp_w" onchange="bulkPreview()"><option value="retail">سعر المفرد</option><option value="wholesale">سعر الجملة</option><option value="both">الاثنين</option></select></div>
-    <div class="form-row"><label>طريقة التعديل</label><select id="bp_m" onchange="bulkPreview()"><option value="pct">نسبة %</option><option value="amt">مبلغ ثابت</option></select></div></div>
-    <div class="form-grid2"><div class="form-row"><label>القيمة (سالب = تخفيض)</label><input type="number" id="bp_v" value="10" oninput="bulkPreview()"><div class="hint">مثلاً 10 ترفع 10%، و -5 تنزل 5%.</div></div>
-    <div class="form-row"><label>تقريب لأقرب</label><select id="bp_r" onchange="bulkPreview()"><option value="0">بدون</option><option value="250">250</option><option value="500" selected>500</option><option value="1000">1,000</option></select></div></div>
-    <div class="ord-title">الموديلات <button type="button" class="btn sm ghost" onclick="document.querySelectorAll('.bp_chk').forEach(c=>c.checked=true);bulkPreview()">الكل</button> <button type="button" class="btn sm ghost" onclick="document.querySelectorAll('.bp_chk').forEach(c=>c.checked=false);bulkPreview()">ولا واحد</button></div>
-    <div class="bp-list">${state.models.map(m=>`<label class="bp-it"><input type="checkbox" class="bp_chk" value="${m.id}" checked onchange="bulkPreview()"> ${esc(m.name)}</label>`).join('')}</div>
-    <div id="bp_prev"></div>${u&&u.rows&&u.rows.length?`<div style="margin-top:10px"><button type="button" class="btn sm" onclick="bulkUndo()">↩ تراجع عن آخر تعديل (${esc(u.at)})</button></div>`:''}`,
+  const u=state.priceUndo, common=k=>{ const v=[...new Set(state.models.map(m=>num(m[k])))]; return v.length===1&&v[0]>0?v[0]:''; };
+  openModal({title:'💲 سعر القطعة للصفحة — لكل الموديلات',bodyHtml:`
+    <div class="form-grid2"><div class="form-row"><label>سعر القطعة للصفحة — مفرد</label><input type="number" id="bp_r" value="${common('pagePrice')}" placeholder="مثال: 20000"></div>
+    <div class="form-row"><label>سعر القطعة للصفحة — جملة</label><input type="number" id="bp_w" value="${common('pagePriceW')}" placeholder="مثال: 19000"></div></div>
+    <div class="hint">اللي تكتبه يتطبق على كل الموديلات. الخانة الفارغة ما تتغير. المبيعات القديمة ما تتأثر.</div>
+    <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">اختيار موديلات معينة فقط</summary><div class="bp-list" style="margin-top:8px">${state.models.map(m=>`<label class="bp-it"><input type="checkbox" class="bp_chk" value="${m.id}" checked> ${esc(m.name)}</label>`).join('')}</div></details>
+    ${u&&u.rows&&u.rows.length?`<div style="margin-top:12px"><button type="button" class="btn sm ghost" onclick="bulkUndo()">↩ تراجع عن آخر تعديل</button></div>`:''}`,
     onSave(){
-      const B=bulkRead(); if(!B.ids.length) return toast('اختر موديل واحد على الأقل'); if(!B.val) return toast('اكتب قيمة التعديل');
+      const r=document.getElementById('bp_r').value.trim(), w=document.getElementById('bp_w').value.trim();
+      if(r===''&&w==='') return toast('اكتب سعر المفرد أو الجملة');
+      const ids=[...document.querySelectorAll('.bp_chk:checked')].map(c=>c.value); if(!ids.length) return toast('اختر موديل واحد على الأقل');
       const rows=[];
-      B.ids.forEach(id=>{ const m=modelById(id); if(!m) return; rows.push({id,s:num(m.sellingPrice),w:m.wholesalePrice});
-        const o2=num(m.wholesalePrice||m.sellingPrice);
-        if(B.which!=='wholesale') m.sellingPrice=bulkNewPrice(m.sellingPrice,B.mode,B.val,B.round);
-        if(B.which!=='retail') m.wholesalePrice=bulkNewPrice(o2,B.mode,B.val,B.round); });
-      state.priceUndo={at:todayISO(),rows}; saveState(); closeModal(); render(); toast('تم تعديل أسعار '+rows.length+' موديل — تكدر تتراجع');
+      ids.forEach(id=>{ const m=modelById(id); if(!m) return; rows.push({id,p:m.pagePrice,pw:m.pagePriceW});
+        if(r!=='') m.pagePrice=num(r); if(w!=='') m.pagePriceW=num(w); });
+      state.priceUndo={at:todayISO(),rows}; saveState(); closeModal(); render(); toast('تم تطبيق السعر على '+rows.length+' موديل');
     }});
-  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='تطبيق';
-  bulkPreview();
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='تطبيق على الكل';
 }
-
 /* ===== ملخص يوم الشراكة (مبيعات الصفحة وإعلاناتها فقط) ===== */
 let dsDate='';
 function dsCalc(d){
@@ -2873,7 +2852,7 @@ function renderModels(){
     <div class="btn-row"><button class="btn" onclick="openModelsReport()">📊 تقرير الشهر</button><button class="btn" onclick="modelsTab='materials';render()">🧵 اللوازم${low?` <span class="pill retail" style="color:var(--negative)">${low}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
   </div>
   ${state.models.length?`<div class="mtool"><input type="search" class="search-box" placeholder="🔍 ابحث باسم الموديل أو الكود" oninput="filterModelCards(this.value)">
-    <span class="seg">${[['new','الأحدث'],['sold','الأكثر مبيعاً'],['profit','الأعلى ربحاً'],['name','الاسم']].map(([k,l])=>`<button type="button" class="${modelsSort===k?'on':''}" onclick="modelsSort='${k}';render();">${l}</button>`).join('')}</span><button type="button" class="btn sm ghost" onclick="openBulkPriceModal()" title="أداة اختيارية">💲 أسعار جماعي</button></div>`:'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
+    <span class="seg">${[['new','الأحدث'],['sold','الأكثر مبيعاً'],['profit','الأعلى ربحاً'],['name','الاسم']].map(([k,l])=>`<button type="button" class="${modelsSort===k?'on':''}" onclick="modelsSort='${k}';render();">${l}</button>`).join('')}</span><button type="button" class="btn sm ghost" onclick="openBulkPriceModal()" title="سعر القطعة للصفحة لكل الموديلات">💲 سعر الصفحة للكل</button></div>`:'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
   <div class="mgrid">
     ${list.map(m=>{
       const profit=modelProfitPerPiece(m), r=st[m.id]||{wn:0,rn:0,qty:0};
