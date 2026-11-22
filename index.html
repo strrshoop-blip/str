@@ -2806,31 +2806,55 @@ function openBulkPriceModal(){
 
 /* ===== ملخص يوم الشراكة (مبيعات الصفحة وإعلاناتها فقط) ===== */
 let dsDate='';
+function dsCalc(d){
+  const P=PS(), D=pageData(d,d);
+  let wage=0, empPcs=0; const emps=[];
+  (P.emps||[]).forEach(e=>{ const sk=new Set(e.skip||[]);
+    const pcs=D.ps.filter(x=>x.customerType!=='wholesale' && !sk.has(x.id) && (!e.from||x.date>=e.from)).reduce((a,x)=>a+num(x.quantity),0);
+    if(pcs){ emps.push({name:e.name,pcs,amt:pcs*num(e.rate)}); } empPcs+=pcs; wage+=pcs*num(e.rate); });
+  const ded=P.empDeduct?wage:0, net=D.profit-D.ads-ded;
+  const R=(state.returns||[]).filter(r=>r.date===d && (r.channel||'shop')==='page');
+  const ret={qty:R.reduce((a,r)=>a+num(r.qty),0), amount:R.reduce((a,r)=>a+num(r.amount),0), profit:R.reduce((a,r)=>a+num(r.profit),0)};
+  const parts=P.partners.map(p=>({name:p.name,pct:num(p.pct),gross:D.profit*num(p.pct)/100,ads:D.ads*num(p.pct)/100,wage:wage*num(p.pct)/100,net:net*num(p.pct)/100}));
+  return {D,wage,empPcs,emps,ded,net,ret,parts,empDeduct:!!P.empDeduct};
+}
 function dsPreview(){
-  dsDate=document.getElementById('ds_d').value||todayISO(); const D=pageData(dsDate,dsDate), box=document.getElementById('ds_box');
+  dsDate=document.getElementById('ds_d').value||todayISO(); const C=dsCalc(dsDate), D=C.D, box=document.getElementById('ds_box');
+  const row=(l,v,c)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border);"><span class="muted">${l}</span><b class="${c||''}">${v}</b></div>`;
   box.innerHTML=`<div class="compute-box"><span>${D.orders} طلب · ${D.pieces} قطعة</span><span>الوارد: <b>${money(D.revenue)}</b></span></div>
-  <div class="md-kpis"><div class="mk"><small>الأرباح</small><b class="${D.profit>=0?'pos':'neg'}">${money(D.profit)}</b></div><div class="mk"><small>الإعلانات</small><b class="neg">${money(D.ads)}</b></div><div class="mk"><small>صافي للتوزيع</small><b class="${D.net>=0?'pos':'neg'}">${money(D.net)}</b></div></div>
-  ${D.orders?`<div class="hint">${modelOrderStats(D.ps).slice(0,6).map(o=>esc(o.name)+' × '+o.qty).join(' · ')}</div>`:'<div class="notes-empty">ماكو مبيعات صفحة بهذا اليوم</div>'}`;
+  <div style="font-size:13.5px;margin-bottom:10px">${row('ربح المبيعات',money(D.profit),'pos')}${row('− الإعلانات',money(D.ads),'neg')}${row('− مستحقات الموظفين '+(C.empDeduct?'':'(للعلم، غير مخصومة)'),money(C.wage),C.empDeduct?'neg':'')}${C.ret.qty?row('↩ راجع اليوم',C.ret.qty+' قطعة · ربح '+money(C.ret.profit)+' انشال من الأرباح','neg'):''}${row('الصافي للتوزيع',money(C.net),C.net>=0?'accent':'neg')}</div>
+  ${C.parts.length?`<div class="table-wrap" style="border:none"><table><thead><tr><th>الشريك</th><th>النسبة</th><th>الأرباح</th><th>الإعلانات</th><th>الموظفين</th><th>الصافي له</th></tr></thead><tbody>${C.parts.map(p=>`<tr><td>${esc(p.name)}</td><td>${pctTxt(p.pct)}</td><td class="num">${money(p.gross)}</td><td class="num neg">−${money(p.ads)}</td><td class="num">${C.empDeduct?'−':''}${money(p.wage)}</td><td class="num accent">${money(p.net)}</td></tr>`).join('')}</tbody></table></div>`:''}
+  ${C.emps.length?`<div class="hint">${C.emps.map(e=>esc(e.name)+': '+e.pcs+' قطعة = '+money(e.amt)).join(' · ')}</div>`:''}
+  ${D.orders?'':'<div class="notes-empty">ماكو مبيعات صفحة بهذا اليوم</div>'}`;
 }
 function openDailySummary(){
   if(!dsDate) dsDate=todayISO();
-  openModal({title:'📋 ملخص يوم الشراكة',bodyHtml:`<div class="form-row"><label>اليوم</label><input type="date" id="ds_d" value="${dsDate}" onchange="dsPreview()"><div class="hint">مبيعات الصفحة وإعلاناتها فقط، وحصة كل شريك.</div></div><div id="ds_box"></div>`,
+  openModal({title:'📋 ملخص يوم الشراكة',bodyHtml:`<div class="form-row"><label>اليوم</label><input type="date" id="ds_d" value="${dsDate}" onchange="dsPreview()"><div class="hint">مبيعات الصفحة وإعلاناتها فقط، مع الاستقطاعات وحصة كل شريك.</div></div><div id="ds_box"></div>`,
     onSave(){
-      const d=document.getElementById('ds_d').value||todayISO(); dsDate=d; const D=pageData(d,d); closeModal();
+      const d=document.getElementById('ds_d').value||todayISO(); dsDate=d; const C=dsCalc(d), D=C.D; closeModal();
       const rows=modelOrderStats(D.ps).map(o=>[o.name,String(o.qty),o.wn+' / '+o.rn,money(o.rev),money(o.profit)]);
+      const sub=[D.orders+' طلب · '+D.pieces+' قطعة · جملة '+D.wh.n+' · مفرد '+D.rt.n];
+      if(C.ret.qty) sub.push('راجع اليوم '+C.ret.qty+' قطعة (ربح '+money(C.ret.profit)+' انشال من الأرباح)');
+      if(C.emps.length) sub.push(C.emps.map(e=>e.name+' '+e.pcs+' قطعة').join('، '));
       openReceipt({prefix:'ملخص-شراكة',modalTitle:'🖨 ملخص الشراكة — '+d,title:'ملخص يوم الشراكة',date:dateAr(),nameLabel:'التاريخ',name:d,
-        sub:D.orders+' طلب · '+D.pieces+' قطعة · جملة '+D.wh.n+' · مفرد '+D.rt.n,
+        sub:sub.join(' · '),
         cols:[{label:'الموديل',w:3.6},{label:'القطع',w:1.4,num:true},{label:'جملة/مفرد',w:2,num:true},{label:'الوارد',w:2.4,num:true},{label:'الربح',w:2.4,num:true}],
         rows:rows.length?rows:[['ماكو مبيعات','—','—','—','—']],
-        totals:[{label:'الوارد',value:money(D.revenue)},{label:'الأرباح',value:money(D.profit)},{label:'الإعلانات',value:money(D.ads)},{label:'صافي للتوزيع',value:money(D.net),strong:true}],
-        extra:{title:'حصة الشركاء من اليوم',cols:[{label:'الشريك',w:4},{label:'النسبة',w:1.6,num:true},{label:'حصته',w:3,num:true}],rows:D.parts.map(p=>[p.name,pctTxt(p.pct),money(p.net)])},
+        totals:[{label:'الأرباح',value:money(D.profit)},{label:'الإعلانات',value:'−'+money(D.ads)},{label:'مستحقات الموظفين'+(C.empDeduct?'':' (للعلم)'),value:(C.empDeduct?'−':'')+money(C.wage)},{label:'صافي للتوزيع',value:money(C.net),strong:true}],
+        extra:{title:'توزيع الشركاء',cols:[{label:'الشريك',w:3},{label:'النسبة',w:1.5,num:true},{label:'الأرباح',w:2.4,num:true},{label:'الإعلانات',w:2.2,num:true},{label:'الموظفين',w:2.2,num:true},{label:'الصافي له',w:2.4,num:true}],rows:C.parts.map(p=>[p.name,pctTxt(p.pct),money(p.gross),'−'+money(p.ads),(C.empDeduct?'−':'')+money(p.wage),money(p.net)])},
         footer:'ملخص الشراكة — ستر',
-        waText:'ملخص الشراكة '+d+'\nالوارد: '+money(D.revenue)+' · الأرباح: '+money(D.profit)+'\nالإعلانات: '+money(D.ads)+' · الصافي: '+money(D.net)+'\n'+D.parts.map(p=>p.name+': '+money(p.net)).join('\n')});
+        waText:'ملخص الشراكة '+d+'\nالوارد: '+money(D.revenue)+' · الأرباح: '+money(D.profit)+'\nالإعلانات: −'+money(D.ads)+' · الموظفين: '+money(C.wage)+(C.empDeduct?'':' (للعلم)')+'\nالصافي للتوزيع: '+money(C.net)+'\n'+C.parts.map(p=>p.name+': '+money(p.net)).join('\n')});
     }});
   const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='🖨 إنشاء الصورة';
+  { const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='760px'; }
   dsPreview();
 }
-
+/* ترتيب الموديلات بقوائم الاختيار: الأكثر مبيعاً هذا الشهر أول، وبعدها الأكثر مبيعاً إجمالاً، وبعدها الأحدث */
+function modelsBySales(){
+  const cm=thisMonth(), mq={}, tq={};
+  state.sales.forEach(x=>{ if(!x.modelId) return; const q=num(x.quantity); tq[x.modelId]=(tq[x.modelId]||0)+q; if((x.date||'').slice(0,7)===cm) mq[x.modelId]=(mq[x.modelId]||0)+q; });
+  return state.models.map((m,i)=>({m,i})).sort((a,b)=>((mq[b.m.id]||0)-(mq[a.m.id]||0))||((tq[b.m.id]||0)-(tq[a.m.id]||0))||(b.i-a.i)).map(x=>x.m);
+}
 let modelsSort='new';
 function modelCardStats(){ const st={}; modelOrderStats(state.sales.filter(x=>x.modelId)).forEach(r=>{ st[r.id]=r; }); return st; }
 function filterModelCards(q){ q=String(q||'').trim().toLowerCase(); let n=0; document.querySelectorAll('.mcard').forEach(c=>{ const ok=!q||c.dataset.k.includes(q); c.style.display=ok?'':'none'; if(ok) n++; }); const e=document.getElementById('mcEmpty'); if(e) e.style.display=n?'none':''; }
@@ -2838,7 +2862,7 @@ function renderModels(){
   if(modelsTab==='materials') return renderMaterials();
   modelsTab='models';
   const st=modelCardStats();
-  let list=state.models.slice();
+  let list=state.models.slice().reverse();
   if(modelsSort==='sold') list.sort((a,b)=>((st[b.id]||{}).qty||0)-((st[a.id]||{}).qty||0));
   else if(modelsSort==='profit') list.sort((a,b)=>modelProfitPerPiece(b)-modelProfitPerPiece(a));
   else if(modelsSort==='name') list.sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
@@ -3251,8 +3275,8 @@ function openSaleModal(id, presetChannel){
   const item = id ? state.sales.find(s=>s.id===id) : null;
   pendingSaleNewModelImages = [];
   saleAmountsTouched = !!(item && num(item.amountRemaining) > 0);
-  const initModel = state.models.length ? modelById(item?.modelId || state.models[0].id) : null;
-  const initSelectValue = item ? (item.modelId || '__NONE__') : (state.models.length ? state.models[0].id : '__NONE__');
+  const initModel = state.models.length ? modelById(item?.modelId || modelsBySales()[0].id) : null;
+  const initSelectValue = item ? (item.modelId || '__NONE__') : (state.models.length ? modelsBySales()[0].id : '__NONE__');
   const initQty = item?.quantity || 1;
   const initType = item?.customerType || 'retail';
   const initPrice = item?.unitPrice ?? modelPriceFor(initModel, initType);
@@ -3267,7 +3291,7 @@ function openSaleModal(id, presetChannel){
         <select id="f_model" onchange="onSaleModelSelectChange()">
           <option value="__NONE__" ${initSelectValue==='__NONE__'?'selected':''}>بدون موديل (بيع حر)</option>
           <option value="__NEW__">+ إضافة موديل جديد الآن</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${initSelectValue===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+          ${modelsBySales().map(m=>`<option value="${m.id}" ${initSelectValue===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
         </select>
       </div>
       <div id="saleNewModelFields" style="display:${initSelectValue==='__NEW__'?'flex':'none'};flex-direction:column;gap:13px;">
@@ -3863,7 +3887,7 @@ function openCustomerDebtModal(id){
         <select id="f_model" onchange="onDebtModelSelectChange()">
           <option value="__NONE__" ${initSelectValue==='__NONE__'?'selected':''}>بدون موديل محدد</option>
           <option value="__NEW__">+ إضافة موديل جديد الآن</option>
-          ${state.models.map(m=>`<option value="${m.id}" ${initSelectValue===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
+          ${modelsBySales().map(m=>`<option value="${m.id}" ${initSelectValue===m.id?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}
         </select>
       </div>
       <div id="debtNewModelFields" style="display:${initSelectValue==='__NEW__'?'flex':'none'};flex-direction:column;gap:13px;">
@@ -4977,7 +5001,7 @@ function orderBuild(sp){
 }
 function ordRender(){
   const box=document.getElementById('ordLines'); if(!box) return;
-  box.innerHTML=orderLines.map((l,i)=>`<div class="ord-line"><div class="ol-m"><select class="o_model" id="o_model_${i}" onchange="ordModel(${i},this.value)">${state.models.map(m=>`<option value="${m.id}" ${m.id===l.modelId?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}</select></div>
+  box.innerHTML=orderLines.map((l,i)=>`<div class="ord-line"><div class="ol-m"><select class="o_model" id="o_model_${i}" onchange="ordModel(${i},this.value)">${modelsBySales().map(m=>`<option value="${m.id}" ${m.id===l.modelId?'selected':''}>${esc(m.name)} (${esc(m.code)})</option>`).join('')}</select></div>
     <label class="ol-f"><small>العدد</small><input type="number" class="ol-q" min="1" value="${l.qty}" placeholder="العدد" oninput="ordSet(${i},'qty',this.value)"></label>
     <label class="ol-f"><small>سعر القطعة</small><input type="number" class="ol-p" value="${l.price}" placeholder="السعر" oninput="ordSet(${i},'price',this.value)"></label>
     <div class="ol-f"><small>المجموع</small><span class="ol-t" id="olt_${i}">${money(num(l.qty)*num(l.price))}</span></div>${orderLines.length>1?`<button type="button" class="btn sm danger ol-del" onclick="ordDel(${i})">✕</button>`:'<span></span>'}</div>`).join('');
@@ -4988,7 +5012,7 @@ function ordType(){ return document.getElementById('o_type').value; }
 function ordChannel(){ return document.getElementById('o_channel').value; }
 function ordSet(i,k,v){ orderLines[i][k]=v; if(k==='price') orderLines[i].touched=true; const t=document.getElementById('olt_'+i); if(t) t.textContent=money(num(orderLines[i].qty)*num(orderLines[i].price)); ordRecalc(); }
 function ordModel(i,id){ const l=orderLines[i]; l.modelId=id; if(!l.touched) l.price=modelPriceFor(modelById(id),ordType()); ordRender(); }
-function ordAdd(){ const m=state.models[0]; orderLines.push({modelId:m.id,qty:1,price:modelPriceFor(m,ordType()),touched:false}); ordRender(); }
+function ordAdd(){ const m=modelsBySales()[0]; orderLines.push({modelId:m.id,qty:1,price:modelPriceFor(m,ordType()),touched:false}); ordRender(); }
 function ordDel(i){ orderLines.splice(i,1); ordRender(); }
 function ordTypeChange(){ orderLines.forEach(l=>{ if(!l.touched) l.price=modelPriceFor(modelById(l.modelId),ordType()); }); ordRender(); }
 function ordRecTouch(){ ordRecTouched=true; ordRecalc(); }
@@ -5018,7 +5042,7 @@ function openOrderModal(orderId,presetChannel){
   const sibs=orderId?state.sales.filter(s=>s.orderId===orderId):[], f=sibs[0]||null;
   ordEditId=orderId||null; ordRecTouched=!!f;
   const type=f?.customerType||'retail', ch=f?.channel||presetChannel||'shop';
-  orderLines=sibs.length?sibs.map(s=>({modelId:s.modelId,qty:s.quantity,price:s.unitPrice,touched:true})):[{modelId:state.models[0].id,qty:1,price:modelPriceFor(state.models[0],type),touched:false}];
+  orderLines=sibs.length?sibs.map(s=>({modelId:s.modelId,qty:s.quantity,price:s.unitPrice,touched:true})):[{modelId:modelsBySales()[0].id,qty:1,price:modelPriceFor(modelsBySales()[0],type),touched:false}];
   const recv=f?sibs.reduce((a,s)=>a+num(s.amountReceived),0):'';
   openModal({title:f?'تعديل طلب بيع':'تسجيل عملية بيع',bodyHtml:`
     <div class="form-grid2"><div class="form-row"><label>قناة البيع</label><select id="o_channel" onchange="ordRecalc()"><option value="shop" ${ch==='shop'?'selected':''}>معمل</option><option value="page" ${ch==='page'?'selected':''}>الصفحة (سوشال ميديا)</option></select></div>
