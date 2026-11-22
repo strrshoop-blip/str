@@ -440,8 +440,8 @@
   .pulse-col{cursor:pointer;display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:10px;border-radius:12px;border:1px solid transparent;transition:background-color .15s,border-color .15s;}
   .pulse-col:hover{background:var(--surface-2);border-color:var(--border);}
   .pulse-val{font-weight:800;font-size:15px;text-align:center;font-variant-numeric:tabular-nums;}
-  .pulse-bar{height:90px;background:var(--surface-2);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;}
-  .pulse-bar i{display:block;width:100%;background:var(--text-faint);border-radius:8px 8px 0 0;transition:height .5s cubic-bezier(.2,.7,.2,1);}
+  .pulse-bar{height:110px;background:var(--surface-2);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;}
+  .pulse-bar i{display:block;width:100%;background:color-mix(in srgb,var(--info) 70%,var(--surface-2));border-radius:8px 8px 0 0;transition:height .5s cubic-bezier(.2,.7,.2,1);}
   .pulse-col.cur .pulse-bar i{background:var(--accent);}
   .pulse-lbl{font-size:12px;text-align:center;font-weight:700;}
   .pulse-sub{font-size:11px;color:var(--text-faint);text-align:center;}
@@ -647,6 +647,66 @@
 .ord-shares .os-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border);font-size:14px;}
 .ord-shares .os-row:last-child{border-bottom:0;}
 .ord-shares-box .ord-title{margin-top:0;}
+
+/* ===== موديلات v31 ===== */
+.mtool{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px;}
+.mtool .search-box{flex:1 1 220px;min-width:0;padding:10px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:14px;}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;display:flex;flex-direction:column;}
+.mcard:hover{border-color:var(--accent-dim,var(--border-strong));box-shadow:0 10px 26px rgba(0,0,0,.12);transform:translateY(-2px);}
+.mc-img{position:relative;aspect-ratio:4/3;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.mc-img img{width:100%;height:100%;object-fit:cover;}
+.mc-noimg{font-size:42px;opacity:.35;}
+.mc-code{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.62);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.mc-sold{position:absolute;bottom:8px;left:8px;background:var(--surface);color:var(--text);font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;border:1px solid var(--border);}
+.mc-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;}
+.mc-name{font-family:'Cairo',sans-serif;font-size:16px;font-weight:800;line-height:1.3;}
+.mc-prices{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mc-prices span{background:var(--surface-2);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;gap:2px;}
+.mc-prices small{font-size:11px;color:var(--text-faint);}
+.mc-prices b{font-size:13.5px;font-variant-numeric:tabular-nums;}
+.mc-foot{display:flex;justify-content:space-between;gap:8px;font-size:12px;flex-wrap:wrap;}
+.mc-profit{font-weight:800;}
+.mc-ord{color:var(--text-dim);}
+.md-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:56px;z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);padding:6px 0;margin-bottom:10px;}
+.md-top .detail-back{margin:0;}
+.md-hero{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px;}
+.md-gal .gallery{display:flex;flex-wrap:wrap;gap:8px;}
+.md-gal .md-main{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:14px;}
+.md-gal .gallery img{width:64px;height:64px;}
+.md-gal .gallery img.md-main{width:100%;height:auto;}
+.md-noimg{aspect-ratio:1/1;background:var(--surface-2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:60px;opacity:.4;}
+.md-info .code{color:var(--accent-soft);font-weight:700;font-size:12.5px;}
+.md-info h1{margin:4px 0 14px;}
+.md-prices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.md-prices div{background:var(--surface-2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;}
+.md-prices small,.mk small{font-size:11.5px;color:var(--text-faint);}
+.md-prices b{font-size:16px;font-variant-numeric:tabular-nums;}
+.md-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px;}
+.mk{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;}
+.mk b{font-size:19px;font-variant-numeric:tabular-nums;}
+.mk em{font-size:11.5px;color:var(--text-faint);font-style:normal;}
+.mk.w{border-top:3px solid var(--text);} .mk.r{border-top:3px solid var(--info);}
+.md-sec{margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.md-sec summary{cursor:pointer;padding:12px 14px;font-weight:700;font-size:14px;}
+.md-sec .table-wrap{border:0;border-top:1px solid var(--border);border-radius:0;}
+.mo-list{display:flex;flex-direction:column;gap:14px;}
+.mo-row{padding:2px 0;}
+.mo-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.mo-i{width:22px;height:22px;border-radius:7px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto;}
+.mo-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mo-t{font-size:12.5px;color:var(--text-dim);white-space:nowrap;}
+.mo-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--surface-2);}
+.mo-bar i.w{background:var(--text);} .mo-bar i.r{background:var(--info);}
+.mo-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin-top:5px;}
+.mo-leg .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:5px;}
+.mo-leg .dot.w{background:var(--text);} .mo-leg .dot.r{background:var(--info);}
+@media (max-width:700px){
+  .md-hero{grid-template-columns:1fr;} .md-gal .md-main{aspect-ratio:4/3;}
+  .mgrid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .mc-body{padding:10px;} .mc-name{font-size:14px;} .mc-prices b{font-size:12.5px;}
+  .md-top{top:52px;}
+}
 </style>
 </head>
 <body>
@@ -1335,7 +1395,9 @@ function navigate(page){
   { const m=document.getElementById('mainContent'); m.classList.remove('page-enter'); void m.offsetWidth; m.classList.add('page-enter'); document.body.classList.remove('nav-go'); void document.body.offsetWidth; document.body.classList.add('nav-go'); setTimeout(()=>document.body.classList.remove('nav-go'),800); setTimeout(()=>m.classList.remove('page-enter'),900); const pg=PAGES.find(p=>isNavActive(p.id)); const tt=document.getElementById('topTitle'); if(tt) tt.textContent = (pg?pg.icon+' '+pg.label:'')+' · ستر'; }
   window.scrollTo(0,0);
 }
+let _lastViewKey='';
 function render(){
+  { const k=currentPage+'|'+currentDetail+'|'+(typeof modelsTab!=='undefined'?modelsTab:''); if(k!==_lastViewKey){ _lastViewKey=k; try{ window.scrollTo(0,0); }catch(e){} } }
   buildNav();
   const main = document.getElementById('mainContent');
   if(currentPage==='dashboard') main.innerHTML = renderDashboard();
@@ -2630,34 +2692,37 @@ function deleteHoodariPayment(id){ confirmDelete(null, ()=>{ state.hoodariPaymen
 /* =========================================================
    MODELS
 ========================================================= */
+let modelsSort='new';
+function modelCardStats(){ const st={}; modelOrderStats(state.sales.filter(x=>x.modelId)).forEach(r=>{ st[r.id]=r; }); return st; }
+function filterModelCards(q){ q=String(q||'').trim().toLowerCase(); let n=0; document.querySelectorAll('.mcard').forEach(c=>{ const ok=!q||c.dataset.k.includes(q); c.style.display=ok?'':'none'; if(ok) n++; }); const e=document.getElementById('mcEmpty'); if(e) e.style.display=n?'none':''; }
 function renderModels(){
   if(modelsTab==='materials') return renderMaterials();
   modelsTab='models';
+  const st=modelCardStats();
+  let list=state.models.slice();
+  if(modelsSort==='sold') list.sort((a,b)=>((st[b.id]||{}).qty||0)-((st[a.id]||{}).qty||0));
+  else if(modelsSort==='profit') list.sort((a,b)=>modelProfitPerPiece(b)-modelProfitPerPiece(a));
+  else if(modelsSort==='name') list.sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
+  const low=lowMaterials().length;
   return `
   <div class="page-head">
-    <div><h1>الموديلات</h1><div class="desc">إدارة موديلات المنتجات وتكاليفها وصورها</div></div>
-    <div class="btn-row"><button class="btn" onclick="modelsTab='materials';render();window.scrollTo(0,0)">🧵 اللوازم${lowMaterials().length?` <span class="pill retail" style="color:var(--negative)">${lowMaterials().length}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
+    <div><h1>الموديلات</h1><div class="desc">${state.models.length} موديل · اضغط على أي موديل لتفاصيله</div></div>
+    <div class="btn-row"><button class="btn" onclick="modelsTab='materials';render()">🧵 اللوازم${low?` <span class="pill retail" style="color:var(--negative)">${low}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
   </div>
-  ${state.models.length?'':'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
-  <div class="model-grid">
-    ${state.models.map(m=>{
-      const cost = modelCost(m);
-      const profit = modelProfitPerPiece(m);
-      const img = (m.images&&m.images[0]) ? `<img src="${m.images[0]}">` : 'لا توجد صورة';
-      return `
-      <div class="model-card" onclick="openModelDetail('${m.id}')">
-        <div class="thumb">${img}</div>
-        <div class="info">
-          <div class="code">${esc(m.code)}</div>
-          <div class="name">${esc(m.name)}</div>
-          <div class="row"><span>التكلفة</span><span class="num">${money(cost)}</span></div>
-          <div class="row"><span>سعر الجملة</span><span class="num">${money(m.wholesalePrice||m.sellingPrice)}</span></div>
-          <div class="row"><span>سعر المفرد</span><span class="num">${money(m.sellingPrice)}</span></div>
-          <div class="row"><span>الربح/قطعة</span><span class="num ${profit>=0?'pos':'neg'}">${money(profit)}</span></div>
-        </div>
-      </div>`;
+  ${state.models.length?`<div class="mtool"><input type="search" class="search-box" placeholder="🔍 ابحث باسم الموديل أو الكود" oninput="filterModelCards(this.value)">
+    <span class="seg">${[['new','الأحدث'],['sold','الأكثر مبيعاً'],['profit','الأعلى ربحاً'],['name','الاسم']].map(([k,l])=>`<button type="button" class="${modelsSort===k?'on':''}" onclick="modelsSort='${k}';render();">${l}</button>`).join('')}</span></div>`:'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
+  <div class="mgrid">
+    ${list.map(m=>{
+      const profit=modelProfitPerPiece(m), r=st[m.id]||{wn:0,rn:0,qty:0};
+      const img=(m.images&&m.images[0])?`<img src="${m.images[0]}" loading="lazy">`:'<span class="mc-noimg">👗</span>';
+      return `<div class="mcard" data-k="${esc((m.name+' '+m.code).toLowerCase())}" onclick="openModelDetail('${m.id}')">
+        <div class="mc-img">${img}<span class="mc-code">${esc(m.code)}</span>${r.qty?`<span class="mc-sold">${r.qty} مباع</span>`:''}</div>
+        <div class="mc-body"><div class="mc-name">${esc(m.name)}</div>
+          <div class="mc-prices"><span><small>جملة</small><b>${money(m.wholesalePrice||m.sellingPrice)}</b></span><span><small>مفرد</small><b>${money(m.sellingPrice)}</b></span></div>
+          <div class="mc-foot"><span class="mc-profit ${profit>=0?'pos':'neg'}">ربح ${money(profit)}</span><span class="mc-ord">${r.wn} جملة · ${r.rn} مفرد</span></div></div></div>`;
     }).join('')}
-  </div>`;
+  </div>
+  <div id="mcEmpty" class="notes-empty" style="display:none">ماكو موديل بهذا الاسم</div>`;
 }
 
 /* =========================================================
@@ -2756,7 +2821,27 @@ function openMatLog(id){
 }
 function deleteMatMove(mid,id){ confirmDelete('حذف هذي الحركة؟ الكمية المتوفرة ترجع تنحسب بدونها.',()=>{ state.materialMoves=state.materialMoves.filter(x=>x.id!==mid); saveState(); render(); openMatLog(id); toast('تم الحذف'); }); }
 function deleteMat(id){ confirmDelete('حذف الصنف مع كل حركاته؟',()=>{ state.materials=state.materials.filter(m=>m.id!==id); state.materialMoves=state.materialMoves.filter(x=>x.matId!==id); saveState(); render(); toast('تم الحذف'); }); }
-function openModelDetail(id){ currentDetail = id; render(); }
+
+/* ===== طلبات الجملة والمفرد لكل موديل ===== */
+function modelOrderStats(sales){
+  const mm={};
+  sales.forEach(x=>{ const k=x.modelId||('x:'+saleProductLabel(x)); const m=x.modelId?modelById(x.modelId):null;
+    const o=mm[k]=mm[k]||{key:k,id:x.modelId||null,name:m?m.name:saleProductLabel(x),w:new Set(),r:new Set(),wq:0,rq:0,rev:0,profit:0};
+    const oid=x.orderId||x.id, q=num(x.quantity);
+    if(x.customerType==='wholesale'){ o.w.add(oid); o.wq+=q; } else { o.r.add(oid); o.rq+=q; }
+    o.rev+=saleRevenue(x); o.profit+=saleProfit(x); });
+  return Object.values(mm).map(o=>({...o,wn:o.w.size,rn:o.r.size,qty:o.wq+o.rq,n:o.w.size+o.r.size})).sort((a,b)=>b.n-a.n||b.qty-a.qty);
+}
+function modelOrdersRows(rows,limit){
+  if(!rows.length) return '<div class="notes-empty">ماكو مبيعات بهذي الفترة</div>';
+  const mx=Math.max(1,...rows.map(r=>r.n));
+  return '<div class="mo-list">'+rows.slice(0,limit||8).map((r,i)=>`<div class="mo-row"${r.id?` onclick="openModelDetail('${r.id}');currentPage='models';render();" style="cursor:pointer"`:''}>
+    <div class="mo-top"><span class="mo-i">${i+1}</span><b class="mo-n">${esc(r.name)}</b><span class="mo-t">${r.n} طلب · ${r.qty} قطعة</span></div>
+    <div class="mo-bar" style="width:${Math.max(6,r.n/mx*100)}%"><i class="w" style="flex:${r.wn||0}"></i><i class="r" style="flex:${r.rn||0}"></i></div>
+    <div class="mo-leg"><span><i class="dot w"></i>جملة <b>${r.wn}</b> طلب · ${r.wq} قطعة</span><span><i class="dot r"></i>مفرد <b>${r.rn}</b> طلب · ${r.rq} قطعة</span></div></div>`).join('')+'</div>';
+}
+function openModelDetail(id){ currentPage='models'; currentDetail = id; render(); }
+
 
 let pendingImages = [];
 function openModelModal(id){
@@ -2881,28 +2966,25 @@ function renderModelDetail(id){
   const hoodWorkCost = hoodWork.reduce((s,w)=>s+num(w.pieceCount)*num(w.pricePerPiece),0);
 
   return `
-  <button class="detail-back" onclick="currentDetail=null;render();">→ رجوع لقائمة الموديلات</button>
-  <div class="detail-head">
-    <div class="titles"><div class="code">${esc(m.code)}</div><h1>${esc(m.name)}</h1></div>
-    <div class="btn-row">
-      <button class="btn" onclick="openModelModal('${id}')">تعديل</button>
-      <button class="btn danger" onclick="deleteModel('${id}')">حذف</button>
-    </div>
+  <div class="md-top"><button class="detail-back" onclick="currentDetail=null;render();">→ كل الموديلات</button>
+    <div class="btn-row"><button class="btn" onclick="openModelModal('${id}')">✏️ تعديل</button><button class="btn danger" onclick="deleteModel('${id}')">🗑 حذف</button></div></div>
+  <div class="md-hero">
+    <div class="md-gal">${m.images&&m.images.length?`<div class="gallery"><img class="md-main" src="${m.images[0]}">${m.images.slice(1).map(src=>`<img src="${src}">`).join('')}</div>`:'<div class="md-noimg">👗</div>'}</div>
+    <div class="md-info"><div class="code">${esc(m.code)}</div><h1>${esc(m.name)}</h1>
+      <div class="md-prices"><div><small>التكلفة</small><b>${money(cost)}</b></div><div><small>سعر الجملة</small><b>${money(m.wholesalePrice||m.sellingPrice)}</b></div><div><small>سعر المفرد</small><b>${money(m.sellingPrice)}</b></div><div><small>ربح القطعة</small><b class="${profit>=0?'pos':'neg'}">${money(profit)}</b></div></div>
+      ${(num(m.pagePrice)>0||num(m.pagePriceW)>0)?`<div class="hint">سعر القطعة للصفحة: مفرد ${num(m.pagePrice)>0?money(m.pagePrice):'—'} · جملة ${num(m.pagePriceW)>0?money(m.pagePriceW):'—'}</div>`:''}
+      ${m.notes?`<div class="hint">${esc(m.notes)}</div>`:''}</div>
   </div>
-  ${m.images && m.images.length ? `<div class="gallery" style="margin-bottom:20px;">${m.images.map(src=>`<img src="${src}" style="width:120px;height:120px;">`).join('')}</div>` : ''}
+  ${(()=>{ const o=modelOrderStats(sales)[0]||{wn:0,rn:0,wq:0,rq:0}; const ch=c=>sales.filter(x=>(x.channel||'shop')===c).length;
+    return `<div class="md-kpis">
+      <div class="mk"><small>القطع المباعة</small><b>${totalQty}</b></div>
+      <div class="mk"><small>إجمالي الوارد</small><b class="accent">${money(totalRevenue)}</b></div>
+      <div class="mk"><small>إجمالي الربح</small><b class="${totalProfit>=0?'pos':'neg'}">${money(totalProfit)}</b></div>
+      <div class="mk w"><small>طلبات الجملة</small><b>${o.wn}</b><em>${o.wq} قطعة</em></div>
+      <div class="mk r"><small>طلبات المفرد</small><b>${o.rn}</b><em>${o.rq} قطعة</em></div>
+      <div class="mk"><small>الصفحة / المعمل</small><b>${ch('page')} / ${ch('shop')}</b><em>عملية بيع</em></div></div>`; })()}
 
-  <div class="grid stats">
-    ${statCard('تكلفة القطعة', money(cost),'')}
-    ${statCard('سعر الجملة', money(m.wholesalePrice||m.sellingPrice),'')}
-    ${statCard('سعر المفرد', money(m.sellingPrice),'')}
-    ${statCard('الربح للقطعة', money(profit), profit>=0?'pos':'neg')}
-    ${statCard('القطع المباعة', totalQty,'')}
-    ${statCard('إجمالي الوارد من الموديل', money(totalRevenue),'accent')}
-    ${statCard('إجمالي الربح من الموديل', money(totalProfit), totalProfit>=0?'pos':'neg')}
-  </div>
-
-  <div class="section-title"><span class="ic">🧵</span> الخياطة المرتبطة بهذا الموديل (${workPieces} قطعة، ${money(workCost)})</div>
-  <div class="table-wrap">
+  <details class="md-sec"><summary>🧵 الخياطة المرتبطة بهذا الموديل (${workPieces} قطعة، ${money(workCost)})</summary><div class="table-wrap">
     <table>
       <thead><tr><th>التاريخ</th><th>الخياط</th><th>القطع</th><th>سعر القطعة</th><th>الإجمالي</th></tr></thead>
       <tbody>
@@ -2910,10 +2992,9 @@ function renderModelDetail(id){
         : `<tr class="empty-row"><td colspan="5">لا يوجد شغل خياطة مرتبط بهذا الموديل</td></tr>`}
       </tbody>
     </table>
-  </div>
+  </div></details>
 
-  <div class="section-title"><span class="ic">✂️</span> الفصل المرتبط بهذا الموديل (${cutWorkPieces} قطعة، ${money(cutWorkCost)})</div>
-  <div class="table-wrap">
+  <details class="md-sec"><summary>✂️ الفصل المرتبط بهذا الموديل (${cutWorkPieces} قطعة، ${money(cutWorkCost)})</summary><div class="table-wrap">
     <table>
       <thead><tr><th>التاريخ</th><th>الفصّال</th><th>القطع</th><th>سعر القطعة</th><th>الإجمالي</th></tr></thead>
       <tbody>
@@ -2921,10 +3002,9 @@ function renderModelDetail(id){
         : `<tr class="empty-row"><td colspan="5">لا يوجد شغل فصل مرتبط بهذا الموديل</td></tr>`}
       </tbody>
     </table>
-  </div>
+  </div></details>
 
-  <div class="section-title"><span class="ic">🪡</span> شغل الهودارية المرتبط بهذا الموديل (${hoodWorkPieces} قطعة، ${money(hoodWorkCost)})</div>
-  <div class="table-wrap">
+  <details class="md-sec"><summary>🪡 شغل الهودارية المرتبط بهذا الموديل (${hoodWorkPieces} قطعة، ${money(hoodWorkCost)})</summary><div class="table-wrap">
     <table>
       <thead><tr><th>التاريخ</th><th>الاسم</th><th>القطع</th><th>سعر القطعة</th><th>الإجمالي</th></tr></thead>
       <tbody>
@@ -2932,7 +3012,7 @@ function renderModelDetail(id){
         : `<tr class="empty-row"><td colspan="5">لا يوجد شغل هودارية مرتبط بهذا الموديل</td></tr>`}
       </tbody>
     </table>
-  </div>
+  </div></details>
 
   <div class="section-title"><span class="ic">📦</span> سجل مبيعات هذا الموديل</div>
   <div class="table-wrap">
@@ -4487,6 +4567,9 @@ function renderPartnership(){
     <div class="card"><div class="dn-title">وين راح الوارد <span>من كل وارد الصفحة</span></div>${donutChart([{v:D.revenue-D.profit,c:'var(--text-faint)',l:'كلفة البضاعة',t:money(D.revenue-D.profit)},{v:D.ads,c:'var(--negative)',l:'الإعلانات',t:money(D.ads)},{v:Math.max(0,D.net),c:'var(--positive)',l:'صافي للشركاء',t:money(D.net)}],D.revenue>0?Math.round(Math.max(0,D.net)/D.revenue*100)+'%':'—','صافي')}</div>
   </div>
 
+  <div class="section-title"><span class="ic">🏆</span> أكثر الموديلات طلباً — جملة ومفرد <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
+  <div class="card">${modelOrdersRows(modelOrderStats(D.ps),8)}<div class="hint" style="margin-top:8px">الطول = عدد الطلبات، والأسود جملة والأزرق مفرد. اضغط على موديل تفتح صفحته.</div></div>
+
   <div class="section-title"><span class="ic">🔒</span> سجل إقفال الأشهر</div>
   <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
   ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num">${money(c.wage||0)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><div class="btn-row"><button class="btn sm" onclick="printPartnerStatement('${c.month}')">🖨 كشف</button><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></div></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
@@ -5505,7 +5588,7 @@ function weeklyPulseHtml(){
   <div class="card"><div class="pulse">${data.map((d,i)=>`
     <div class="pulse-col ${i===3?'cur':''}" onclick="openWeekDetail('${d.s}')">
       <div class="pulse-val">${money(d.rev)}</div>
-      <div class="pulse-bar"><i style="height:${Math.max(3,Math.round(d.rev/mx*100))}%"></i></div>
+      <div class="pulse-bar"><i style="height:${d.rev>0?Math.max(4,Math.round(d.rev/mx*100)):0}%"></i></div>
       <div class="pulse-lbl">${weekLabel(d.s)}${i===3?' · الحالي':''}</div>
       <div class="pulse-sub">${d.pcs.toLocaleString('en-US')} قطعة · أجور ${money(d.wages)}</div>
     </div>`).join('')}</div>
