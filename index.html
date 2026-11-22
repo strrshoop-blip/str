@@ -642,6 +642,11 @@
     body>.row-menu.show{left:10px !important;right:10px;top:auto !important;bottom:14px;width:auto;padding:8px;z-index:900;border-radius:18px;box-shadow:0 -10px 40px rgba(0,0,0,.35);}
     body>.row-menu .btn{padding:15px 14px;font-size:15.5px;font-weight:700;}
   }
+
+.ord-shares-box{margin:8px 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2,var(--surface));}
+.ord-shares .os-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border);font-size:14px;}
+.ord-shares .os-row:last-child{border-bottom:0;}
+.ord-shares-box .ord-title{margin-top:0;}
 </style>
 </head>
 <body>
@@ -1184,10 +1189,11 @@ function debtCashEventsInRange(from,to){ return allDebtCashEvents().filter(e=>in
 function totalCustomerDebtCashProfit(){ return allDebtCashEvents().reduce((s,e)=>s+e.profit,0); }
 
 /* الأرباح تُحسب على المبلغ المستلم فعلاً: كل دفعة تأخذ نسبتها من الربح، والمتبقي ينتظر التحصيل */
-/* كلفة القطعة: بيع المفرد عبر الصفحة يستعمل «سعر القطعة للصفحة» إذا مكتوب بالموديل. الجملة والمعمل دائماً الكلفة الأصلية */
+/* كلفة القطعة: البيع عبر الصفحة يستعمل «سعر القطعة للصفحة» (مفرد أو جملة حسب نوع البيع) إذا مكتوب بالموديل، وإلا الكلفة الأصلية. المعمل دائماً الكلفة الأصلية */
 function unitCostFor(modelId, channel, customerType){
   const m = modelById(modelId); if(!m) return 0;
-  return (channel==='page' && customerType!=='wholesale' && num(m.pagePrice)>0) ? num(m.pagePrice) : modelCost(m);
+  if(channel==='page'){ const pp = customerType==='wholesale' ? num(m.pagePriceW) : num(m.pagePrice); if(pp>0) return pp; }
+  return modelCost(m);
 }
 function saleUnitCost(s){ return num(s.costSnapshot!=null?s.costSnapshot:modelCost(modelById(s.modelId))); }
 function saleMargin(s){
@@ -2782,7 +2788,8 @@ function openModelModal(id){
         <div class="form-row"><label>سعر البيع بالجملة</label><input type="number" class="cost-field" id="f_wholesale" value="${item?.wholesalePrice||''}" oninput="updateModelCompute()"></div>
         <div class="form-row"><label>سعر البيع بالمفرد</label><input type="number" class="cost-field" id="f_sell" value="${item?.sellingPrice||''}" oninput="updateModelCompute()"></div>
       </div>
-      <div class="form-row"><label>سعر القطعة للصفحة (للمفرد فقط)</label><input type="number" id="f_pageprice" value="${item?.pagePrice||''}" placeholder="مثال: 20000"><div class="hint">السعر اللي يُحسب على الصفحة كأنه كلفة القطعة. مثلاً إذا كتبت 20,000 وبعت القطعة بالصفحة بـ 40,000، يُحسب ربح الصفحة 20,000 فقط. بيع الجملة عبر الصفحة يبقى على كلفة القطعة الأصلية. إذا تركته فارغ تنحسب كلفة الموديل الأصلية. يتطبق على المبيعات الجديدة فقط.</div></div>
+      <div class="form-row"><label>سعر القطعة للصفحة — مفرد</label><input type="number" id="f_pageprice" value="${item?.pagePrice||''}" placeholder="مثال: 20000"></div>
+      <div class="form-row"><label>سعر القطعة للصفحة — جملة</label><input type="number" id="f_pagepricew" value="${item?.pagePriceW||''}" placeholder="مثال: 19000"><div class="hint">هذا السعر يُحسب على الصفحة كأنه كلفة القطعة، والفرق بينه وبين سعر بيعك هو ربح الصفحة اللي يتقاسم بين الشركاء. مثلاً إذا كتبت 19,000 وبعت بـ 20,000 يصير الربح 1,000. المفرد يستعمل سعر المفرد، والجملة يستعمل سعر الجملة. إذا تركته فارغ تنحسب كلفة الموديل الأصلية. يتطبق على المبيعات الجديدة فقط.</div></div>
       <div class="flow-split">
         <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالجملة</span><span class="flow-amt" id="computeProfitWholesale">${item? money(modelWholesaleProfitPerPiece(item)) : money(0)}</span></div>
         <div class="flow-chip is-profit"><span class="flow-dest">ربحك من القطعة بالمفرد</span><span class="flow-amt" id="computeProfit">${item? money(modelProfitPerPiece(item)) : money(0)}</span></div>
@@ -2804,6 +2811,7 @@ function openModelModal(id){
         wholesalePrice:num(document.getElementById('f_wholesale').value),
         sellingPrice:num(document.getElementById('f_sell').value),
         pagePrice:num(document.getElementById('f_pageprice').value),
+        pagePriceW:num(document.getElementById('f_pagepricew').value),
         notes: document.getElementById('f_notes').value.trim()
       };
       if(item) Object.assign(item, data);
@@ -4443,7 +4451,7 @@ function renderPartnership(){
     <div class="toolbar" style="margin:0;"><button class="btn" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   <div class="pt-top">
     <div class="pt-quick"><button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button></div>
-    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
+    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}${(P.archive&&P.archive.length)?`<button class="btn" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button>`:''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
   </div>
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
@@ -4771,6 +4779,16 @@ function ordRecalc(){
   document.getElementById('ordPieces').textContent=B2.pieces+' قطعة';
   document.getElementById('o_rem').value=B2.remaining>0?money(B2.remaining):'0';
   document.getElementById('ordProfit').textContent=money(B2.profit);
+  const sh=document.getElementById('ordShares');
+  if(sh){
+    if(ordChannel()!=='page'){ sh.innerHTML='<div class="hint">بيع المعمل — الربح كله للمعمل وما يتقاسم بالشراكة.</div>'; }
+    else{
+      const P=PS(), pr=B2.profit, ratio=B2.total>0?B2.received/B2.total:1;
+      sh.innerHTML='<div class="ord-title">💼 حصة الشركاء من ربح هذي العملية</div><div class="ord-shares">'+P.partners.map(p=>`<div class="os-row"><span>${esc(p.name)} <small class="muted">${pctTxt(p.pct)}</small></span><b class="${pr>=0?'pos':'neg'}">${money(pr*num(p.pct)/100)}</b></div>`).join('')+'</div>'
+        +(B2.remaining>0?`<div class="hint">الربح يتحسب لما يتسدد المبلغ. المحصّل لحد الآن: ${money(pr*ratio)} فقط.</div>`:'')
+        +`<div class="hint">الكلفة المحسوبة ${money(B2.cost)}${B2.pieces?' ('+money(B2.cost/B2.pieces)+' للقطعة بالمعدل)':''} — من «سعر القطعة للصفحة» بالموديل إذا مكتوب.</div>`;
+    }
+  }
 }
 function openOrderModal(orderId,presetChannel){
   if(!state.models.length) { window.__legacySale=true; openSaleModal(null,presetChannel); window.__legacySale=false; return; }
@@ -4789,6 +4807,7 @@ function openOrderModal(orderId,presetChannel){
     <div class="compute-box"><span>إجمالي الطلب</span><span><b id="ordTotal"></b> · <b id="ordPieces"></b></span></div>
     <div class="form-grid2"><div class="form-row"><label>المبلغ المستلم</label><input type="number" id="o_received" value="${recv}" oninput="ordRecTouch()"></div><div class="form-row"><label>المتبقي (دين)</label><input type="text" id="o_rem" readonly></div></div>
     <div class="flow-chip is-profit"><span class="flow-dest">ربحك الكلي من العملية</span><span class="flow-amt" id="ordProfit"></span></div>
+    <div id="ordShares" class="ord-shares-box"></div>
     <div class="form-row"><label>اسم الزبون (اختياري)</label><input type="text" id="o_customer" value="${esc(f?.customerName||'')}" placeholder="اسم الشخص أو التاجر"><div class="hint">اسم الزبون اختياري. إذا تركت مبلغ متبقي بدون اسم، ينسجل الدين باسم "بدون اسم" بصفحة ديون الزبائن.</div></div>
     <div class="form-grid2"><div class="form-row"><label>التاريخ</label><input type="date" id="o_date" value="${f?.date||todayISO()}"></div><div class="form-row"><label>طريقة الدفع</label><select id="o_pay">${PAYMENT_METHODS.map(p=>`<option ${f?.paymentMethod===p?'selected':''}>${p}</option>`).join('')}</select></div></div>
     <div class="form-row"><label>ملاحظات</label><textarea id="o_notes">${esc(f?.notes||'')}</textarea></div>
@@ -5819,7 +5838,7 @@ async function exportAllExcel(){
     const add=(name,rows)=>{ const ws=X.utils.json_to_sheet(rows.length?rows:[{'—':'لا توجد بيانات'}]); X.utils.book_append_sheet(wb,ws,name.slice(0,31)); };
     add('المبيعات',state.sales.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(x=>({'رقم':x.no||'','التاريخ':x.date,'الوقت':tmLabel(x),'المنتج':saleProductLabel(x),'القناة':(x.channel||'shop')==='page'?'الصفحة':'معمل','النوع':x.customerType==='wholesale'?'جملة':'مفرد','الزبون':x.customerName||'','الكمية':num(x.quantity),'سعر الوحدة':num(x.unitPrice),'الوارد':saleRevenue(x),'المستلم':x.amountReceived!=null?num(x.amountReceived):saleRevenue(x),'المتبقي':num(x.amountRemaining),'الربح':Math.round(saleProfit(x)),'طريقة الدفع':x.paymentMethod||'','ملاحظات':x.notes||''})));
     add('المصاريف',state.expenses.map(e=>({'التاريخ':e.date,'الوقت':tmLabel(e),'النوع':e.type,'القناة':(e.channel||'shop')==='page'?'الصفحة':'معمل','المبلغ':num(e.amount),'ملاحظات':e.notes||''})));
-    add('الموديلات',state.models.map(m=>({'الكود':m.code,'الاسم':m.name,'التكلفة':modelCost(m),'سعر الجملة':num(m.wholesalePrice),'سعر المفرد':num(m.sellingPrice),'سعر القطعة للصفحة':num(m.pagePrice)})));
+    add('الموديلات',state.models.map(m=>({'الكود':m.code,'الاسم':m.name,'التكلفة':modelCost(m),'سعر الجملة':num(m.wholesalePrice),'سعر المفرد':num(m.sellingPrice),'سعر القطعة للصفحة (مفرد)':num(m.pagePrice),'سعر القطعة للصفحة (جملة)':num(m.pagePriceW)})));
     add('المرتجعات',state.returns.map(r=>({'تاريخ الترجيع':r.date,'بيع رقم':r.no||'','الموديل':r.product,'الزبون':r.customerName||'','القناة':(r.channel||'shop')==='page'?'الصفحة':'معمل','القطع':num(r.qty),'المبلغ':num(r.amount),'الربح الضائع':num(r.profit),'السبب':r.reason,'ملاحظات':r.notes||''})));
     add('اللوازم',state.materials.map(m=>({'الصنف':m.name,'الوحدة':m.unit||'','سعر الوحدة':num(m.cost),'المتوفر':matQty(m.id),'القيمة':Math.max(0,matQty(m.id))*num(m.cost),'حد التنبيه':num(m.min)||''})));
     add('حركات المخزون',state.materialMoves.map(x=>({'التاريخ':x.date,'الصنف':(matById(x.matId)||{}).name||'محذوف','النوع':x.type==='in'?'إدخال':'صرف','الكمية':num(x.qty),'السعر':num(x.cost)||'','ملاحظات':x.notes||''})));
@@ -5981,11 +6000,46 @@ function togglePtMenu(e){
   menu.style.top=(r.bottom+mh+8>window.innerHeight?Math.max(8,r.top-mh-4):r.bottom+4)+'px';
   menu.style.left=Math.max(8,Math.min(window.innerWidth-mw-8,r.left))+'px';
 }
+
+/* ===== لقطة أرقام الشراكة قبل التصفير + سجل التصفيرات ===== */
+function ptSnapshot(){
+  const P=PS(), D=pageData(null,null);
+  return {at:todayISO(), ts:Date.now(), from:P.resetAt||null, revenue:D.revenue, profit:D.profit, ads:D.ads, wage:D.wage, wagePaid:D.wagePaid, net:D.net, pieces:D.pieces, orders:D.orders, closesCount:(P.closes||[]).length,
+    parts:D.parts.map(p=>{ const t=ptTotals(p.id); return {id:p.id,name:p.name,pct:p.pct,gross:p.gross,ads:p.ads,exp:p.exp,net:p.net,earned:t.earned,adj:t.adj,received:t.paid,remaining:t.remaining}; })};
+}
+function snapHtml(sn){
+  const kv=(l,v,c)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border);"><span class="muted">${l}</span><b class="${c||''}">${v}</b></div>`;
+  return `<div style="font-size:13.5px;">
+    ${kv('الفترة',(sn.from?'من '+sn.from:'من البداية')+' إلى '+sn.at)}
+    ${kv('وارد الصفحة',money(sn.revenue))}${kv('الأرباح',money(sn.profit),'pos')}${kv('الإعلانات','−'+money(sn.ads),'neg')}
+    ${kv('القطع / الطلبات',(sn.pieces||0)+' قطعة · '+(sn.orders||0)+' طلب')}
+    ${kv('مستحقات الموظفين',money(sn.wage||0))}${kv('الصافي للتوزيع',money(sn.net),'accent')}
+    <div style="margin-top:10px;overflow-x:auto;"><table style="width:100%;font-size:12.5px;"><thead><tr><th>الشريك</th><th>النسبة</th><th>حصته من الصافي</th><th>المقفل له</th><th>المستلم</th><th>المتبقي له</th></tr></thead><tbody>
+    ${(sn.parts||[]).map(p=>`<tr><td>${esc(p.name)}</td><td>${pctTxt(p.pct)}</td><td class="num">${money(p.net)}</td><td class="num">${money(p.earned)}</td><td class="num">${money(p.received)}</td><td class="num accent">${money(p.remaining)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function printResetSnap(i){
+  const a=PS().archive[i]; if(!a||!a.snap) return; const sn=a.snap;
+  openReceipt({prefix:'تصفير-شراكة',modalTitle:'🖨 أرقام الشراكة قبل التصفير',title:'أرقام الشراكة قبل التصفير',date:dateAr(),nameLabel:'تاريخ التصفير',name:a.at,
+    sub:(sn.from?'من '+sn.from:'من البداية')+' إلى '+sn.at+' · مبيعات الصفحة وإعلاناتها',
+    cols:[{label:'الشريك',w:3},{label:'النسبة',w:1.5,num:true},{label:'حصته من الصافي',w:2.6,num:true},{label:'المستلم',w:2.2,num:true},{label:'المتبقي له',w:2.4,num:true}],
+    rows:(sn.parts||[]).map(p=>[p.name,pctTxt(p.pct),money(p.net),money(p.received),money(p.remaining)]),
+    totals:[{label:'الوارد',value:money(sn.revenue)},{label:'الأرباح',value:money(sn.profit)},{label:'الإعلانات',value:money(sn.ads)},{label:'صافي للتوزيع',value:money(sn.net),strong:true}],
+    footer:'سجل التصفيرات — ستر'});
+}
+function openResetHistory(){
+  const P=PS(), list=(P.archive||[]).map((a,i)=>({a,i})).reverse();
+  openModal({title:'📜 سجل التصفيرات',bodyHtml: list.length? list.map(({a,i})=>`<details class="card" style="margin-bottom:10px;padding:12px;"><summary style="cursor:pointer;font-weight:800;">تصفير ${esc(a.at)}${a.snap?` — صافي ${money(a.snap.net)} · وارد ${money(a.snap.revenue)}`:''}</summary>
+      <div style="margin-top:10px;">${a.snap?snapHtml(a.snap)+`<div class="btn-row" style="margin-top:10px;"><button class="btn sm" onclick="printResetSnap(${i})">🖨 صورة الأرقام</button></div>`:'<div class="muted">هذا التصفير قديم، ما انحفظت أرقامه. المحفوظ: '+(a.closes||[]).length+' إقفال شهري، '+(a.pays||[]).length+' استلام.</div>'}</div></details>`).join('') : '<div class="notes-empty">ماكو تصفيرات سابقة</div>',
+    });
+  const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='760px';
+}
 function openPartnerResetModal(){
   document.querySelectorAll('.row-menu.show').forEach(m=>m.classList.remove('show'));
   const P=PS(), today=todayISO();
   openModal({title:'🗑 تصفير أرقام الشراكة',
-    bodyHtml:`<div class="rule-box" style="margin-bottom:12px;border-color:var(--negative);">
+    bodyHtml:`<div class="card" style="margin-bottom:12px;padding:12px;"><b>📊 أرقام الشراكة الحالية (قبل التصفير)</b><div style="margin-top:8px;">${snapHtml(ptSnapshot())}</div><div class="hint" style="margin-top:6px;">هذي الأرقام تنحفظ تلقائياً بـ «سجل التصفيرات» وتكدر ترجعلها وتطلعها كصورة.</div></div>
+      <div class="rule-box" style="margin-bottom:12px;border-color:var(--negative);">
         تصفير الشراكة يخلي كل الأرقام (المبيعات، الإعلانات، الأرباح، حصص الشركاء) تبدأ من <b>صفر الآن</b>.<br>
         • كل بيع أو إعلان تسجله <b>بعد التصفير</b> ينضاف عادي حتى لو بنفس اليوم.<br>
         • مبيعاتك ومصاريفك الأصلية <b>ما تنحذف</b> (تبقى بالمبيعات والمصاريف والتقارير).<br>
@@ -5997,11 +6051,12 @@ function openPartnerResetModal(){
       state.sales.forEach(x=>{ if((x.channel||'shop')==='page' && x.date>=d) skip.push(x.id); });
       state.expenses.forEach(x=>{ if((x.channel||'shop')==='page' && x.type==='إعلانات' && x.date>=d) skip.push(x.id); });
       allDebtCashEvents().forEach(e=>{ if(debtChannel(e.debtId)==='page' && e.date>=d) skip.push(e.id); });
-      P.archive.push({id:uid(),at:today,prevResetAt:P.resetAt||null,prevSkip:P.resetSkip||[],closes:P.closes,adj:P.adj,pays:P.pays});
+      P.archive.push({id:uid(),at:today,snap:ptSnapshot(),prevResetAt:P.resetAt||null,prevSkip:P.resetSkip||[],closes:P.closes,adj:P.adj,pays:P.pays});
       P.closes=[]; P.adj=[]; P.pays=[]; P.resetAt=d; P.resetSkip=[...new Set([...(P.resetSkip||[]),...skip])]; partMonth=thisMonth();
-      saveState(); closeModal(); render(); toast('تم تصفير أرقام الشراكة — الأرقام تبدأ من صفر');
+      saveState(); closeModal(); render(); toast('تم تصفير أرقام الشراكة — الأرقام القديمة انحفظت بسجل التصفيرات'); setTimeout(openResetHistory,300);
     }});
   const b=document.getElementById('modalSaveBtn'); if(b){ b.textContent='تصفير'; b.classList.remove('primary'); b.classList.add('danger'); }
+  { const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='760px'; }
 }
 function restorePartnerReset(){
   document.querySelectorAll('.row-menu.show').forEach(m=>m.classList.remove('show'));
