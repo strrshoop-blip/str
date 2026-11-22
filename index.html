@@ -707,6 +707,13 @@
   .mc-body{padding:10px;} .mc-name{font-size:14px;} .mc-prices b{font-size:12.5px;}
   .md-top{top:52px;}
 }
+
+.tr{font-size:11px;font-weight:800;margin-inline-start:4px;}
+.tr.up{color:var(--positive);} .tr.dn{color:var(--negative);} .tr.flat{color:var(--text-faint);}
+.tr small{font-weight:500;color:var(--text-faint);}
+.mc-stale{position:absolute;top:8px;left:8px;background:var(--warn);color:#000;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;}
+.bp-list{display:flex;flex-wrap:wrap;gap:6px 14px;max-height:120px;overflow:auto;margin-bottom:10px;}
+.bp-it{display:flex;align-items:center;gap:6px;font-size:13px;}
 </style>
 </head>
 <body>
@@ -1475,7 +1482,7 @@ function renderDashboard(){
   return `
   <div class="page-head">
     <div><h1>لوحة التحكم</h1><div class="desc">نظرة شاملة على أداء المشروع</div></div>
-    <div class="toolbar" style="margin:0;">
+    <div class="toolbar" style="margin:0;"><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم</button>
       <div class="field-inline">
         <label>الفترة</label>
         <select onchange="dashboardMonth=this.value;render();">
@@ -2692,6 +2699,152 @@ function deleteHoodariPayment(id){ confirmDelete(null, ()=>{ state.hoodariPaymen
 /* =========================================================
    MODELS
 ========================================================= */
+
+/* ===== اتجاه الموديل + تقرير الموديلات + تعديل أسعار جماعي ===== */
+function modelPcs(id,from,to){ return state.sales.filter(x=>x.modelId===id && x.date>=from && x.date<=to).reduce((a,x)=>a+num(x.quantity),0); }
+function modelTrend(id){
+  const t=todayISO(), cm=t.slice(0,7), pm=ymAdd(cm,-1), d=t.slice(8,10);
+  const cur=modelPcs(id,cm+'-01',t), prev=modelPcs(id,pm+'-01',pm+'-'+(d>'28'?'31':d));
+  return {cur,prev};
+}
+function trendChip(id,full){
+  const {cur,prev}=modelTrend(id); if(!cur && !prev) return '';
+  let up,txt;
+  if(!prev){ up=true; txt='▲'; } else { const p=Math.round((cur-prev)/prev*100); if(p===0) return '<span class="tr flat">▬</span>'; up=p>0; txt=(up?'▲ ':'▼ ')+Math.abs(p)+'%'; }
+  return `<span class="tr ${up?'up':'dn'}" title="القطع المباعة هذا الشهر (${cur}) مقابل نفس الفترة بالشهر الماضي (${prev})">${txt}${full?` <small>${cur} مقابل ${prev}</small>`:''}</span>`;
+}
+function modelStale(id){
+  const last=state.sales.filter(x=>x.modelId===id).map(x=>x.date).sort().pop(); if(!last) return false;
+  return dayDiff(last,todayISO())>30;
+}
+/* تقرير الموديلات الشهري */
+let mrState={ym:thisMonth(),ch:'ALL'};
+function modelsReportData(ym,ch){
+  const [f,t]=mRange(ym), pm=ymAdd(ym,-1), [pf,pt]=mRange(pm);
+  const sel=x=>(ch==='ALL'||(x.channel||'shop')===ch);
+  const S=state.sales.filter(x=>x.date>=f&&x.date<=t&&sel(x)), PS_=state.sales.filter(x=>x.date>=pf&&x.date<=pt&&sel(x));
+  const prevQ={}; PS_.forEach(x=>{ const k=x.modelId||('x:'+saleProductLabel(x)); prevQ[k]=(prevQ[k]||0)+num(x.quantity); });
+  const ret={}; (state.returns||[]).filter(r=>r.date>=f&&r.date<=t&&(ch==='ALL'||(r.channel||'shop')===ch)).forEach(r=>{ const k=r.modelId||('x:'+r.product); ret[k]=(ret[k]||0)+num(r.qty); });
+  const rows=modelOrderStats(S).map(o=>({...o,prev:prevQ[o.key]||0,ret:ret[o.key]||0}));
+  return {rows,rev:S.reduce((a,x)=>a+saleRevenue(x),0),profit:S.reduce((a,x)=>a+saleProfit(x),0),pcs:S.reduce((a,x)=>a+num(x.quantity),0),retTotal:Object.values(ret).reduce((a,b)=>a+b,0)};
+}
+function mrChange(o){ if(!o.prev) return o.qty?'▲':'—'; const p=Math.round((o.qty-o.prev)/o.prev*100); return p===0?'▬ 0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%'; }
+function mrPreview(){
+  const ym=document.getElementById('mr_m').value, ch=document.getElementById('mr_c').value; mrState={ym,ch};
+  const D=modelsReportData(ym,ch), box=document.getElementById('mr_box');
+  box.innerHTML=`<div class="compute-box"><span>${D.pcs} قطعة · وارد ${money(D.rev)}</span><span>الربح: <b class="pos">${money(D.profit)}</b></span></div>
+  <div class="table-wrap" style="border:none"><table><thead><tr><th>#</th><th>الموديل</th><th>القطع</th><th>جملة / مفرد (طلب)</th><th>الوارد</th><th>الربح</th><th>راجع</th><th>عن الشهر السابق</th></tr></thead><tbody>
+  ${D.rows.length?D.rows.slice(0,10).map((o,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(o.name)}</b></td><td class="num">${o.qty}</td><td class="num">${o.wn} / ${o.rn}</td><td class="num">${money(o.rev)}</td><td class="num pos">${money(o.profit)}</td><td class="num ${o.ret?'neg':'muted'}">${o.ret||'—'}</td><td>${mrChange(o)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="8">ماكو مبيعات بهذا الشهر</td></tr>'}</tbody></table></div>`;
+}
+function openModelsReport(){
+  openModal({title:'📊 تقرير الموديلات الشهري',bodyHtml:`<div class="form-grid2"><div class="form-row"><label>الشهر</label><select id="mr_m" onchange="mrPreview()">${monthOptionsList(mrState.ym)}</select></div>
+    <div class="form-row"><label>القناة</label><select id="mr_c" onchange="mrPreview()"><option value="ALL">الكل</option><option value="page" ${mrState.ch==='page'?'selected':''}>الصفحة</option><option value="shop" ${mrState.ch==='shop'?'selected':''}>المعمل</option></select></div></div><div id="mr_box"></div>`,
+    onSave(){
+      const D=modelsReportData(mrState.ym,mrState.ch); if(!D.rows.length) return toast('ماكو مبيعات بهذا الشهر');
+      const worst=D.rows.filter(o=>o.ret>0).sort((a,b)=>b.ret-a.ret)[0];
+      closeModal();
+      openReceipt({prefix:'تقرير-موديلات',modalTitle:'🖨 تقرير الموديلات — '+monthLabelAr(mrState.ym),title:'تقرير الموديلات الشهري',date:dateAr(),nameLabel:'الشهر',name:monthLabelAr(mrState.ym),
+        sub:(mrState.ch==='ALL'?'كل القنوات':mrState.ch==='page'?'مبيعات الصفحة':'مبيعات المعمل')+' · أفضل '+Math.min(10,D.rows.length)+' موديلات',
+        cols:[{label:'#',w:.8},{label:'الموديل',w:3.4},{label:'القطع',w:1.4,num:true},{label:'جملة/مفرد',w:2,num:true},{label:'الوارد',w:2.4,num:true},{label:'الربح',w:2.4,num:true},{label:'عن السابق',w:1.9,num:true}],
+        rows:D.rows.slice(0,10).map((o,i)=>[String(i+1),o.name,String(o.qty),o.wn+' / '+o.rn,money(o.rev),money(o.profit),mrChange(o)]),
+        totals:[{label:'القطع المباعة',value:String(D.pcs)},{label:'الوارد',value:money(D.rev)},{label:'الأرباح',value:money(D.profit),strong:true}].concat(D.retTotal?[{label:'قطع راجعة',value:D.retTotal+(worst?' (أكثرها '+worst.name+')':'')}]:[]),
+        footer:'تقرير الموديلات — ستر',
+        waText:'تقرير الموديلات — '+monthLabelAr(mrState.ym)+'\nالأفضل: '+D.rows[0].name+' ('+D.rows[0].qty+' قطعة)\nالوارد: '+money(D.rev)+' · الأرباح: '+money(D.profit)});
+    }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='🖨 إنشاء الصورة';
+  { const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='820px'; }
+  mrPreview();
+}
+/* تعديل أسعار جماعي: يغيّر أسعار الموديلات الافتراضية فقط، ما يلمس المبيعات القديمة ولا الكلفة */
+function bulkNewPrice(old,mode,val,round){
+  old=num(old); let v=mode==='pct'?old*(1+val/100):old+val;
+  if(round>0) v=Math.round(v/round)*round; else v=Math.round(v);
+  return Math.max(0,v);
+}
+function bulkRead(){
+  return {which:document.getElementById('bp_w').value, mode:document.getElementById('bp_m').value, val:num(document.getElementById('bp_v').value), round:num(document.getElementById('bp_r').value),
+    ids:[...document.querySelectorAll('.bp_chk:checked')].map(c=>c.value)};
+}
+function bulkPreview(){
+  const B=bulkRead(), box=document.getElementById('bp_prev'); if(!box) return;
+  const rows=state.models.filter(m=>B.ids.includes(m.id)).map(m=>{
+    const o1=num(m.sellingPrice), n1=B.which==='wholesale'?o1:bulkNewPrice(o1,B.mode,B.val,B.round);
+    const o2=num(m.wholesalePrice||m.sellingPrice), n2=B.which==='retail'?o2:bulkNewPrice(o2,B.mode,B.val,B.round);
+    return {m,o1,n1,o2,n2}; });
+  box.innerHTML=`<div class="table-wrap" style="border:none;max-height:240px;overflow:auto"><table><thead><tr><th>الموديل</th><th>المفرد</th><th>الجملة</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${esc(r.m.name)}</td><td class="num">${r.o1===r.n1?money(r.o1):money(r.o1)+' ← <b class="accent">'+money(r.n1)+'</b>'}</td><td class="num">${r.o2===r.n2?money(r.o2):money(r.o2)+' ← <b class="accent">'+money(r.n2)+'</b>'}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="3">ما اخترت موديلات</td></tr>'}</tbody></table></div>`;
+}
+function bulkUndo(){
+  const u=state.priceUndo; if(!u||!u.rows||!u.rows.length) return;
+  askConfirm('تراجع عن آخر تعديل أسعار جماعي ('+u.at+')؟ ترجع أسعار '+u.rows.length+' موديل مثل ما كانت.',()=>{
+    u.rows.forEach(r=>{ const m=modelById(r.id); if(m){ m.sellingPrice=r.s; m.wholesalePrice=r.w; } });
+    state.priceUndo=null; saveState(); closeModal(); render(); toast('رجعت الأسعار القديمة');
+  },{title:'تراجع',yesLabel:'تراجع'});
+}
+function openBulkPriceModal(){
+  if(!state.models.length) return toast('ماكو موديلات');
+  const u=state.priceUndo;
+  openModal({title:'💲 تعديل أسعار جماعي',bodyHtml:`<div class="rule-box" style="margin-bottom:12px">أداة اختيارية. تغيّر أسعار البيع الافتراضية بالموديلات فقط. <b>ما تغيّر المبيعات القديمة ولا الكلفة ولا الأرباح</b>، وتكدر ترجع عنها بزر «تراجع».</div>
+    <div class="form-grid2"><div class="form-row"><label>أي سعر؟</label><select id="bp_w" onchange="bulkPreview()"><option value="retail">سعر المفرد</option><option value="wholesale">سعر الجملة</option><option value="both">الاثنين</option></select></div>
+    <div class="form-row"><label>طريقة التعديل</label><select id="bp_m" onchange="bulkPreview()"><option value="pct">نسبة %</option><option value="amt">مبلغ ثابت</option></select></div></div>
+    <div class="form-grid2"><div class="form-row"><label>القيمة (سالب = تخفيض)</label><input type="number" id="bp_v" value="10" oninput="bulkPreview()"><div class="hint">مثلاً 10 ترفع 10%، و -5 تنزل 5%.</div></div>
+    <div class="form-row"><label>تقريب لأقرب</label><select id="bp_r" onchange="bulkPreview()"><option value="0">بدون</option><option value="250">250</option><option value="500" selected>500</option><option value="1000">1,000</option></select></div></div>
+    <div class="ord-title">الموديلات <button type="button" class="btn sm ghost" onclick="document.querySelectorAll('.bp_chk').forEach(c=>c.checked=true);bulkPreview()">الكل</button> <button type="button" class="btn sm ghost" onclick="document.querySelectorAll('.bp_chk').forEach(c=>c.checked=false);bulkPreview()">ولا واحد</button></div>
+    <div class="bp-list">${state.models.map(m=>`<label class="bp-it"><input type="checkbox" class="bp_chk" value="${m.id}" checked onchange="bulkPreview()"> ${esc(m.name)}</label>`).join('')}</div>
+    <div id="bp_prev"></div>${u&&u.rows&&u.rows.length?`<div style="margin-top:10px"><button type="button" class="btn sm" onclick="bulkUndo()">↩ تراجع عن آخر تعديل (${esc(u.at)})</button></div>`:''}`,
+    onSave(){
+      const B=bulkRead(); if(!B.ids.length) return toast('اختر موديل واحد على الأقل'); if(!B.val) return toast('اكتب قيمة التعديل');
+      const rows=[];
+      B.ids.forEach(id=>{ const m=modelById(id); if(!m) return; rows.push({id,s:num(m.sellingPrice),w:m.wholesalePrice});
+        const o2=num(m.wholesalePrice||m.sellingPrice);
+        if(B.which!=='wholesale') m.sellingPrice=bulkNewPrice(m.sellingPrice,B.mode,B.val,B.round);
+        if(B.which!=='retail') m.wholesalePrice=bulkNewPrice(o2,B.mode,B.val,B.round); });
+      state.priceUndo={at:todayISO(),rows}; saveState(); closeModal(); render(); toast('تم تعديل أسعار '+rows.length+' موديل — تكدر تتراجع');
+    }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='تطبيق';
+  bulkPreview();
+}
+
+/* ===== ملخص نهاية اليوم ===== */
+let dsDate='';
+function dailyData(d){
+  const S=state.sales.filter(x=>x.date===d), E=state.expenses.filter(x=>x.date===d), R=(state.returns||[]).filter(x=>x.date===d);
+  const ev=allDebtCashEvents().filter(e=>e.date===d);
+  const orders=new Set(S.map(x=>x.orderId||x.id)).size, pcs=S.reduce((a,x)=>a+num(x.quantity),0);
+  const rev=S.reduce((a,x)=>a+saleRevenue(x),0), profit=S.reduce((a,x)=>a+saleProfit(x),0)+ev.reduce((a,e)=>a+e.profit,0);
+  const coll=ev.reduce((a,e)=>a+e.amount,0), exp=E.reduce((a,x)=>a+num(x.amount),0);
+  const rem=S.reduce((a,x)=>a+num(x.amountRemaining),0);
+  const byM=modelOrderStats(S);
+  const byT={}; E.forEach(x=>{ byT[x.type||'أخرى']=(byT[x.type||'أخرى']||0)+num(x.amount); });
+  const ch=c=>S.filter(x=>(x.channel||'shop')===c).reduce((a,x)=>a+saleRevenue(x),0);
+  return {S,E,R,orders,pcs,rev,profit,coll,exp,rem,byM,byT,page:ch('page'),shop:ch('shop'),ret:R.reduce((a,x)=>a+num(x.qty),0),net:profit-exp};
+}
+function dsPreview(){
+  dsDate=document.getElementById('ds_d').value||todayISO(); const D=dailyData(dsDate), box=document.getElementById('ds_box');
+  box.innerHTML=`<div class="compute-box"><span>${D.orders} طلب · ${D.pcs} قطعة</span><span>الوارد: <b>${money(D.rev)}</b></span></div>
+  <div class="md-kpis"><div class="mk"><small>الربح</small><b class="${D.profit>=0?'pos':'neg'}">${money(D.profit)}</b></div><div class="mk"><small>المصاريف</small><b class="neg">${money(D.exp)}</b></div><div class="mk"><small>الصافي</small><b class="${D.net>=0?'pos':'neg'}">${money(D.net)}</b></div></div>
+  ${D.byM.length?`<div class="hint">${D.byM.slice(0,6).map(o=>esc(o.name)+' × '+o.qty).join(' · ')}</div>`:'<div class="notes-empty">ماكو مبيعات بهذا اليوم</div>'}`;
+}
+function openDailySummary(){
+  if(!dsDate) dsDate=todayISO();
+  openModal({title:'📋 ملخص نهاية اليوم',bodyHtml:`<div class="form-row"><label>اليوم</label><input type="date" id="ds_d" value="${dsDate}" onchange="dsPreview()"></div><div id="ds_box"></div>`,
+    onSave(){
+      const d=document.getElementById('ds_d').value||todayISO(); dsDate=d; const D=dailyData(d);
+      closeModal();
+      const rows=D.byM.map(o=>[o.name,String(o.qty),o.wn+' / '+o.rn,money(o.rev),money(o.profit)]);
+      const tot=[{label:'الوارد',value:money(D.rev)},{label:'الأرباح',value:money(D.profit)},{label:'المصاريف',value:money(D.exp)},{label:'الصافي',value:money(D.net),strong:true}];
+      const extra=[]; if(D.page||D.shop) extra.push('الصفحة '+money(D.page)+' · المعمل '+money(D.shop)); if(D.coll) extra.push('تحصيل ديون '+money(D.coll)); if(D.rem>0) extra.push('متبقي على زبائن '+money(D.rem)); if(D.ret) extra.push('قطع راجعة '+D.ret);
+      openReceipt({prefix:'ملخص-يوم',modalTitle:'🖨 ملخص يوم '+d,title:'ملخص اليوم',date:dateAr(),nameLabel:'التاريخ',name:d,
+        sub:D.orders+' طلب · '+D.pcs+' قطعة'+(extra.length?' · '+extra.join(' · '):''),
+        cols:[{label:'الموديل',w:3.6},{label:'القطع',w:1.4,num:true},{label:'جملة/مفرد',w:2,num:true},{label:'الوارد',w:2.4,num:true},{label:'الربح',w:2.4,num:true}],
+        rows:rows.length?rows:[['ماكو مبيعات','—','—','—','—']], totals:tot,
+        extra:Object.keys(D.byT).length?{title:'المصاريف',cols:[{label:'النوع',w:4},{label:'المبلغ',w:3,num:true}],rows:Object.entries(D.byT).map(([k,v])=>[k,money(v)])}:null,
+        footer:'ملخص نهاية اليوم — ستر',
+        waText:'ملخص '+d+'\nالوارد: '+money(D.rev)+' · الأرباح: '+money(D.profit)+'\nالمصاريف: '+money(D.exp)+' · الصافي: '+money(D.net)});
+    }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='🖨 إنشاء الصورة';
+  dsPreview();
+}
+
 let modelsSort='new';
 function modelCardStats(){ const st={}; modelOrderStats(state.sales.filter(x=>x.modelId)).forEach(r=>{ st[r.id]=r; }); return st; }
 function filterModelCards(q){ q=String(q||'').trim().toLowerCase(); let n=0; document.querySelectorAll('.mcard').forEach(c=>{ const ok=!q||c.dataset.k.includes(q); c.style.display=ok?'':'none'; if(ok) n++; }); const e=document.getElementById('mcEmpty'); if(e) e.style.display=n?'none':''; }
@@ -2707,16 +2860,16 @@ function renderModels(){
   return `
   <div class="page-head">
     <div><h1>الموديلات</h1><div class="desc">${state.models.length} موديل · اضغط على أي موديل لتفاصيله</div></div>
-    <div class="btn-row"><button class="btn" onclick="modelsTab='materials';render()">🧵 اللوازم${low?` <span class="pill retail" style="color:var(--negative)">${low}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
+    <div class="btn-row"><button class="btn" onclick="openModelsReport()">📊 تقرير الشهر</button><button class="btn" onclick="modelsTab='materials';render()">🧵 اللوازم${low?` <span class="pill retail" style="color:var(--negative)">${low}</span>`:''}</button><button class="btn primary" onclick="openModelModal()">+ إضافة موديل</button></div>
   </div>
   ${state.models.length?`<div class="mtool"><input type="search" class="search-box" placeholder="🔍 ابحث باسم الموديل أو الكود" oninput="filterModelCards(this.value)">
-    <span class="seg">${[['new','الأحدث'],['sold','الأكثر مبيعاً'],['profit','الأعلى ربحاً'],['name','الاسم']].map(([k,l])=>`<button type="button" class="${modelsSort===k?'on':''}" onclick="modelsSort='${k}';render();">${l}</button>`).join('')}</span></div>`:'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
+    <span class="seg">${[['new','الأحدث'],['sold','الأكثر مبيعاً'],['profit','الأعلى ربحاً'],['name','الاسم']].map(([k,l])=>`<button type="button" class="${modelsSort===k?'on':''}" onclick="modelsSort='${k}';render();">${l}</button>`).join('')}</span><button type="button" class="btn sm ghost" onclick="openBulkPriceModal()" title="أداة اختيارية">💲 أسعار جماعي</button></div>`:'<div class="card" style="text-align:center;padding:40px 20px;"><div style="font-size:34px;">👗</div><div style="font-weight:800;margin:8px 0;">ما كو موديلات بعد</div><div class="desc" style="margin-bottom:14px;">أضف أول موديل بصورته وكلفته وأسعار البيع حتى تنربط بالمبيعات والديون.</div><button class="btn primary" onclick="openModelModal()">+ إضافة أول موديل</button></div>'}
   <div class="mgrid">
     ${list.map(m=>{
       const profit=modelProfitPerPiece(m), r=st[m.id]||{wn:0,rn:0,qty:0};
       const img=(m.images&&m.images[0])?`<img src="${m.images[0]}" loading="lazy">`:'<span class="mc-noimg">👗</span>';
       return `<div class="mcard" data-k="${esc((m.name+' '+m.code).toLowerCase())}" onclick="openModelDetail('${m.id}')">
-        <div class="mc-img">${img}<span class="mc-code">${esc(m.code)}</span>${r.qty?`<span class="mc-sold">${r.qty} مباع</span>`:''}</div>
+        <div class="mc-img">${img}<span class="mc-code">${esc(m.code)}</span>${r.qty?`<span class="mc-sold">${r.qty} مباع</span>`:''}${modelStale(m.id)?'<span class="mc-stale" title="ما انباع من أكثر من 30 يوم">راكد</span>':''}</div>
         <div class="mc-body"><div class="mc-name">${esc(m.name)}</div>
           <div class="mc-prices"><span><small>جملة</small><b>${money(m.wholesalePrice||m.sellingPrice)}</b></span><span><small>مفرد</small><b>${money(m.sellingPrice)}</b></span></div>
           <div class="mc-foot"><span class="mc-profit ${profit>=0?'pos':'neg'}">ربح ${money(profit)}</span><span class="mc-ord">${r.wn} جملة · ${r.rn} مفرد</span></div></div></div>`;
@@ -4700,6 +4853,7 @@ function buildAlerts(){
   }
   if(prev.expTotal>0 && cur.expTotal>prev.expTotal*1.5 && day>=3) out.push({id:cm+':exp',kind:'warn',ic:'🧾',t:'ارتفاع المصاريف',d:`المصاريف أعلى بـ ${Math.round((cur.expTotal/prev.expTotal-1)*100)}% من نفس الفترة بالشهر الماضي`,go:'expenses'});
   if(prev.netProfit>0 && day>=3){ const pd=(cur.netProfit-prev.netProfit)/prev.netProfit*100; if(pd<=-A.profitDrop) out.push({id:cm+':pdrop',kind:'bad',ic:'📉',t:'الأرباح نزلت عن الشهر الماضي',d:`صافي الربح أقل بـ ${Math.round(-pd)}% من نفس الفترة بالشهر الماضي (${money(cur.netProfit)} مقابل ${money(prev.netProfit)})`,go:'dashboard'}); }
+  { const st=state.models.filter(m=>modelStale(m.id)); if(st.length) out.push({id:cm+':stale',kind:'warn',ic:'💤',t:st.length+' موديل راكد',d:'ما انباعوا من أكثر من 30 يوم: '+st.slice(0,3).map(m=>m.name).join('، ')+(st.length>3?'…':''),go:'models'}); }
   if(cur.netProfit<0 && day>=7) out.push({id:cm+':loss',kind:'bad',ic:'⚠️',t:'صافي الربح سالب هذا الشهر',d:`صافي الربح الحالي ${money(cur.netProfit)}`,go:'dashboard'});
   const late=state.customerDebts.map(d=>{ const t=customerDebtTotals(d.id); const last=[d.date,...customerDebtPaymentsOf(d.id).map(p=>p.date)].sort().pop(); return {d,rem:t.remaining,age:dayDiff(last,today)}; }).filter(x=>x.rem>0 && x.age>A.lateDays);
   if(late.length){ const top=late.slice().sort((a,b)=>b.rem-a.rem)[0]; out.push({id:cm+':cdebt',kind:'warn',ic:'⏰',t:`تأخر تحصيل ${late.length} دين زبائن`,d:`إجمالي ${money(late.reduce((s,x)=>s+x.rem,0))} — الأكبر: ${top.d.customerName||'زبون'} (${money(top.rem)}) من ${top.age} يوم`,go:'customerdebts'}); }
