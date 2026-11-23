@@ -772,6 +772,15 @@
 .wrt-rows{display:flex;flex-direction:column;} .wrt-rows div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px dashed var(--border);font-size:13px;} .wrt-rows span{color:var(--text-dim);} .wrt-rows b{font-variant-numeric:tabular-nums;}
 .rc-sum{gap:8px !important;margin:2px 0 12px !important;} .rc-sum>div{padding:7px 12px !important;border-radius:10px !important;} .rc-sum b{font-size:16px !important;}
 @media (max-width:480px){.wrt{padding:10px;} .wrt-big{font-size:16px;} .wrt-rows div{font-size:12px;} .wrt-best{display:none;}}
+
+  /* ===== v13 partnership top + safety ===== */
+  .pt-top{margin-bottom:14px;}
+  .gpartners{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);} .gp-t{font-weight:800;font-size:13.5px;margin-bottom:8px;}
+  .gp-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+  .gp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);cursor:pointer;transition:transform .2s var(--ease),border-color .2s;} .gp:hover{transform:translateY(-2px);border-color:var(--border-strong);}
+  .gp-n{font-weight:800;flex:1;min-width:70px;} .gp b{font-variant-numeric:tabular-nums;font-size:13.5px;width:100%;}
+  .issue{margin-bottom:12px;border-right:4px solid var(--info);} .issue.bad{border-right-color:var(--negative);} .issue.warn{border-right-color:var(--warn);}
+  .issue-h{margin-bottom:4px;} .issue-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-top:1px dashed var(--border);font-size:13.5px;}
 </style>
 </head>
 <body>
@@ -4869,6 +4878,7 @@ function renderPartnership(){
   return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات الصفحة وإعلاناتها فقط — تتحدث الأرقام تلقائياً. مصاريف الصفحة الثانية (كارتات وغيرها) ما تدخل بالشراكة، فقط الإعلانات تتقاسمونها بالنسب.</div></div>
     <div class="toolbar" style="margin:0;"><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   <div class="pt-bar"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="openPartnerManage()">⚙️ إدارة الشراكة</button></div>
+  ${ptTopStats(D,PD)}
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
@@ -5285,10 +5295,25 @@ function openGoalModal(){
     <div class="form-row"><label>نبّهني إذا الإعلانات تجاوزت (% من الأرباح)</label><input type="number" id="f_ga" value="${g.adsPct||30}" min="1" max="100"><div class="hint">مثلاً 30 يعني: إذا الإعلانات صارت أكثر من 30% من أرباح الصفحة يطلع تنبيه أحمر.</div></div>`,
   onSave(){ const sales=num(document.getElementById('f_gs').value), adsPct=num(document.getElementById('f_ga').value); P.goal={sales,adsPct:adsPct>0?adsPct:30}; saveState(); closeModal(); render(); toast('تم حفظ الهدف'); }});
 }
+function ptTopStats(D,PD){
+  const P=PS(), db=(c,p,up)=>PD?deltaBadge(c,p,up):'';
+  const wn=(P.empDeduct&&D.wage)?' · بعد خصم أجور الموظفين '+money(D.wage):'';
+  return `<div class="grid stats pt-top">
+    ${statCard('صافي الأرباح للتوزيع',money(D.net),D.net>=0?'pos':'neg','بعد الإعلانات'+wn,true,null,db(D.net,PD&&PD.net,true))}
+    ${statCard('وارد الصفحة',money(D.revenue),'accent',D.orders+' طلب · '+D.pieces+' قطعة',false,null,db(D.revenue,PD&&PD.revenue,true))}
+    ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg','هامش '+(D.revenue>0?Math.round(D.profit/D.revenue*1000)/10:0)+'%',false,null,db(D.profit,PD&&PD.profit,true))}
+    ${statCard('تكاليف الإعلانات',money(D.ads),'neg',D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',false,null,db(D.ads,PD&&PD.ads,false))}
+  </div>`;
+}
+function ptGoalPartners(D){
+  return `<div class="gpartners"><div class="gp-t">نسب الشركاء <span class="muted" style="font-weight:500">— اضغط على اسم لكشف حسابه</span></div><div class="gp-row">${D.parts.map(p=>`<div class="gp" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)"><span class="gp-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span><b class="${p.net>=0?'pos':'neg'}">${money(p.net)}</b></div>`).join('')}</div></div>`;
+}
+
 function goalCardHtml(D){
   const P=PS(), g=P.goal||{}, all=partMonth==='ALL';
   if(all) return '';
-  if(!g.sales && !g.adsPct) return `<div class="gcard"><div class="gcard-h"><b>🎯 هدف الشهر</b><button class="btn sm primary" onclick="openGoalModal()">حدد هدف شهري</button></div><div class="hint">حدد هدف مبيعات للصفحة، وتنبيه إذا الإعلانات صارت تاكل من الأرباح.</div></div>`;
+  const PH=ptGoalPartners(D);
+  if(!g.sales && !g.adsPct) return `<div class="gcard"><div class="gcard-h"><b>🎯 هدف الشهر</b><button class="btn sm primary" onclick="openGoalModal()">حدد هدف شهري</button></div><div class="hint">حدد هدف مبيعات للصفحة، وتنبيه إذا الإعلانات صارت تاكل من الأرباح.</div>${PH}</div>`;
   const pct=g.sales>0?D.revenue/g.sales*100:0, left=Math.max(0,g.sales-D.revenue);
   const isCur=partMonth===thisMonth(); let perDay='';
   if(isCur && left>0){ const t=new Date(), last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(), rem=Math.max(1,last-t.getDate()+1); perDay=`<span>المطلوب يومياً: <b>${money(left/rem)}</b> (باقي ${rem} يوم)</span>`; }
@@ -5296,7 +5321,7 @@ function goalCardHtml(D){
   return `<div class="gcard"><div class="gcard-h"><b>🎯 هدف ${monthLabelAr(partMonth)}</b><button class="btn sm" onclick="openGoalModal()">تعديل الهدف</button></div>
   ${g.sales>0?`<div class="gbar"><i class="${pct>=100?'done':''}" style="width:${Math.min(100,pct)}%"></i></div>
   <div class="gnums"><span>الوارد: <b>${money(D.revenue)}</b> من ${money(g.sales)}</span><span><b>${Math.round(pct)}%</b>${pct>=100?' ✓ تحقق الهدف':' · متبقي '+money(left)}</span>${perDay}</div>`:''}
-  <div class="galert ${over?'':'ok'}">${over?`⚠️ الإعلانات ${money(D.ads)} = ${Math.round(ar)}% من الأرباح (الحد ${lim}%) — راجع الإعلانات.`:`الإعلانات ${D.ads>0?Math.round(ar)+'% من الأرباح':'0'} — ضمن الحد (${lim}%).`}</div></div>`;
+  <div class="galert ${over?'':'ok'}">${over?`⚠️ الإعلانات ${money(D.ads)} = ${Math.round(ar)}% من الأرباح (الحد ${lim}%) — راجع الإعلانات.`:`الإعلانات ${D.ads>0?Math.round(ar)+'% من الأرباح':'0'} — ضمن الحد (${lim}%).`}</div>${PH}</div>`;
 }
 
 let ptRange={mode:'month',from:'',to:''};
@@ -6163,29 +6188,37 @@ function opsDiff(){
   try{ const P=state.partnership; if(P&&P.closes) P.closes.forEach(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); const key=c.month+':'+Math.round(D.net); if(Math.round(D.net)!==Math.round(c.net) && !_warnClose[key]){ _warnClose[key]=1; toast(`⚠️ أرقام شهر ${c.month} (مقفل بالشراكة) تغيّرت بعد الإقفال — حدّث الإقفال من نظام الشراكة`); } }); }catch(e){}
 }
 function integrityIssues(){
-  const out=[], today=todayISO(), S=state, add=(kind,t,list,go)=>{ if(list.length) out.push({kind,t,n:list.length,ex:list.slice(0,4),go}); };
-  const lab=s=>`${s.date} · ${saleProductLabel(s)}${s.customerName?' · '+s.customerName:''}`;
-  add('bad','مبيعات بتاريخ مستقبلي',S.sales.filter(s=>s.date>today).map(lab),'sales');
-  add('warn','مبيعات بموديل وبدون كلفة محفوظة',S.sales.filter(s=>s.modelId && !num(s.costSnapshot)).map(lab),'sales');
-  add('info','مبيعات بسعر أقل من الكلفة (خسارة)',S.sales.filter(s=>s.modelId && num(s.costSnapshot)>0 && num(s.unitPrice)<num(s.costSnapshot)).map(lab),'sales');
+  const out=[], today=todayISO(), S=state;
+  const sRow=s=>({label:`${s.date} · ${saleProductLabel(s)}${s.customerName&&s.customerName!=='بدون اسم'?' · '+s.customerName:''} · ${money(num(s.unitPrice)*num(s.quantity))}`,edit:s.orderId?`openOrderModal('${s.orderId}')`:`openSaleModal('${s.id}')`,del:`deleteSale('${s.id}')`});
+  const add=(kind,t,hint,items)=>{ if(items.length) out.push({kind,t,hint,items}); };
+  add('bad','مبيعات بتاريخ مستقبلي','عدّل التاريخ إلى اليوم أو قبله، أو احذف العملية إذا كانت خطأ.',S.sales.filter(s=>s.date>today).map(sRow));
+  add('warn','مبيعات بموديل وبدون كلفة محفوظة','افتح العملية واحفظها من جديد حتى تنحسب الكلفة والربح بشكل صحيح.',S.sales.filter(s=>s.modelId && !num(s.costSnapshot)).map(sRow));
+  add('info','مبيعات بسعر أقل من الكلفة (خسارة)','تأكد إن السعر مكتوب صح. إذا صحيح (تخفيض مقصود) تجاهل التنبيه.',S.sales.filter(s=>s.modelId && num(s.costSnapshot)>0 && num(s.unitPrice)<num(s.costSnapshot)).map(sRow));
   const hasDebt=s=>(s.orderId?S.sales.filter(v=>v.orderId===s.orderId):[s]).some(v=>v.linkedDebtId && customerDebtById(v.linkedDebtId));
-  add('bad','مبيعات فيها متبقي بدون دين مسجل',S.sales.filter(s=>num(s.amountRemaining)>0 && !hasDebt(s)).map(lab),'sales');
-  add('warn','ديون زبائن بدون اسم',S.customerDebts.filter(d=>!(d.customerName||'').trim()).map(d=>`${d.date} · ${money(d.amount)}`),'customerdebts');
-  add('bad','ديون زبائن المسدد منها أكثر من المبلغ',S.customerDebts.filter(d=>customerDebtTotals(d.id).paid>num(d.amount)+1).map(d=>`${d.customerName} · ${money(d.amount)}`),'customerdebts');
-  add('warn','مصاريف بدون مبلغ',S.expenses.filter(e=>!num(e.amount)).map(e=>`${e.date} · ${e.type}`),'expenses');
-  try{ const P=PS(); const sum=P.partners.reduce((a,p)=>a+num(p.pct),0); if(Math.abs(sum-100)>0.001) out.push({kind:'bad',t:'مجموع نسب الشركاء ليس 100%',n:1,ex:['المجموع الحالي '+sum+'%'],go:'partnership'});
-    add('warn','أشهر مقفلة تغيّرت أرقامها',P.closes.filter(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); return Math.round(D.net)!==Math.round(c.net); }).map(c=>c.month),'partnership'); }catch(e){}
+  add('bad','مبيعات فيها متبقي بدون دين مسجل','افتح العملية واحفظها حتى ينسجل الدين، أو اجعل المتبقي صفر إذا انسدد.',S.sales.filter(s=>num(s.amountRemaining)>0 && !hasDebt(s)).map(sRow));
+  add('bad','ديون زبائن المسدد منها أكثر من مبلغها','افتح الدين وصحح المبلغ أو التسديدات.',S.customerDebts.filter(d=>customerDebtTotals(d.id).paid>num(d.amount)+1).map(d=>({label:`${d.date} · ${d.customerName||'بدون اسم'} · ${money(d.amount)}`,edit:`openCustomerDebtModal('${d.id}')`,del:`deleteCustomerDebt('${d.id}')`})));
+  add('warn','مصاريف بدون مبلغ','افتح المصروف وأضف المبلغ، أو احذفه.',S.expenses.filter(e=>!num(e.amount)).map(e=>({label:`${e.date} · ${e.type}`,edit:`openExpenseModal('${e.id}')`,del:`deleteExpense('${e.id}')`})));
+  try{ const P=PS(), sum=P.partners.reduce((a,p)=>a+num(p.pct),0);
+    if(Math.abs(sum-100)>0.001) add('bad','مجموع نسب الشركاء ليس 100%','عدّل النسب حتى يصير المجموع 100%.',[{label:'المجموع الحالي '+sum+'%',edit:'openPartnerManage()'}]);
+    add('warn','أشهر مقفلة تغيّرت أرقامها بعد الإقفال','افتح نظام الشراكة واضغط "تحديث إقفال الشهر" إذا التغيير مقصود.',P.closes.filter(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); return Math.round(D.net)!==Math.round(c.net); }).map(c=>({label:monthLabelAr(c.month),edit:`partMonth='${c.month}';navigate('partnership')`}))); }catch(e){}
   return out;
 }
+var safetyTab='debts';
+const OPS_TABS=[['debts','💸 الديون',['دين علينا','دين زبون','تسديد دين','تحصيل دين']],['sales','📦 المبيعات',['بيع','مرتجع']],['pt','🤝 الشراكة وسوالفها',['إقفال شراكة','استلام شريك','تعديل حساب شريك','تسديد موظف','حالة الشراكة']],['other','🧾 مصاريف وعمال',['مصروف','تسديد خياط','تسديد فصال','تسديد هودارية']]];
 function renderSafety(){
-  const I=integrityIssues(), L=(state.opsLog||[]).slice().reverse().slice(0,150);
-  const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''};
-  return `<div class="page-head"><div><h1>الحماية والسجل</h1><div class="desc">فحص تلقائي لأخطاء البيانات، وسجل بكل إضافة وتعديل وحذف حتى تعرف شنو تغيّر ومتى</div></div></div>
+  const I=integrityIssues(), all=(state.opsLog||[]).slice().reverse();
+  const tab=OPS_TABS.find(t=>t[0]===safetyTab)||OPS_TABS[0], L=all.filter(e=>tab[2].includes(e.c)).slice(0,150);
+  const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''}, ic={bad:'⛔',warn:'⚠️',info:'ℹ️'};
+  return `<div class="page-head"><div><h1>الحماية والسجل</h1><div class="desc">فحص أخطاء البيانات بأزرار تفتح العملية نفسها (تعديل أو حذف)، وسجل مقسم حسب النوع</div></div></div>
   <div class="section-title"><span class="ic">🩺</span> فحص سلامة البيانات</div>
-  ${I.length?I.map(x=>`<div class="np-item ${x.kind}" onclick="navigate('${x.go}')"><span class="np-ic">${x.kind==='bad'?'⛔':x.kind==='warn'?'⚠️':'ℹ️'}</span><div><b>${esc(x.t)} (${x.n})</b><div>${x.ex.map(esc).join(' · ')}${x.n>x.ex.length?' …':''}</div></div></div>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}
-  <div class="section-title"><span class="ic">🕒</span> سجل العمليات (آخر ${L.length})</div>
+  ${I.length?I.map(x=>`<div class="card issue ${x.kind}"><div class="issue-h"><b>${ic[x.kind]} ${esc(x.t)} (${x.items.length})</b></div><div class="hint">${esc(x.hint)}</div>
+    ${x.items.slice(0,15).map(it=>`<div class="issue-row"><span>${esc(it.label)}</span><span class="btn-row">${it.edit?`<button type="button" class="btn sm" onclick="${it.edit}">تعديل</button>`:''}${it.del?`<button type="button" class="btn sm danger" onclick="${it.del}">حذف</button>`:''}</span></div>`).join('')}
+    ${x.items.length>15?`<div class="muted" style="padding:6px 2px">… و${x.items.length-15} غيرها (صحح الأولى وتظهر اللي بعدها)</div>`:''}</div>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}
+  <div class="section-title"><span class="ic">🕒</span> سجل العمليات</div>
+  <div class="tabs no-print">${OPS_TABS.map(t=>`<button type="button" class="${tab[0]===t[0]?'on':''}" onclick="safetyTab='${t[0]}';render();">${t[1]} <span style="opacity:.6">(${all.filter(e=>t[2].includes(e.c)).length})</span></button>`).join('')}</div>
+  ${tab[0]==='debts'?`<div class="btn-row" style="margin:-6px 0 10px;"><button type="button" class="btn sm ghost" onclick="navigate('debtlog')">📋 سجل تعديلات الديون بالتفصيل (باسم المستخدم)</button></div>`:''}
   <div class="table-wrap"><table><thead><tr><th>الوقت</th><th>العملية</th><th>النوع</th><th>التفاصيل</th></tr></thead><tbody>
-  ${L.length?L.map(e=>`<tr><td class="muted">${new Date(e.t).toLocaleString('ar-IQ',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td class="${colr[e.a]||''}"><b>${e.a}</b></td><td>${esc(e.c)}</td><td class="muted">${esc(e.d)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">السجل يبدأ من هسه — كل تغيير تسويه ينكتب هنا</td></tr>'}</tbody></table></div>`;
+  ${L.length?L.map(e=>`<tr><td class="muted">${new Date(e.t).toLocaleString('ar-IQ',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td class="${colr[e.a]||''}"><b>${e.a}</b></td><td>${esc(e.c)}</td><td class="muted">${esc(e.d)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">ما اكو عمليات مسجلة بهذا القسم لحد هسه</td></tr>'}</tbody></table></div>`;
 }
 
 function renderReturns(){
