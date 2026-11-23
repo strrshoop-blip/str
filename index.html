@@ -762,6 +762,16 @@
 .tm-num{text-align:end;display:flex;flex-direction:column;gap:2px;flex:0 0 auto;} .tm-num b{font-size:14px;font-variant-numeric:tabular-nums;} .tm-num small{font-size:11.5px;}
 .pt-sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;} .pt-sec>summary{cursor:pointer;padding:13px 16px;font-weight:800;font-size:14.5px;} .pt-sec[open]>summary{border-bottom:1px solid var(--border);} .pt-sec .table-wrap{border:0;border-radius:0;box-shadow:none;}
 @media (max-width:640px){.hero-rev{text-align:start;width:100%;} .hero-rev b{font-size:24px;} .wr-q{display:none;} .wr2-b b{min-width:64px;font-size:13px;} .tm-img{width:46px;height:46px;} .hero-card{padding:14px;}}
+
+.wr3-bar{display:flex;height:30px;border-radius:12px;overflow:hidden;gap:3px;margin-bottom:12px;} .wr3-bar i{display:flex;align-items:center;justify-content:center;min-width:0;} .wr3-bar i.w{background:var(--text);} .wr3-bar i.r{background:var(--info);} .wr3-bar em{font-style:normal;font-size:12px;font-weight:800;color:#fff;white-space:nowrap;}
+.wr3{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.wrt{border:1px solid var(--border);border-radius:16px;padding:12px 14px;background:var(--surface);border-top:4px solid var(--text);} .wrt.r{border-top-color:var(--info);}
+.wrt-h{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;flex-wrap:wrap;} .wrt-h i{width:10px;height:10px;border-radius:50%;background:var(--text);} .wrt.r .wrt-h i{background:var(--info);}
+.wrt-best{margin-inline-start:auto;font-size:10.5px;font-weight:800;background:var(--positive);color:#fff;border-radius:999px;padding:2px 8px;}
+.wrt-big{font-size:20px;font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums;} .wrt-sub{font-size:11.5px;color:var(--text-faint);margin-bottom:8px;}
+.wrt-rows{display:flex;flex-direction:column;} .wrt-rows div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px dashed var(--border);font-size:13px;} .wrt-rows span{color:var(--text-dim);} .wrt-rows b{font-variant-numeric:tabular-nums;}
+.rc-sum{gap:8px !important;margin:2px 0 12px !important;} .rc-sum>div{padding:7px 12px !important;border-radius:10px !important;} .rc-sum b{font-size:16px !important;}
+@media (max-width:480px){.wrt{padding:10px;} .wrt-big{font-size:16px;} .wrt-rows div{font-size:12px;} .wrt-best{display:none;}}
 </style>
 </head>
 <body>
@@ -4762,11 +4772,14 @@ function openWhy(kind){
 function openPtSection(id){ const e=document.getElementById(id); if(e){ e.open=true; e.scrollIntoView({behavior:'smooth',block:'start'}); } }
 function ptWRHtml(D){
   const M=ptMargins(D), W=M.w, R=M.r, nf=v=>Math.round(v).toLocaleString('en-US');
-  const rows=[['الطلبات',W.n,R.n,nf],['القطع',W.pcs,R.pcs,nf],['الوارد',W.rev,R.rev,money],['الأرباح',W.profit,R.profit,money],['متوسط الطلب',W.n?W.rev/W.n:0,R.n?R.rev/R.n:0,money],['ربح القطعة',W.pcs?W.profit/W.pcs:0,R.pcs?R.profit/R.pcs:0,money]];
   if(!W.n && !R.n) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
-  return `<div class="wr2-head"><span class="w"><i></i> جملة <small>${W.n} طلب · ${W.pcs} قطعة</small></span><span class="r"><i></i> مفرد <small>${R.n} طلب · ${R.pcs} قطعة</small></span></div>`+
-    rows.map(([l,w,r,fm])=>{ const t=(w+r)||1, share=(w+r)>0&&['الطلبات','القطع','الوارد','الأرباح'].includes(l);
-      return `<div class="wr2"><div class="wr2-l">${l}</div><div class="wr2-b"><b class="w">${fm(w)}</b><div class="wr2-bar"><i class="w" style="flex:${share?w/t:(w>=r?1:r?w/r:0)}"></i><i class="r" style="flex:${share?r/t:(r>w?1:w?r/w:0)}"></i></div><b class="r">${fm(r)}</b></div>${share?`<div class="wr2-p"><span>${Math.round(w/t*100)}%</span><span>${Math.round(r/t*100)}%</span></div>`:''}</div>`; }).join('');
+  const tr=(W.rev+R.rev)||1, wp=Math.round(W.rev/tr*100), rp=100-wp;
+  const ppW=W.pcs?W.profit/W.pcs:0, ppR=R.pcs?R.profit/R.pcs:0, best=(W.pcs&&R.pcs)?(ppW>ppR?'w':ppR>ppW?'r':''):'';
+  const tile=(k,l,X,pp)=>`<div class="wrt ${k}"><div class="wrt-h"><i></i>${l}${best===k?'<span class="wrt-best">الأربح للقطعة</span>':''}</div>
+    <div class="wrt-big">${money(X.rev)}</div><div class="wrt-sub">وارد · ${k==='w'?wp:rp}%</div>
+    <div class="wrt-rows"><div><span>طلبات</span><b>${X.n}</b></div><div><span>قطع</span><b>${nf(X.pcs)}</b></div><div><span>ربح</span><b class="${X.profit>=0?'pos':'neg'}">${money(X.profit)}</b></div><div><span>ربح القطعة</span><b>${X.pcs?money(pp):'—'}</b></div><div><span>متوسط الطلب</span><b>${X.n?money(X.rev/X.n):'—'}</b></div></div></div>`;
+  return `<div class="wr3-bar" title="حصة كل نوع من الوارد"><i class="w" style="flex:${W.rev}"><em>${wp>=12?'جملة '+wp+'%':''}</em></i><i class="r" style="flex:${R.rev}"><em>${rp>=12?'مفرد '+rp+'%':''}</em></i></div>
+  <div class="wr3">${tile('w','جملة',W,ppW)}${tile('r','مفرد',R,ppR)}</div>`;
 }
 let ptModelsAll=false;
 function ptModelsHtml(D){
@@ -4848,7 +4861,7 @@ function renderPartnership(){
   const changed=closed && (Math.round(closed.net)!==Math.round(D.net) || Math.round(closed.profit)!==Math.round(D.profit));
   const gm={}; D.ps.forEach(s=>{const k=groupKey(s.date,partGran); gm[k]=(gm[k]||0)+saleRevenue(s);});
   let keys=Object.keys(gm).sort();
-  if(partGran==='day' && partMonth!=='ALL'){ const y=+partMonth.slice(0,4), m=+partMonth.slice(5,7), last=new Date(y,m,0).getDate(), td=todayISO(); keys=[]; for(let d=1;d<=last;d++){ const k=partMonth+'-'+String(d).padStart(2,'0'); if(k<=td||gm[k]) keys.push(k); } }
+  if(partGran==='day' && partMonth!=='ALL'){ const y=+partMonth.slice(0,4), m=+partMonth.slice(5,7), last=new Date(y,m,0).getDate(), td=todayISO(); keys=[]; for(let d=1;d<=last;d++){ const k=partMonth+'-'+String(d).padStart(2,'0'); if(k<=td||gm[k]) keys.push(k); } const fk=Object.keys(gm).sort()[0]; if(fk) keys=keys.filter(k=>k>=fk); }
   const unitLabel={day:'يوم',week:'أسبوع',month:'شهر',year:'سنة'}[partGran];
   const rows=keys.map(k=>({v:gm[k]||0,l:partGran==='day'?String(+k.slice(8)):partGran==='week'?(+k.slice(8))+'/'+(+k.slice(5,7)):partGran==='month'?monthLabelAr(k):k,full:partGran==='day'?k:partGran==='week'?'أسبوع يبدأ '+k:partGran==='month'?monthLabelAr(k):k}));
   const tot=D.rt.rev+D.wh.rev||1, tp=D.pieces||1;
@@ -4859,7 +4872,10 @@ function renderPartnership(){
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
-  ${ptHeroHtml(D,PD)}
+  <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
+  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel)}</div>
+
+  <div id="ptDaily">${ptDailyHtml()}</div>
 
   <div class="section-title"><span class="ic">👥</span> الشركاء <span class="muted" style="font-size:12px;font-weight:500">اضغط على أي اسم لكشف حسابه</span></div>
   <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
@@ -4871,16 +4887,13 @@ function renderPartnership(){
     <div class="pr"><span>المستلم (كل الفترات)</span><b class="pos">${money(t.paid)}</b></div>
     <div class="pr"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>`;}).join('')}</div>
 
-  <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
-  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel)}</div>
-
-  <div id="ptDaily">${ptDailyHtml()}</div>
-
   <div class="section-title"><span class="ic">⚖️</span> جملة مقابل مفرد <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
   <div class="card wr2-card">${ptWRHtml(D)}</div>
 
   <div class="section-title"><span class="ic">🏆</span> أكثر الموديلات طلباً <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
   <div class="card">${ptModelsHtml(D)}</div>
+
+  ${ptHeroHtml(D,PD)}
 
   ${(()=>{const T=empsTotal(); return `<div class="section-title"><span class="ic">👥</span> موظفو الصفحة — مستحقاتهم <button class="btn sm" style="margin-inline-start:auto" onclick="currentDetail='emps';render();window.scrollTo(0,0)">إدارة الموظفين ←</button></div>
   <div class="grid stats">${T.list.length?T.list.map(S=>`<div class="pcard" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)"><div class="pn"><span>👤 ${esc(S.E.name)}</span><span class="pill retail">${money(S.rate)} للقطعة</span></div><div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له</div><div class="pr"><span>قطع هذا الشهر</span><b>${S.mPieces}</b></div><div class="pr"><span>مستحق هذا الشهر</span><b>${money(S.mDue)}</b></div></div>`).join(''):`<div class="pcard" onclick="openEmpEditModal()"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظفين. اضغط لإضافة موظف يستحق أجرة على قطع المفرد.</div></div>`}</div>`;})()}
@@ -5311,7 +5324,7 @@ function ptDailyHtml(){
   <div class="btn-row" style="margin:0 0 12px;align-items:end;">${chip('today','اليوم')}${chip('yest','أمس')}${chip('7d','آخر 7 أيام')}${chip('month','الشهر المحدد')}
     <label class="ol-f" style="margin-inline-start:10px;"><small>من</small><input type="date" id="pd_from" value="${ptRange.mode==='custom'?esc(ptRange.from):''}" onchange="ptCustom()"></label>
     <label class="ol-f"><small>إلى</small><input type="date" id="pd_to" value="${ptRange.mode==='custom'?esc(ptRange.to):''}" onchange="ptCustom()"></label></div>
-  <div class="grid stats" style="margin-bottom:12px;">${statCard('عدد الطلبات',tot.o+' طلب','accent',list.length+' يوم فيه مبيعات')}${statCard('القطع',tot.p+' قطعة','',list.length?'معدل '+(Math.round(tot.o/list.length*10)/10)+' طلب باليوم':'')}${statCard('الوارد',money(tot.r),'pos')}${statCard('الربح',money(tot.f),tot.f>=0?'pos':'neg')}</div>
+  <div class="hero-kpis" style="margin:0 0 12px;"><div class="hk"><small>الطلبات</small><b>${tot.o}</b><small>${list.length} يوم فيه مبيعات</small></div><div class="hk"><small>القطع</small><b>${tot.p}</b><small>${list.length?'معدل '+(Math.round(tot.o/list.length*10)/10)+' طلب باليوم':''}</small></div><div class="hk"><small>الوارد</small><b>${money(tot.r)}</b></div><div class="hk"><small>الربح</small><b class="${tot.f>=0?'pos':'neg'}">${money(tot.f)}</b></div></div>
   <div class="table-wrap"><table><thead><tr><th></th><th>اليوم</th><th>الطلبات</th><th>القطع</th><th>الوارد</th><th>الربح</th></tr></thead><tbody>
   ${list.length?list.map(g=>{ const dn=AR_DAYS[new Date(g.date+'T12:00:00').getDay()]; return `<tr style="cursor:pointer" onclick="ptToggleDay('${g.date}')"><td class="muted" id="pdc_${g.date}">▸</td><td><b>${esc(g.date)}</b> <span class="muted">${dn}</span></td><td class="num">${g.orders.size}</td><td class="num">${g.pcs}</td><td class="num accent">${money(g.rev)}</td><td class="num ${g.profit>=0?'pos':'neg'}">${money(g.profit)}</td></tr>
     <tr id="pdd_${g.date}" style="display:none"><td></td><td colspan="5"><table class="sub-table" style="width:100%"><thead><tr><th>الوقت</th><th>المنتج</th><th>الزبون</th><th>النوع</th><th>القطع</th><th>الوارد</th><th></th></tr></thead><tbody>${g.list.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(x=>`<tr><td class="muted">${tmLabel(x)||'—'}</td><td>${esc(saleProductLabel(x))}</td><td>${esc(x.customerName||'—')}</td><td><span class="pill ${x.customerType==='wholesale'?'wholesale':'retail'}">${x.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(x.quantity)}</td><td class="num accent">${money(saleRevenue(x))}</td><td><button class="btn sm" onclick="event.stopPropagation();openReturnModal('${x.id}')">↩ راجع</button></td></tr>`).join('')}</tbody></table></td></tr>`; }).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات بهذي الفترة</td></tr>'}</tbody></table></div>
