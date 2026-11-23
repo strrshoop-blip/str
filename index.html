@@ -719,6 +719,15 @@
 .pt-menu{position:absolute;top:calc(100% + 6px);left:0;right:auto;min-width:260px;z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;}
 .pt-menu button{background:none;border:0;text-align:start;padding:10px 12px;border-radius:10px;font:inherit;font-size:13.5px;color:var(--text);cursor:pointer;} .pt-menu button:hover{background:var(--surface-2);} .pt-menu button.neg{color:var(--negative);}
 @media (max-width:700px){.pt-menu{min-width:230px;max-width:80vw;}}
+
+.pt-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;} .pt-bar .btn{flex:0 0 auto;}
+.pm-list{display:flex;flex-direction:column;gap:8px;}
+.pm-it{display:flex;align-items:center;gap:12px;text-align:start;width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font:inherit;color:var(--text);cursor:pointer;transition:background .12s,border-color .12s;}
+.pm-it:hover{background:var(--surface-2);border-color:var(--border-strong);}
+.pm-it.main{background:var(--text);color:var(--bg);border-color:var(--text);} .pm-it.main small{color:inherit;opacity:.75;}
+.pm-it.neg{color:var(--negative);margin-top:6px;}
+.pm-ic{font-size:20px;width:30px;text-align:center;flex:0 0 auto;} .pm-tx{display:flex;flex-direction:column;gap:2px;} .pm-tx b{font-size:14.5px;} .pm-tx small{font-size:12px;color:var(--text-dim);}
+@media (max-width:640px){.pt-bar .btn{flex:1 1 auto;}}
 </style>
 </head>
 <body>
@@ -4597,9 +4606,32 @@ function PS(){
   if(P.emp===undefined) P.emp={name:'أمير علي',rate:num(P.empRate!=null?P.empRate:1000),from:P.resetAt||null,skip:[...P.resetSkip],pays:[]};
   if(P.emp && !P.emp.v2){ P.emp.v2=true; const st='2026-11-19'; if(!P.emp.from||P.emp.from<st) P.emp.from=st; P.emp.skip=[]; }
   (P.emps||[]).forEach(e=>{ if(!e.v3){ e.v3=true; e.skip=[]; } });
+  if(!P.contract){ const t=todayISO(); const st=t.slice(0,7)+'-15'; const en=(+t.slice(0,4)+1)+'-'+t.slice(5,7)+'-15'; P.contract={start:st,end:en,wagesShared:true}; P.empDeduct=true; }
   if(!Array.isArray(P.emps)){ P.emps=P.emp?[Object.assign({id:'e_'+uid()},P.emp)]:[]; P.emp=null; (P.emps||[]).forEach(e=>{ if(!e.v3){ e.v3=true; e.skip=[]; } }); }
   return P;
 }
+/* ===== إدارة الشراكة: كل الخيارات بقائمة وحدة ===== */
+function pmGo(fn){ closeModal(); setTimeout(fn,60); }
+function openPartnerManage(){
+  const P=PS(), pm=partMonth, closed=pm!=='ALL'&&P.closes.find(c=>c.month===pm);
+  const it=(ic,t,d,fn,cls)=>`<button type="button" class="pm-it ${cls||''}" onclick="pmGo(()=>{${fn}})"><span class="pm-ic">${ic}</span><span class="pm-tx"><b>${t}</b>${d?`<small>${d}</small>`:''}</span></button>`;
+  openModal({title:'⚙️ إدارة الشراكة',bodyHtml:`<div class="pm-list">
+    ${pm!=='ALL'?it('🔒',closed?'تحديث إقفال الشهر':'إقفال الشهر وتوزيع الأرباح',monthLabelAr(pm),`closePartnerMonth('${pm}')`,'main'):''}
+    ${it('✏️','الأسماء والنسب','تعديل الشركاء ونسبهم','openPartnersModal()')}
+    ${it('📜','عقد الشراكة','المدة والبنود والاتفاق',"navigate('contract')")}
+    ${it('📋','ملخص اليوم','صورة للشركاء','openDailySummary()')}
+    ${pm!=='ALL'?it('🖨','كشف الشهر',monthLabelAr(pm)+' · صورة',`printPartnerStatement('${pm}')`):''}
+    ${it(P.empDeduct?'✅':'⬜','خصم أجور الموظفين من الصافي',P.empDeduct?'مفعّل — الشركاء يتقاسمونها بالنسب':'غير مفعّل — للعلم فقط','togglePtEmpDeduct()')}
+    ${(P.archive&&P.archive.length)?it('🗂','سجل التصفيرات',P.archive.length+' تصفير سابق','openResetHistory()')+it('↩','استرجاع آخر تصفير','','restorePartnerReset()'):''}
+    ${it('🗑','تصفير أرقام الشراكة','تبدأ الأرقام من صفر، وتنحفظ القديمة بالسجل','openPartnerResetModal()','neg')}</div>`,onSave(){ closeModal(); }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
+}
+function openContractTerm(){
+  const C=PS().contract;
+  openModal({title:'📅 مدة العقد',bodyHtml:`<div class="form-grid2"><div class="form-row"><label>يبدأ بتاريخ</label><input type="date" id="ct_s" value="${C.start}"></div><div class="form-row"><label>ينتهي بتاريخ</label><input type="date" id="ct_e" value="${C.end}"></div></div>`,
+    onSave(){ const st=document.getElementById('ct_s').value, en=document.getElementById('ct_e').value; if(!st||!en||en<=st) return toast('تأكد من التواريخ'); C.start=st; C.end=en; saveState(); closeModal(); render(); }});
+}
+
 let partMonth=thisMonth(), partGran='day';
 const mRange=m=>[m==='ALL'?null:m+'-01', m==='ALL'?null:m+'-31'];
 function pageData(from,to){
@@ -4675,15 +4707,8 @@ function renderPartnership(){
   const tot=D.rt.rev+D.wh.rev||1, tp=D.pieces||1;
   const closeBtn=partMonth==='ALL'?'':`<button class="btn primary" onclick="closePartnerMonth('${partMonth}')">${closed?'🔄 تحديث إقفال الشهر':'🔒 إقفال الشهر وتوزيع الأرباح'}</button>`;
   return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات الصفحة وإعلاناتها فقط — تتحدث الأرقام تلقائياً. مصاريف الصفحة الثانية (كارتات وغيرها) ما تدخل بالشراكة، فقط الإعلانات تتقاسمونها بالنسب.</div></div>
-    <div class="toolbar" style="margin:0;"><button class="btn" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
-  <div class="pt-top">
-    <div class="pt-quick"><button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button></div>
-    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ الأسماء والنسب</button><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر</button>`:''}
-      <details class="pt-more"><summary class="btn">⋯ المزيد</summary><div class="pt-menu">
-        <button type="button" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>
-        ${(P.archive&&P.archive.length)?`<button type="button" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button><button type="button" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>`:''}
-        <button type="button" class="neg" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></details></div></div>
-  </div>
+    <div class="toolbar" style="margin:0;"><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
+  <div class="pt-bar"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="openPartnerManage()">⚙️ إدارة الشراكة</button></div>
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
@@ -4821,17 +4846,27 @@ function renderStore(){
 
 
 function renderContract(){
-  const P=PS(), li=P.partners.map(p=>`<li>${esc(p.name)}: ${pctTxt(p.pct)}.</li>`).join('');
-  return `<div class="page-head"><div><h1>عقد الشراكة <span class="muted" style="font-size:.6em;font-weight:600;">(قواعد توزيع النسب)</span></h1><div class="desc">اتفاقية الشراكة بين الشركاء — النسب تتحدث تلقائياً من "تعديل الأسماء والنسب" بصفحة نظام الشراكة</div></div><button class="btn" onclick="navigate('partnership')">← رجوع لنظام الشراكة</button></div>
+  const P=PS(), C=P.contract, li=P.partners.map(p=>`<li>${esc(p.name)}: ${pctTxt(p.pct)}.</li>`).join('');
+  const t=todayISO(), left=dayDiff(t,C.end), st=t<C.start?'لم يبدأ بعد':(t>C.end?'منتهي':'ساري');
+  const fd=d=>{ const [y,m,dd]=d.split('-'); return +dd+' '+monthLabelAr(y+'-'+m).replace(/\s*-?\s*\d{4}.*$/,'')+' '+y; };
+  return `<div class="page-head"><div><h1>عقد الشراكة</h1><div class="desc">اتفاقية الشراكة بين الشركاء — النسب تتحدث تلقائياً من «الأسماء والنسب»</div></div><button class="btn" onclick="navigate('partnership')">← رجوع لنظام الشراكة</button></div>
+  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;">
+    <div><div class="muted" style="font-size:12px">مدة العقد</div><b style="font-size:18px">سنة كاملة</b></div>
+    <div><div class="muted" style="font-size:12px">يبدأ</div><b>${C.start}</b></div>
+    <div><div class="muted" style="font-size:12px">ينتهي</div><b>${C.end}</b></div>
+    <div><div class="muted" style="font-size:12px">الحالة</div><b class="${st==='ساري'?'pos':'neg'}">${st}${st==='ساري'?' — باقي '+left+' يوم':''}</b></div>
+    <button class="btn sm ghost" style="margin-inline-start:auto" onclick="openContractTerm()">✏️ تعديل المدة</button></div>
   <div class="rule-box contract">
     <h4>اتفاقية الشراكة – STR | ستر</h4>
-    <h5>أولاً: نسب الشراكة والأرباح</h5><ul>${li}</ul><p>تشمل النسب جميع مبيعات الصفحة، مفرداً وجملة.</p>
-    <h5>ثانياً: مسؤوليات الشركاء</h5>
+    <h5>أولاً: مدة العقد</h5><p>مدة العقد سنة كاملة، تبدأ بتاريخ ${C.start} وتنتهي بتاريخ ${C.end}.</p>
+    <h5>ثانياً: نسب الشراكة والأرباح</h5><ul>${li}</ul><p>تشمل النسب جميع مبيعات الصفحة، مفرداً وجملة.</p>
+    <h5>ثالثاً: مسؤوليات الشركاء</h5>
     <p><b>أحمد نعيم – التسويق والإدارة الرقمية</b></p><ul><li>إدارة مواقع التواصل الاجتماعي.</li><li>إدارة الحملات الإعلانية والتسويقية.</li><li>إعداد المحتوى والتصاميم الإعلانية.</li><li>تطوير الأنظمة الرقمية للمشروع.</li></ul>
     <p><b>حسن الفتلاوي وأمجد – الإدارة التشغيلية</b></p><ul><li>إدارة المعمل والإنتاج.</li><li>الإشراف على المبيعات والزبائن.</li><li>متابعة المخزون والطلبات.</li><li>تنظيم العمل اليومي وضمان جودة المنتجات.</li></ul>
-    <h5>ثالثاً: تكاليف الإعلانات</h5><p>تُوزّع تكاليف الإعلانات بين الشركاء:</p><ul>${li}</ul>
-    <h5>رابعاً: آلية توزيع الأرباح</h5><p>يُحتسب صافي الربح بعد خصم تكلفة البضاعة وتكاليف الإعلانات فقط (مصاريف الصفحة الأخرى لا تدخل بالشراكة)، ثم يوزع حسب نسب الشراكة أعلاه.</p>
-    <p><b>ضوابط مالية:</b> تُخصم الإعلانات مرة واحدة فقط، وتُوثق جميع الإيرادات والمصروفات والمساهمات المالية لضمان الشفافية بين الشركاء.</p>
+    <h5>رابعاً: تكاليف الإعلانات</h5><p>تُوزّع تكاليف الإعلانات بين الشركاء بالنسب:</p><ul>${li}</ul>
+    <h5>خامساً: أجور موظفي السوشيال ميديا (الاتفاق الجديد)</h5><p>أي موظف يعمل على الصفحة، تُقسّم أجوره بين الشركاء بالنسب المعروفة:</p><ul>${li}</ul><p>وتُخصم الأجور من صافي الأرباح قبل التوزيع.</p>
+    <h5>سادساً: آلية توزيع الأرباح</h5><p>يُحتسب صافي الربح بعد خصم تكلفة البضاعة وتكاليف الإعلانات وأجور موظفي الصفحة (مصاريف الصفحة الأخرى لا تدخل بالشراكة)، ثم يوزع حسب نسب الشراكة أعلاه.</p>
+    <p><b>ضوابط مالية:</b> تُخصم الإعلانات والأجور مرة واحدة فقط، وتُوثق جميع الإيرادات والمصروفات والمساهمات المالية لضمان الشفافية بين الشركاء.</p>
   </div>`;
 }
 
