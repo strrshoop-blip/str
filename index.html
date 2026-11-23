@@ -781,6 +781,30 @@
   .gp-n{font-weight:800;flex:1;min-width:70px;} .gp b{font-variant-numeric:tabular-nums;font-size:13.5px;width:100%;}
   .issue{margin-bottom:12px;border-right:4px solid var(--info);} .issue.bad{border-right-color:var(--negative);} .issue.warn{border-right-color:var(--warn);}
   .issue-h{margin-bottom:4px;} .issue-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-top:1px dashed var(--border);font-size:13.5px;}
+
+  /* ===== v14 partnership KPI strip + partner cards ===== */
+  .pt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:14px;}
+  .ptk{position:relative;background:var(--glass),var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 15px 12px;box-shadow:inset 0 1px 0 var(--hi),var(--card-shadow);cursor:pointer;transition:transform .25s var(--ease),border-color .25s;}
+  .ptk:hover{transform:translateY(-3px);border-color:var(--border-strong);}
+  .ptk-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);font-weight:700;}
+  .ptk-h i{font-style:normal;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:var(--surface-3);border:1px solid var(--border);}
+  .ptk-v{display:block;font-family:'Cairo',sans-serif;font-size:22px;font-weight:800;margin:8px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px;} .ptk-v.pos{color:var(--positive);} .ptk-v.neg{color:var(--negative);}
+  .ptk-s{font-size:11.5px;color:var(--text-faint);line-height:1.6;} .ptk-d{margin-top:6px;}
+  .ptk.hero{grid-column:span 2;background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+  .ptk.hero .ptk-h,.ptk.hero .ptk-s{color:color-mix(in srgb,var(--on-accent) 72%,transparent);} .ptk.hero .ptk-h i{background:color-mix(in srgb,var(--on-accent) 16%,transparent);border-color:transparent;}
+  .ptk.hero .ptk-v{font-size:32px;} .ptk.hero .ptk-v.neg{color:#ff9b93;}
+  .gp2{border:1px solid var(--border);border-radius:14px;padding:12px 13px;background:var(--surface-2);transition:transform .2s var(--ease),border-color .2s;} .gp2:hover{border-color:var(--border-strong);}
+  .gp2-top{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;} .gp2-top:hover .gp-n{text-decoration:underline;}
+  .gp2-v{display:block;font-family:'Cairo',sans-serif;font-size:21px;font-weight:800;margin:8px 0 0;font-variant-numeric:tabular-nums;} .gp2-s{font-size:11.5px;color:var(--text-faint);margin-bottom:6px;}
+  .gp2-r{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-top:1px dashed var(--border);color:var(--text-dim);} .gp2-r b{color:var(--text);}
+  .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
+  .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
+  .ps-card{margin-bottom:6px;} .ps-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .ps-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;} .ps-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px;}
+  .ps-r small{display:block;font-size:11px;color:var(--text-faint);margin-top:2px;} .ps-r b{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .ps-eff{display:flex;flex-direction:column;gap:10px;} .ps-e{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;} .ps-e small{display:block;font-size:11.5px;color:var(--text-faint);} .ps-e b{font-family:'Cairo',sans-serif;font-size:22px;font-weight:800;}
+  .ps-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:13.5px;}
+  @media (max-width:900px){.ps-grid{grid-template-columns:1fr;} .ptk.hero .ptk-v{font-size:28px;}}
 </style>
 </head>
 <body>
@@ -4887,15 +4911,7 @@ function renderPartnership(){
 
   <div id="ptDaily">${ptDailyHtml()}</div>
 
-  <div class="section-title"><span class="ic">👥</span> الشركاء <span class="muted" style="font-size:12px;font-weight:500">اضغط على أي اسم لكشف حسابه</span></div>
-  <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
-    <div class="pn"><span>${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
-    <div class="big ${p.net>=0?'pos':'neg'}">${money(p.net)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">صافي حصته بهذي الفترة</div>
-    <div class="pr"><span>حصته من الأرباح</span><b>${money(p.gross)}</b></div>
-    <div class="pr"><span>مساهمته بالإعلانات</span><b class="neg">−${money(p.ads)}</b></div>
-    <div class="pr"><span>مساهمته بمستحقات الموظفين${P.empDeduct?'':' <small style="color:var(--text-faint)">(للعلم)</small>'}</span><b class="${P.empDeduct?'neg':''}">${P.empDeduct?'−':''}${money(p.exp)}</b></div>
-    <div class="pr"><span>المستلم (كل الفترات)</span><b class="pos">${money(t.paid)}</b></div>
-    <div class="pr"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>`;}).join('')}</div>
+  ${partMonth==='ALL'?`<div class="card">${ptGoalPartners(D)}</div>`:''}
 
   <div class="section-title"><span class="ic">⚖️</span> جملة مقابل مفرد <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
   <div class="card wr2-card">${ptWRHtml(D)}</div>
@@ -4943,6 +4959,27 @@ function openPartnersModal(){
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
+function ptPartnerSummary(pid){
+  const P=PS(), [f,t]=mRange(partMonth), D=pageData(f,t), p=D.parts.find(x=>x.id===pid); if(!p) return '';
+  const adjM=P.adj.filter(a=>a.pid===pid && inRange(a.date,f,t)), adjS=adjM.reduce((a,x)=>a+num(x.amount),0);
+  const paidM=P.pays.filter(a=>a.pid===pid && inRange(a.date,f,t)).reduce((a,x)=>a+num(x.amount),0);
+  const fin=p.net+adjS, rev=D.revenue||0, eff=D.net?Math.round(fin/D.net*1000)/10:null, tot=ptTotals(pid), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
+  const r=(l,v,c,sub)=>`<div class="ps-r"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b class="${c||''}">${v}</b></div>`;
+  return `<div class="card ps-card"><div class="ps-h"><b>تفاصيل نسبته — ${per}</b><span class="muted">المتفق عليه: <b>${pctTxt(p.pct)}</b> من الأرباح ومن الإعلانات</span></div>
+    <div class="ps-grid"><div>
+      ${r('حصته من أرباح الصفحة (قبل الخصم)',money(p.gross),'',pctTxt(p.pct)+' من '+money(D.profit))}
+      ${r('مساهمته بتكاليف الإعلانات','−'+money(p.ads),'neg',pctTxt(p.pct)+' من '+money(D.ads))}
+      ${p.exp?r('مساهمته بمستحقات الموظفين','−'+money(p.exp),'neg'):''}
+      ${adjS?r('إضافات / خصومات عليه',(adjS>0?'+':'−')+money(Math.abs(adjS)),adjS>0?'pos':'neg',adjM.map(a=>esc(a.note||'')).filter(Boolean).join('، ')):''}
+      ${r('صافي حصته بعد الخصم',money(fin),fin>=0?'pos':'neg')}
+      ${r('المستلم بهذي الفترة',money(paidM),'')}
+    </div><div class="ps-eff">
+      <div class="ps-e"><small>نسبته المتفق عليها</small><b>${pctTxt(p.pct)}</b></div>
+      <div class="ps-e"><small>نسبته الفعلية بعد الخصم</small><b>${eff===null?'—':eff+'%'}</b><small>من صافي الأرباح</small></div>
+      <div class="ps-e"><small>من الوارد</small><b>${rev?Math.round(p.gross/rev*1000)/10:0}%</b><small>قبل الخصم · وبعده ${rev?Math.round(fin/rev*1000)/10:0}%</small></div>
+    </div></div>
+    <div class="ps-foot">المتبقي له (كل الفترات) بعد كل الخصومات والتسديدات: <b class="${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</b></div></div>`;
+}
 function renderPartnerDetail(pid){
   if(pid==='emps') return renderEmployeesPage();
   if(typeof pid==='string' && pid.startsWith('emp:')) return renderEmployeeDetail(pid.slice(4));
@@ -4951,8 +4988,9 @@ function renderPartnerDetail(pid){
   const t=ptTotals(pid), cl=P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month));
   const adj=P.adj.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date)), pays=P.pays.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date));
   return `<div class="page-head"><div><h1>${esc(p.name)} <span class="pill wholesale">${pctTxt(p.pct)}</span></h1><div class="desc">كشف حساب الشريك — الأرباح المقفلة، التعديلات، والمبالغ المستلمة</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
-  <div class="grid stats">${statCard('المتبقي له',money(t.remaining),t.remaining>0?'neg':'pos','أرباح + تعديلات − مستلم',true)}${statCard('أرباح الأشهر المقفلة',money(t.earned),'pos')}${statCard('مبالغ إضافية / خصومات',money(t.adj),t.adj>=0?'':'neg')}${statCard('المستلم',money(t.paid),'accent')}</div>
-  <div class="btn-row" style="margin:20px 0 6px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">+ تسجيل استلام مبلغ</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">+ مبلغ إضافي / خصم</button></div>
+  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">💵 تسديد مبلغ للشريك</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">± خصم أو إضافة على حصته</button></div>
+  ${ptPartnerSummary(pid)}
+  <div class="grid stats" style="margin-top:14px;">${statCard('المتبقي له',money(t.remaining),t.remaining>0?'neg':'pos','أرباح + تعديلات − مستلم',true)}${statCard('أرباح الأشهر المقفلة',money(t.earned),'pos')}${statCard('مبالغ إضافية / خصومات',money(t.adj),t.adj>=0?'':'neg')}${statCard('المستلم',money(t.paid),'accent')}</div>
   <div class="section-title"><span class="ic">🔒</span> الأشهر المقفلة</div>
   <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>حصته من الأرباح</th><th>مساهمة الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي له</th></tr></thead><tbody>
   ${cl.length?cl.map(c=>{const x=(c.parts||[]).find(y=>y.id===pid)||{};return `<tr><td><b>${monthLabelAr(c.month)}</b> <span class="muted">(${pctTxt(x.pct)})</span></td><td class="num">${money(x.gross)}</td><td class="num neg">−${money(x.ads)}</td><td class="num">${money(x.exp||0)}</td><td class="num pos">${money(x.net)}</td></tr>`;}).join(''):'<tr class="empty-row"><td colspan="5">لا توجد أشهر مقفلة</td></tr>'}</tbody></table></div>
@@ -4974,8 +5012,8 @@ function partnerRecModal(kind,pid,id,title,amountLabel,noteLabel){
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
-function openPartnerPayModal(pid,id){ partnerRecModal('pays',pid,id,'تسجيل استلام مبلغ','المبلغ المستلم','ملاحظات'); }
-function openPartnerAdjModal(pid,id){ partnerRecModal('adj',pid,id,'مبلغ إضافي / خصم','المبلغ (± )','السبب'); }
+function openPartnerPayModal(pid,id){ partnerRecModal('pays',pid,id,'تسديد مبلغ للشريك','المبلغ المسدد','ملاحظات'); }
+function openPartnerAdjModal(pid,id){ partnerRecModal('adj',pid,id,'خصم أو إضافة على حصة الشريك','المبلغ (موجب = إضافة، سالب = خصم)','السبب'); }
 function deletePartnerRec(kind,id){ confirmDelete('حذف هذا السجل؟',()=>{ PS()[kind]=PS()[kind].filter(x=>x.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 /* ===== الديون (علينا + الزبائن) بقائمة وحدة ===== */
@@ -5296,17 +5334,25 @@ function openGoalModal(){
   onSave(){ const sales=num(document.getElementById('f_gs').value), adsPct=num(document.getElementById('f_ga').value); P.goal={sales,adsPct:adsPct>0?adsPct:30}; saveState(); closeModal(); render(); toast('تم حفظ الهدف'); }});
 }
 function ptTopStats(D,PD){
-  const P=PS(), db=(c,p,up)=>PD?deltaBadge(c,p,up):'';
-  const wn=(P.empDeduct&&D.wage)?' · بعد خصم أجور الموظفين '+money(D.wage):'';
-  return `<div class="grid stats pt-top">
-    ${statCard('صافي الأرباح للتوزيع',money(D.net),D.net>=0?'pos':'neg','بعد الإعلانات'+wn,true,null,db(D.net,PD&&PD.net,true))}
-    ${statCard('وارد الصفحة',money(D.revenue),'accent',D.orders+' طلب · '+D.pieces+' قطعة',false,null,db(D.revenue,PD&&PD.revenue,true))}
-    ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg','هامش '+(D.revenue>0?Math.round(D.profit/D.revenue*1000)/10:0)+'%',false,null,db(D.profit,PD&&PD.profit,true))}
-    ${statCard('تكاليف الإعلانات',money(D.ads),'neg',D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',false,null,db(D.ads,PD&&PD.ads,false))}
+  const P=PS(), db=(c,p,up)=>PD?deltaBadge(c,p,up):'', T=empsTotal();
+  const k=(cls,ic,l,v,sub,d,click,vc)=>`<div class="ptk ${cls}" ${click?`onclick="${click}"`:''}><div class="ptk-h"><span>${l}</span><i>${ic}</i></div><b class="ptk-v ${vc||''}">${v}</b><div class="ptk-s">${sub}</div>${d?`<div class="ptk-d">${d}</div>`:''}</div>`;
+  const mg=D.revenue>0?Math.round(D.profit/D.revenue*1000)/10:0;
+  const eC=T.list.length?k('','👤','مستحقات الموظفين',money(T.mDue),`${T.mPieces} قطعة مفرد · مسدد ${money(T.paid)} · متبقي ${money(T.remaining)}`,'',"currentDetail='emps';render();window.scrollTo(0,0)"):'';
+  return `<div class="pt-kpis">
+    ${k('hero','📊','صافي الأرباح للتوزيع',money(D.net),'بعد الإعلانات'+((P.empDeduct&&D.wage)?' وأجور الموظفين':'')+' · على '+P.partners.length+' شركاء',db(D.net,PD&&PD.net,true),"var e=document.getElementById('ptPartners');if(e)e.scrollIntoView({behavior:'smooth'})",D.net<0?'neg':'')}
+    ${k('','💰','وارد الصفحة',money(D.revenue),D.orders+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
+    ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
+    ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),'','neg')}
+    ${eC}
   </div>`;
 }
+function openPartnerDetail(id){ currentDetail=id; render(); window.scrollTo(0,0); }
 function ptGoalPartners(D){
-  return `<div class="gpartners"><div class="gp-t">نسب الشركاء <span class="muted" style="font-weight:500">— اضغط على اسم لكشف حسابه</span></div><div class="gp-row">${D.parts.map(p=>`<div class="gp" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)"><span class="gp-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span><b class="${p.net>=0?'pos':'neg'}">${money(p.net)}</b></div>`).join('')}</div></div>`;
+  return `<div class="gpartners" id="ptPartners"><div class="gp-t">👥 الشركاء ونسبهم <span class="muted" style="font-weight:500">— اضغط على الاسم لتفاصيل نسبته وكشف حسابه</span></div><div class="gp-row">${D.parts.map(p=>{ const t=ptTotals(p.id); return `<div class="gp2">
+    <div class="gp2-top" onclick="openPartnerDetail('${p.id}')"><span class="gp-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
+    <b class="gp2-v ${p.net>=0?'pos':'neg'}">${money(p.net)}</b><div class="gp2-s">صافي حصته بهذي الفترة</div>
+    <div class="gp2-r"><span>المستلم</span><b>${money(t.paid)}</b></div><div class="gp2-r"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div>
+    <div class="gp2-b"><button type="button" class="btn sm primary" onclick="openPartnerPayModal('${p.id}')">💵 تسديد</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}')">± خصم / إضافة</button></div></div>`; }).join('')}</div></div>`;
 }
 
 function goalCardHtml(D){
