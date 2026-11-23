@@ -728,6 +728,40 @@
 .pm-it.neg{color:var(--negative);margin-top:6px;}
 .pm-ic{font-size:20px;width:30px;text-align:center;flex:0 0 auto;} .pm-tx{display:flex;flex-direction:column;gap:2px;} .pm-tx b{font-size:14.5px;} .pm-tx small{font-size:12px;color:var(--text-dim);}
 @media (max-width:640px){.pt-bar .btn{flex:1 1 auto;}}
+
+.hero-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;margin-bottom:18px;box-shadow:var(--card-shadow);}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.hero-t{font-family:'Cairo',sans-serif;font-size:20px;font-weight:800;} .hero-s{font-size:12.5px;color:var(--text-faint);margin-top:2px;}
+.hero-rev{text-align:end;} .hero-rev small{display:block;font-size:12px;color:var(--text-faint);} .hero-rev b{font-size:26px;font-variant-numeric:tabular-nums;margin-inline-end:6px;}
+.wr-bar{display:flex;height:16px;border-radius:999px;overflow:hidden;background:var(--surface-2);gap:2px;margin-bottom:12px;} .wr-bar i{display:block;min-width:0;}
+.wr-list{display:flex;flex-direction:column;gap:6px;}
+.wr-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;width:100%;text-align:start;padding:11px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font:inherit;color:var(--text);cursor:pointer;transition:background .12s,border-color .12s,transform .12s;}
+.wr-row:hover{background:var(--surface-2);border-color:var(--border-strong);} .wr-row:active{transform:scale(.995);}
+.wr-row.net{background:var(--surface-2);border-width:2px;}
+.wr-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;} .wr-l{flex:1 1 130px;font-weight:700;font-size:14px;}
+.wr-v{font-size:16px;font-variant-numeric:tabular-nums;} .wr-p{min-width:46px;text-align:center;font-size:12.5px;font-weight:800;background:var(--surface-3,var(--surface-2));border-radius:999px;padding:2px 8px;}
+.wr-d{font-size:11.5px;font-weight:800;} .wr-d.good{color:var(--positive);} .wr-d.bad{color:var(--negative);}
+.wr-q{font-size:12px;color:var(--accent-soft,var(--text-dim));font-weight:700;margin-inline-start:auto;}
+.hero-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px;}
+.hk{background:var(--surface-2);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:2px;} .hk small{font-size:11.5px;color:var(--text-faint);} .hk b{font-size:16px;font-variant-numeric:tabular-nums;}
+.why-head{padding:12px 14px;border-radius:14px;font-weight:800;font-size:15px;margin-bottom:12px;background:var(--surface-2);}
+.why-head.good{border-inline-start:5px solid var(--positive);} .why-head.warn{border-inline-start:5px solid var(--warn);} .why-head.bad{border-inline-start:5px solid var(--negative);}
+.why-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:6px;} .why-facts div{background:var(--surface-2);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;} .why-facts small{font-size:11.5px;color:var(--text-faint);} .why-facts b{font-size:15px;font-variant-numeric:tabular-nums;}
+.why-h{margin:16px 0 6px;font-size:14.5px;} .why-ul{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.7;} .why-ul .btn{margin-inline-start:6px;}
+.wr2-card{padding:16px 18px;}
+.wr2-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;font-weight:800;font-size:14px;} .wr2-head small{font-weight:500;color:var(--text-faint);margin-inline-start:4px;}
+.wr2-head i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:6px;} .wr2-head .w i{background:var(--text);} .wr2-head .r i{background:var(--info);}
+.wr2{padding:8px 0;border-top:1px dashed var(--border);} .wr2-l{text-align:center;font-size:12px;color:var(--text-faint);margin-bottom:5px;font-weight:700;}
+.wr2-b{display:flex;align-items:center;gap:10px;} .wr2-b b{flex:0 0 auto;min-width:78px;font-size:14px;font-variant-numeric:tabular-nums;} .wr2-b b.w{text-align:start;} .wr2-b b.r{text-align:end;}
+.wr2-bar{flex:1;display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--surface-2);} .wr2-bar i.w{background:var(--text);} .wr2-bar i.r{background:var(--info);}
+.wr2-p{display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-top:2px;padding-inline:2px;}
+.tm-list{display:flex;flex-direction:column;} .tm-row{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px dashed var(--border);cursor:pointer;} .tm-row:first-child{border-top:0;} .tm-row:hover{background:var(--surface-2);border-radius:12px;}
+.tm-rk{width:22px;height:22px;border-radius:7px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto;}
+.tm-img{width:54px;height:54px;border-radius:12px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:22px;} .tm-img img{width:100%;height:100%;object-fit:cover;}
+.tm-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;} .tm-mid b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .tm-mid small{font-size:11.5px;color:var(--text-dim);}
+.tm-num{text-align:end;display:flex;flex-direction:column;gap:2px;flex:0 0 auto;} .tm-num b{font-size:14px;font-variant-numeric:tabular-nums;} .tm-num small{font-size:11.5px;}
+.pt-sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;} .pt-sec>summary{cursor:pointer;padding:13px 16px;font-weight:800;font-size:14.5px;} .pt-sec[open]>summary{border-bottom:1px solid var(--border);} .pt-sec .table-wrap{border:0;border-radius:0;box-shadow:none;}
+@media (max-width:640px){.hero-rev{text-align:start;width:100%;} .hero-rev b{font-size:24px;} .wr-q{display:none;} .wr2-b b{min-width:64px;font-size:13px;} .tm-img{width:46px;height:46px;} .hero-card{padding:14px;}}
 </style>
 </head>
 <body>
@@ -4632,6 +4666,119 @@ function openContractTerm(){
     onSave(){ const st=document.getElementById('ct_s').value, en=document.getElementById('ct_e').value; if(!st||!en||en<=st) return toast('تأكد من التواريخ'); C.start=st; C.end=en; saveState(); closeModal(); render(); }});
 }
 
+/* ===== صفحة الشراكة v39: وين راح الوارد + تحليل السبب والحل + مقارنة جملة/مفرد + موديلات بصور ===== */
+function ptPrevData(){ if(partMonth==='ALL') return null; const pm=ymAdd(partMonth,-1); return pageData(pm+'-01',pm+'-31'); }
+function ptSplit(D){ return {cost:Math.max(0,D.revenue-D.profit),ads:D.ads,wage:D.other||0,net:D.net}; }
+function ptMargins(D){ const f=l=>({rev:l.reduce((a,x)=>a+saleRevenue(x),0),profit:l.reduce((a,x)=>a+saleProfit(x),0),pcs:l.reduce((a,x)=>a+num(x.quantity),0),n:l.length}); return {w:f(D.ps.filter(x=>x.customerType==='wholesale')),r:f(D.ps.filter(x=>x.customerType!=='wholesale'))}; }
+function ptHeroHtml(D,PD){
+  const P=PS(), rev=D.revenue||0, S=ptSplit(D), PSx=PD?ptSplit(PD):null;
+  const pc=(v,t)=>t>0?Math.round(v/t*1000)/10:0;
+  const segs=[{k:'cost',l:'كلفة البضاعة',v:S.cost,c:'var(--text-faint)',ic:'🧵',bad:true},{k:'ads',l:'الإعلانات',v:S.ads,c:'var(--negative)',ic:'📣',bad:true}];
+  if(P.empDeduct) segs.push({k:'wage',l:'أجور الموظفين',v:S.wage,c:'var(--warn)',ic:'👤',bad:true});
+  segs.push({k:'net',l:'صافي للشركاء',v:S.net,c:'var(--positive)',ic:'💰',bad:false});
+  const tot=segs.reduce((a,x)=>a+Math.max(0,x.v),0)||1;
+  const rows=segs.map(x=>{
+    const now=pc(x.v,rev), prev=(PD&&PD.revenue>0)?pc(PSx[x.k],PD.revenue):null;
+    let d=''; if(prev!==null && Math.abs(now-prev)>=0.5){ const up=now>prev, good=x.bad?!up:up; d=`<span class="wr-d ${good?'good':'bad'}" title="مقارنة بنسبته من وارد الشهر الماضي">${up?'▲':'▼'} ${Math.abs(Math.round((now-prev)*10)/10)}</span>`; }
+    return `<button type="button" class="wr-row ${x.k==='net'?'net':''}" onclick="openWhy('${x.k}')"><i class="wr-dot" style="background:${x.c}"></i><span class="wr-l">${x.ic} ${x.l}</span><b class="wr-v ${x.k==='net'?(x.v>=0?'pos':'neg'):''}">${money(x.v)}</b><span class="wr-p">${now}%</span>${d}<span class="wr-q">ليش؟ ›</span></button>`;
+  }).join('');
+  const avg=D.orders?D.revenue/D.orders:0, ppp=D.pieces?D.profit/D.pieces:0, mg=rev>0?Math.round(D.profit/rev*1000)/10:0;
+  const chip=(l,v,d)=>`<div class="hk"><small>${l}</small><b>${v}</b>${d||''}</div>`;
+  return `<div class="hero-card">
+    <div class="hero-top"><div><div class="hero-t">وين راح الوارد؟</div><div class="hero-s">اضغط على أي سطر تعرف ليش وشنو الحل</div></div>
+      <div class="hero-rev"><small>وارد الصفحة</small><b>${money(rev)}</b>${PD?deltaBadge(D.revenue,PD.revenue,true):''}</div></div>
+    <div class="wr-bar">${segs.map(x=>`<i style="flex:${Math.max(0,x.v)/tot};background:${x.c}" title="${x.l}"></i>`).join('')}</div>
+    <div class="wr-list">${rows}</div>
+    <div class="hero-kpis">${chip('الطلبات',D.orders,PD?deltaBadge(D.orders,PD.orders,true):'')}${chip('القطع',D.pieces,PD?deltaBadge(D.pieces,PD.pieces,true):'')}${chip('متوسط الطلب',avg?money(avg):'—')}${chip('ربح القطعة',D.pieces?money(ppp):'—')}${chip('هامش الربح',mg+'%')}</div></div>`;
+}
+function openWhy(kind){
+  const [f,t]=mRange(partMonth), D=pageData(f,t), PD=ptPrevData(), P=PS();
+  const rev=D.revenue, S=ptSplit(D), PSx=PD?ptSplit(PD):null, pct=(v,tt)=>tt>0?Math.round(v/tt*1000)/10:0;
+  const M=ptMargins(D), ms=modelOrderStats(D.ps).map(o=>({...o,mg:pct(o.profit,o.rev)}));
+  const causes=[], fixes=[], facts=[]; let tone='good', head='', title='';
+  const pp=(cur,prev)=>(cur>prev?'▲ ':'▼ ')+Math.abs(Math.round((cur-prev)*10)/10)+' نقطة';
+  const fx=(tx,l,fn)=>fixes.push({t:tx,a:l?{l,fn}:null});
+  if(kind==='cost'){
+    title='🧵 كلفة البضاعة';
+    const share=pct(S.cost,rev), prev=PD&&PD.revenue>0?pct(PSx.cost,PD.revenue):null, mg=Math.round((100-share)*10)/10;
+    tone=share>=70?'bad':share>=60?'warn':'good';
+    head=tone==='good'?'كلفة البضاعة طبيعية':'الكلفة تاكل جزء كبير من الوارد';
+    facts.push({l:'الكلفة',v:money(S.cost)},{l:'نسبتها من الوارد',v:share+'%'},{l:'الشهر الماضي',v:prev===null?'—':prev+'%'},{l:'هامش الربح',v:mg+'%'});
+    if(prev!==null && share-prev>=3) causes.push('نسبة الكلفة ارتفعت ('+pp(share,prev)+') عن الشهر الماضي، يعني الباقي من كل دينار وارد صار أقل.');
+    if(M.w.rev>0 && M.r.rev>0){ const wm=pct(M.w.profit,M.w.rev), rm=pct(M.r.profit,M.r.rev); if(M.w.rev/rev>=.5 && wm<rm-3){ causes.push('الجملة تمثل '+pct(M.w.rev,rev)+'% من الوارد، وهامشها '+wm+'% فقط مقابل '+rm+'% للمفرد.'); fx('قلل الجملة بأسعار منخفضة أو ارفع سعر الجملة شوي.'); } }
+    const low=ms.filter(o=>o.id&&o.rev>0&&o.mg<mg-8).sort((a,b)=>b.qty-a.qty).slice(0,3);
+    low.forEach(o=>{ causes.push('«'+esc(o.name)+'» هامشه '+o.mg+'% (انباع '+o.qty+' قطعة)، أقل من معدل الصفحة '+mg+'%.'); fx('راجع سعر بيع أو كلفة «'+esc(o.name)+'».','فتح الموديل',"openModelDetail('"+o.id+"')"); });
+    if(!causes.length) causes.push('ما اكو سبب واضح، النسبة ضمن الطبيعي.');
+    fx('تأكد من «سعر القطعة للصفحة» بالموديلات حتى تنحسب الكلفة صح.','سعر الصفحة للكل','openBulkPriceModal()');
+  } else if(kind==='ads'){
+    title='📣 الإعلانات';
+    const lim=num((P.goal||{}).adsPct)||30, ofP=D.profit>0?D.ads/D.profit*100:(D.ads>0?100:0), cpo=D.orders?D.ads/D.orders:0, ppo=D.orders?D.profit/D.orders:0;
+    tone=D.ads===0?'good':ofP>lim?'bad':ofP>lim*.8?'warn':'good';
+    head=D.ads===0?'ما اكو إعلانات بهذي الفترة':tone==='bad'?'الإعلانات تاكل من الأرباح أكثر من الحد':tone==='warn'?'الإعلانات قريبة من الحد':'الإعلانات ضمن الحد';
+    facts.push({l:'الإعلانات',v:money(D.ads)},{l:'من الأرباح (الحد '+lim+'%)',v:Math.round(ofP)+'%'},{l:'من الوارد',v:pct(D.ads,rev)+'%'},{l:'كلفة الطلب الواحد',v:D.orders?money(cpo):'—'},{l:'ربح الطلب الواحد',v:D.orders?money(ppo):'—'});
+    if(PD && D.ads>PD.ads*1.15 && D.orders<=PD.orders) causes.push('صرفت أكثر من الشهر الماضي ('+money(PD.ads)+' ← '+money(D.ads)+') وعدد الطلبات ما زاد ('+PD.orders+' ← '+D.orders+').');
+    if(D.orders && cpo>=ppo) causes.push('الإعلان يكلف '+money(cpo)+' لكل طلب، وربح الطلب '+money(ppo)+' — يعني الطلبات اللي تجي من الإعلان ما تغطي كلفتها.');
+    else if(D.orders && cpo>=ppo*.5) causes.push('الإعلان ياخذ نصف ربح الطلب تقريباً ('+money(cpo)+' من '+money(ppo)+').');
+    const byD={}; D.exps.forEach(e=>{ byD[e.date]=(byD[e.date]||0)+num(e.amount); }); const rD={}; D.ps.forEach(x=>{ rD[x.date]=(rD[x.date]||0)+saleRevenue(x); });
+    const waste=Object.keys(byD).filter(d=>!rD[d]); if(waste.length>=2) causes.push(waste.length+' أيام صرفت بيها إعلان ('+money(waste.reduce((a,d)=>a+byD[d],0))+') وما اجا بيع بنفس اليوم.');
+    const topD=Object.keys(byD).sort((a,b)=>byD[b]-byD[a])[0]; if(topD && D.ads>0) causes.push('أعلى يوم صرف كان '+topD+' بمبلغ '+money(byD[topD])+'.');
+    if(!causes.length) causes.push(D.ads===0?'ما صرفت على إعلانات.':'ما اكو مشكلة واضحة، النسبة ضمن الحد.');
+    const best=ms.filter(o=>o.id).sort((a,b)=>b.profit-a.profit)[0];
+    if(tone!=='good'){ fx('قلل الصرف بالأيام الي ما تجيب مبيعات.'); if(best) fx('ركّز الإعلان على أربح موديل: «'+esc(best.name)+'».','فتح الموديل',"openModelDetail('"+best.id+"')"); fx('حدد حد يومي للإعلان وراقبه.','تعديل حد الإعلانات','openGoalModal()'); }
+    else fx('استمر على نفس الوتيرة وراقب كلفة الطلب الواحد.');
+    fx('شوف كل إعلانات الفترة.','عرض الإعلانات',"openPtSection('ptAds')"); fx('سجل إعلان جديد.','+ إعلان',"openExpenseModal(null,'page','إعلانات')");
+  } else if(kind==='wage'){
+    title='👤 أجور الموظفين';
+    const share=pct(D.wage,rev), rpp=M.r.pcs?M.r.profit/M.r.pcs:0, rate=(P.emps||[]).length?num(P.emps[0].rate):0;
+    tone=D.wage>0&&share>10?'warn':'good';
+    head=D.wage===0?'ما اكو أجور بهذي الفترة':(P.empDeduct?'أجور الموظفين مخصومة من صافي الشركاء':'أجور الموظفين للعلم فقط (غير مخصومة)');
+    facts.push({l:'الأجور',v:money(D.wage)},{l:'قطع المفرد المحسوبة',v:D.empPieces},{l:'نسبتها من الوارد',v:share+'%'},{l:'مدفوع',v:money(D.wagePaid)},{l:'متبقي للدفع',v:money(Math.max(0,D.wage-D.wagePaid))});
+    causes.push('الأجرة تنحسب على كل قطعة مفرد انباعت بالصفحة: '+D.empPieces+' قطعة.');
+    if(rate && rpp) causes.push('أجرة القطعة '+money(rate)+' تعادل '+Math.round(rate/rpp*100)+'% من ربح قطعة المفرد ('+money(rpp)+').');
+    if(!P.empDeduct) causes.push('حسب الإعداد الحالي، الأجور ما تنخصم من الصافي.');
+    fx('شوف مستحقات كل موظف وسدد المتبقي.','موظفو الصفحة',"currentDetail='emps';render();window.scrollTo(0,0)");
+    fx(P.empDeduct?'إذا الاتفاق تغير تكدر توقف خصمها من الصافي.':'حسب العقد الجديد، الأجور تنقسم على الشركاء بالنسب.','تبديل الخصم','togglePtEmpDeduct()');
+  } else {
+    title='💰 صافي الشركاء';
+    const mg=pct(D.net,rev), pm=PD&&PD.revenue>0?pct(PD.net,PD.revenue):null;
+    tone=D.net<0?'bad':mg<10?'warn':'good';
+    head=D.net<0?'الصافي بالسالب — المصاريف أكبر من الأرباح':tone==='warn'?'الصافي قليل مقارنة بالوارد':'الصافي جيد';
+    facts.push({l:'الصافي للتوزيع',v:money(D.net)},{l:'نسبته من الوارد',v:mg+'%'},{l:'الشهر الماضي',v:pm===null?'—':pm+'%'},{l:'صافي القطعة',v:D.pieces?money(D.net/D.pieces):'—'});
+    const eat=[['cost','كلفة البضاعة',S.cost],['ads','الإعلانات',S.ads]]; if(P.empDeduct) eat.push(['wage','أجور الموظفين',S.wage]); eat.sort((a,b)=>b[2]-a[2]);
+    if(eat[0] && rev>0) causes.push('أكبر مستهلك للوارد: '+eat[0][1]+' ('+pct(eat[0][2],rev)+'%).');
+    if(pm!==null && Math.abs(mg-pm)>=2) causes.push('نسبة الصافي '+(mg>pm?'تحسنت':'نزلت')+' ('+pp(mg,pm)+') عن الشهر الماضي.');
+    if(D.net<0) causes.push('الأرباح ('+money(D.profit)+') أقل من الإعلانات'+(P.empDeduct?' والأجور':'')+'.');
+    if(!causes.length) causes.push('الوضع مستقر.');
+    eat.slice(0,2).forEach(e=>fx('ابدأ بمعالجة '+e[1]+'.','شوف التفاصيل',"openWhy('"+e[0]+"')"));
+    fx('وزّع الأرباح بنهاية الشهر من «إدارة الشراكة».');
+  }
+  const em={good:'✅',warn:'⚠️',bad:'🛑'}[tone];
+  openModal({title,bodyHtml:`<div class="why-head ${tone}">${em} ${head}</div>
+    <div class="why-facts">${facts.map(x=>`<div><small>${x.l}</small><b>${x.v}</b></div>`).join('')}</div>
+    <h4 class="why-h">ليش صار هيج؟</h4><ul class="why-ul">${causes.map(c=>`<li>${c}</li>`).join('')}</ul>
+    <h4 class="why-h">شنو تسوي؟</h4><ul class="why-ul">${fixes.map(x=>`<li>${x.t}${x.a?` <button type="button" class="btn sm" onclick="closeModal();setTimeout(()=>{${x.a.fn}},60)">${x.a.l}</button>`:''}</li>`).join('')}</ul>`,onSave(){ closeModal(); }});
+  const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
+}
+function openPtSection(id){ const e=document.getElementById(id); if(e){ e.open=true; e.scrollIntoView({behavior:'smooth',block:'start'}); } }
+function ptWRHtml(D){
+  const M=ptMargins(D), W=M.w, R=M.r, nf=v=>Math.round(v).toLocaleString('en-US');
+  const rows=[['الطلبات',W.n,R.n,nf],['القطع',W.pcs,R.pcs,nf],['الوارد',W.rev,R.rev,money],['الأرباح',W.profit,R.profit,money],['متوسط الطلب',W.n?W.rev/W.n:0,R.n?R.rev/R.n:0,money],['ربح القطعة',W.pcs?W.profit/W.pcs:0,R.pcs?R.profit/R.pcs:0,money]];
+  if(!W.n && !R.n) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
+  return `<div class="wr2-head"><span class="w"><i></i> جملة <small>${W.n} طلب · ${W.pcs} قطعة</small></span><span class="r"><i></i> مفرد <small>${R.n} طلب · ${R.pcs} قطعة</small></span></div>`+
+    rows.map(([l,w,r,fm])=>{ const t=(w+r)||1, share=(w+r)>0&&['الطلبات','القطع','الوارد','الأرباح'].includes(l);
+      return `<div class="wr2"><div class="wr2-l">${l}</div><div class="wr2-b"><b class="w">${fm(w)}</b><div class="wr2-bar"><i class="w" style="flex:${share?w/t:(w>=r?1:r?w/r:0)}"></i><i class="r" style="flex:${share?r/t:(r>w?1:w?r/w:0)}"></i></div><b class="r">${fm(r)}</b></div>${share?`<div class="wr2-p"><span>${Math.round(w/t*100)}%</span><span>${Math.round(r/t*100)}%</span></div>`:''}</div>`; }).join('');
+}
+let ptModelsAll=false;
+function ptModelsHtml(D){
+  const all=modelOrderStats(D.ps); if(!all.length) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
+  const list=ptModelsAll?all:all.slice(0,6), mx=Math.max(1,...all.map(o=>o.n));
+  return '<div class="tm-list">'+list.map((o,i)=>{ const m=o.id?modelById(o.id):null, img=m&&m.images&&m.images[0]?`<img src="${m.images[0]}" loading="lazy">`:'<span>👗</span>';
+    return `<div class="tm-row"${o.id?` onclick="openModelDetail('${o.id}')"`:''}><span class="tm-rk">${i+1}</span><span class="tm-img">${img}</span>
+      <div class="tm-mid"><b>${esc(o.name)}</b><small>${o.n} طلب · ${o.qty} قطعة</small><div class="mo-bar" style="width:${Math.max(8,o.n/mx*100)}%"><i class="w" style="flex:${o.wn||0}"></i><i class="r" style="flex:${o.rn||0}"></i></div><small>جملة ${o.wn} · مفرد ${o.rn}</small></div>
+      <div class="tm-num"><b>${money(o.rev)}</b><small class="${o.profit>=0?'pos':'neg'}">ربح ${money(o.profit)}</small></div></div>`; }).join('')+'</div>'+
+    (all.length>6?`<div style="text-align:center;margin-top:10px"><button type="button" class="btn sm ghost" onclick="ptModelsAll=!ptModelsAll;render()">${ptModelsAll?'عرض الأقل':'عرض كل الموديلات ('+all.length+')'}</button></div>`:'')+'<div class="hint" style="margin-top:8px">الأسود جملة والأزرق مفرد · اضغط على موديل تفتح صفحته.</div>';
+}
+
 let partMonth=thisMonth(), partGran='day';
 const mRange=m=>[m==='ALL'?null:m+'-01', m==='ALL'?null:m+'-31'];
 function pageData(from,to){
@@ -4681,7 +4828,7 @@ function revChart(rows,unitLabel){
   const step=Math.pow(10,Math.floor(Math.log10(mx||1))), top=Math.ceil(mx/step*2)/2*step||1, best=rows.reduce((a,r)=>r.v>a.v?r:a,rows[0]);
   const grid=[1,.75,.5,.25,0].map(f=>`<div class="rc-g" style="bottom:${f*100}%"><span>${f?absNum(top*f):'0'}</span></div>`).join('');
   return `<div class="rc-sum"><div><span>إجمالي الوارد</span><b>${money(tot)}</b></div><div><span>أعلى ${unitLabel}</span><b>${money(best.v)}</b><em>${esc(best.full)}</em></div><div><span>معدل ${unitLabel}</span><b>${money(tot/act.length)}</b><em>من ${act.length} ${unitLabel} فيها مبيعات</em></div></div>
-  <div class="rc-plot"><div class="rc-grid">${grid}</div><div class="rc-bars">${rows.map(r=>`<div class="rc-b ${r===best&&r.v>0?'top':''}" title="${esc(r.full)} — ${money(r.v)}"><div class="rc-v">${r.v>0?absNum(r.v):''}</div><div class="rc-col"><i style="height:${r.v>0?Math.max(2,r.v/top*100):0}%"></i></div><div class="rc-x">${esc(r.l)}</div></div>`).join('')}</div></div>
+  <div class="rc-plot"><div class="rc-grid">${grid}</div><div class="rc-bars">${rows.map(r=>`<div class="rc-b ${r===best&&r.v>0?'top':''}" title="${esc(r.full)} — ${money(r.v)}"><div class="rc-v">${(r.v>0&&(rows.length<=10||r.v>=mx*0.3))?absNum(r.v):''}</div><div class="rc-col"><i style="height:${r.v>0?Math.max(2,r.v/top*100):0}%"></i></div><div class="rc-x">${esc(r.l)}</div></div>`).join('')}</div></div>
   <div class="rc-note">كل عمود = ${unitLabel==='يوم'?'وارد يوم':unitLabel==='أسبوع'?'وارد أسبوع (يبدأ السبت)':unitLabel==='شهر'?'وارد شهر':'وارد سنة'} · مرّر على العمود لتشوف التفاصيل</div>`;
 }
 function barChart(items){
@@ -4712,18 +4859,9 @@ function renderPartnership(){
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
-  <div class="grid stats">
-    ${statCard('صافي الأرباح للتوزيع',money(D.net),D.net>=0?'pos':'neg','بعد خصم الإعلانات · على '+P.partners.length+' شركاء',true,null,PD?deltaBadge(D.net,PD.net,true):'')}
-    ${statCard('مبيعات الصفحة (الوارد)',money(D.revenue),'accent',D.orders+' طلب · '+D.pieces+' قطعة',true,"openPageSalesModal()",PD?deltaBadge(D.revenue,PD.revenue,true):'')}
-    ${statCard('الأرباح قبل الإعلانات',money(D.profit),D.profit>=0?'pos':'neg','هامش '+(D.revenue>0?(Math.round(D.profit/D.revenue*1000)/10)+'%':'—'),false,null,PD?deltaBadge(D.profit,PD.profit,true):'')}
-    ${statCard('تكاليف الإعلانات',money(D.ads),'neg','تُخصم مرة وحدة بالنسب',false,null,PD?deltaBadge(D.ads,PD.ads,false):'')}
-    ${statCard('مستحقات الموظفين',money(D.wage),'neg',D.empPieces+' قطعة مفرد × أجرة القطعة · مسدد '+money(D.wagePaid)+' · متبقي '+money(Math.max(0,D.wage-D.wagePaid)),false,"currentDetail='emps';render();window.scrollTo(0,0)")}
-    ${statCard('عدد المبيعات',D.orders+' عملية بيع','accent','جملة '+D.wh.n+' · مفرد '+D.rt.n,false,"openPageSalesModal()",PD?deltaBadge(D.orders,PD.orders,true):'')}
-    ${statCard('القطع المباعة',D.pieces.toLocaleString('en-US'),'','جملة '+D.wh.pcs+' · مفرد '+D.rt.pcs,false,null,PD?deltaBadge(D.pieces,PD.pieces,true):'')}
-    ${statCard('متوسط قيمة الطلب',D.orders?money(D.revenue/D.orders):'—','','ربح القطعة '+(D.pieces?money(D.profit/D.pieces):'—'))}
-  </div>
+  ${ptHeroHtml(D,PD)}
 
-  <div class="section-title"><span class="ic">👥</span> الشركاء — اضغط على أي اسم لكشف حسابه</div>
+  <div class="section-title"><span class="ic">👥</span> الشركاء <span class="muted" style="font-size:12px;font-weight:500">اضغط على أي اسم لكشف حسابه</span></div>
   <div class="grid stats">${D.parts.map(p=>{const t=ptTotals(p.id);return `<div class="pcard" onclick="currentDetail='${p.id}';render();window.scrollTo(0,0)">
     <div class="pn"><span>${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
     <div class="big ${p.net>=0?'pos':'neg'}">${money(p.net)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">صافي حصته بهذي الفترة</div>
@@ -4732,29 +4870,31 @@ function renderPartnership(){
     <div class="pr"><span>مساهمته بمستحقات الموظفين${P.empDeduct?'':' <small style="color:var(--text-faint)">(للعلم)</small>'}</span><b class="${P.empDeduct?'neg':''}">${P.empDeduct?'−':''}${money(p.exp)}</b></div>
     <div class="pr"><span>المستلم (كل الفترات)</span><b class="pos">${money(t.paid)}</b></div>
     <div class="pr"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>`;}).join('')}</div>
-  ${(()=>{const T=empsTotal(); return `<div class="section-title"><span class="ic">👥</span> موظفو الصفحة — مستحقاتهم <button class="btn sm" style="margin-inline-start:auto" onclick="currentDetail='emps';render();window.scrollTo(0,0)">إدارة الموظفين ←</button></div>
-  <div class="grid stats">${T.list.length?T.list.map(S=>`<div class="pcard" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)"><div class="pn"><span>👤 ${esc(S.E.name)}</span><span class="pill retail">${money(S.rate)} للقطعة</span></div><div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له</div><div class="pr"><span>قطع هذا الشهر</span><b>${S.mPieces}</b></div><div class="pr"><span>مستحق هذا الشهر</span><b>${money(S.mDue)}</b></div></div>`).join(''):`<div class="pcard" onclick="openEmpEditModal()"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظفين. اضغط لإضافة موظف يستحق أجرة على قطع المفرد.</div></div>`}</div>`;})()}
 
   <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
   <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel)}</div>
-  <div class="grid stats dn-grid" style="margin-top:14px;">
-    <div class="card"><div class="dn-title">جملة مقابل مفرد <span>الوارد</span></div>${donutChart([{v:D.wh.rev,c:'var(--text)',l:'جملة',t:money(D.wh.rev)+' · '+D.wh.n+' طلب'},{v:D.rt.rev,c:'var(--info)',l:'مفرد',t:money(D.rt.rev)+' · '+D.rt.n+' طلب'}],D.orders,'طلب')}</div>
-    <div class="card"><div class="dn-title">جملة مقابل مفرد <span>القطع</span></div>${donutChart([{v:D.wh.pcs,c:'var(--text)',l:'جملة',t:D.wh.pcs+' قطعة'},{v:D.rt.pcs,c:'var(--info)',l:'مفرد',t:D.rt.pcs+' قطعة'}],D.pieces,'قطعة')}</div>
-    <div class="card"><div class="dn-title">وين راح الوارد <span>من كل وارد الصفحة</span></div>${donutChart([{v:D.revenue-D.profit,c:'var(--text-faint)',l:'كلفة البضاعة',t:money(D.revenue-D.profit)},{v:D.ads,c:'var(--negative)',l:'الإعلانات',t:money(D.ads)},{v:Math.max(0,D.net),c:'var(--positive)',l:'صافي للشركاء',t:money(D.net)}],D.revenue>0?Math.round(Math.max(0,D.net)/D.revenue*100)+'%':'—','صافي')}</div>
-  </div>
 
-  <div class="section-title"><span class="ic">🏆</span> أكثر الموديلات طلباً — جملة ومفرد <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
-  <div class="card">${modelOrdersRows(modelOrderStats(D.ps),8)}<div class="hint" style="margin-top:8px">الطول = عدد الطلبات، والأسود جملة والأزرق مفرد. اضغط على موديل تفتح صفحته.</div></div>
+  <div id="ptDaily">${ptDailyHtml()}</div>
 
-  <div class="section-title"><span class="ic">🔒</span> سجل إقفال الأشهر</div>
-  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
-  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num">${money(c.wage||0)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><div class="btn-row"><button class="btn sm" onclick="printPartnerStatement('${c.month}')">🖨 كشف</button><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></div></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div>
+  <div class="section-title"><span class="ic">⚖️</span> جملة مقابل مفرد <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
+  <div class="card wr2-card">${ptWRHtml(D)}</div>
 
-  <div class="section-title"><span class="ic">📣</span> إعلانات الصفحة بهذي الفترة</div>
+  <div class="section-title"><span class="ic">🏆</span> أكثر الموديلات طلباً <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
+  <div class="card">${ptModelsHtml(D)}</div>
+
+  ${(()=>{const T=empsTotal(); return `<div class="section-title"><span class="ic">👥</span> موظفو الصفحة — مستحقاتهم <button class="btn sm" style="margin-inline-start:auto" onclick="currentDetail='emps';render();window.scrollTo(0,0)">إدارة الموظفين ←</button></div>
+  <div class="grid stats">${T.list.length?T.list.map(S=>`<div class="pcard" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)"><div class="pn"><span>👤 ${esc(S.E.name)}</span><span class="pill retail">${money(S.rate)} للقطعة</span></div><div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له</div><div class="pr"><span>قطع هذا الشهر</span><b>${S.mPieces}</b></div><div class="pr"><span>مستحق هذا الشهر</span><b>${money(S.mDue)}</b></div></div>`).join(''):`<div class="pcard" onclick="openEmpEditModal()"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظفين. اضغط لإضافة موظف يستحق أجرة على قطع المفرد.</div></div>`}</div>`;})()}
+
+
+  <details class="pt-sec" id="ptAds"><summary>📣 إعلانات الصفحة بهذي الفترة (${D.exps.length})</summary>
   <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظات</th></tr></thead><tbody>
-  ${D.exps.length?D.exps.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`<tr><td class="muted">${dtCell(e)}</td><td>${e.type==='إعلانات'?'<span class="pill wholesale">إعلانات</span>':esc(e.type)}</td><td class="num neg">${money(e.amount)}</td><td class="muted">${esc(e.notes||'—')}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد مصاريف</td></tr>'}</tbody></table></div>
+  ${D.exps.length?D.exps.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`<tr><td class="muted">${dtCell(e)}</td><td>${e.type==='إعلانات'?'<span class="pill wholesale">إعلانات</span>':esc(e.type)}</td><td class="num neg">${money(e.amount)}</td><td class="muted">${esc(e.notes||'—')}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد مصاريف</td></tr>'}</tbody></table></div></details>
 
-  <div id="ptDaily">${ptDailyHtml()}</div>`;
+  <details class="pt-sec"><summary>🔒 سجل إقفال الأشهر (${P.closes.length})</summary>
+  <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>المبيعات</th><th>الأرباح</th><th>الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي</th>${P.partners.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${P.closes.length?P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)).map(c=>`<tr><td><b>${monthLabelAr(c.month)}</b></td><td class="num">${money(c.revenue)}</td><td class="num">${money(c.profit)}</td><td class="num neg">${money(c.ads)}</td><td class="num">${money(c.wage||0)}</td><td class="num ${c.net>=0?'pos':'neg'}">${money(c.net)}</td>${P.partners.map(p=>`<td class="num">${money(((c.parts||[]).find(x=>x.id===p.id)||{}).net||0)}</td>`).join('')}<td><div class="btn-row"><button class="btn sm" onclick="printPartnerStatement('${c.month}')">🖨 كشف</button><button class="btn sm danger" onclick="deletePartnerClose('${c.id}')">إلغاء</button></div></td></tr>`).join(''):`<tr class="empty-row"><td colspan="${7+P.partners.length}">ما اكو أشهر مقفلة بعد</td></tr>`}</tbody></table></div></details>
+
+`;
 }
 function closePartnerMonth(ym){
   const P=PS();
