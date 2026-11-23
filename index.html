@@ -714,6 +714,11 @@
 .mc-stale{position:absolute;top:8px;left:8px;background:var(--warn);color:#000;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;}
 .bp-list{display:flex;flex-wrap:wrap;gap:6px 14px;max-height:120px;overflow:auto;margin-bottom:10px;}
 .bp-it{display:flex;align-items:center;gap:6px;font-size:13px;}
+
+.pt-more{position:relative;display:inline-block;} .pt-more>summary{list-style:none;cursor:pointer;} .pt-more>summary::-webkit-details-marker{display:none;}
+.pt-menu{position:absolute;top:calc(100% + 6px);left:0;right:auto;min-width:260px;z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;}
+.pt-menu button{background:none;border:0;text-align:start;padding:10px 12px;border-radius:10px;font:inherit;font-size:13.5px;color:var(--text);cursor:pointer;} .pt-menu button:hover{background:var(--surface-2);} .pt-menu button.neg{color:var(--negative);}
+@media (max-width:700px){.pt-menu{min-width:230px;max-width:80vw;}}
 </style>
 </head>
 <body>
@@ -4673,7 +4678,11 @@ function renderPartnership(){
     <div class="toolbar" style="margin:0;"><button class="btn" onclick="navigate('contract')">📜 عقد الشراكة</button><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   <div class="pt-top">
     <div class="pt-quick"><button class="btn primary" onclick="openOrderModal(null,'page')">+ تسجيل بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان للصفحة</button></div>
-    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ تعديل الأسماء والنسب</button><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم (صورة)</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر (صورة)</button>`:''}<button class="btn" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>${(P.archive&&P.archive.length)?'<button class="btn" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>':''}${(P.archive&&P.archive.length)?`<button class="btn" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button>`:''}<button class="btn danger" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></div>
+    <div class="pt-manage"><div class="pt-mt">⚙️ إدارة الشراكة</div><div class="btn-row">${closeBtn}<button class="btn" onclick="openPartnersModal()">✏️ الأسماء والنسب</button><button class="btn" onclick="openDailySummary()">📋 ملخص اليوم</button>${partMonth!=='ALL'?`<button class="btn" onclick="printPartnerStatement('${partMonth}')">🖨 كشف الشهر</button>`:''}
+      <details class="pt-more"><summary class="btn">⋯ المزيد</summary><div class="pt-menu">
+        <button type="button" onclick="togglePtEmpDeduct()">${P.empDeduct?'✅':'⬜'} خصم مستحقات الموظفين من الصافي</button>
+        ${(P.archive&&P.archive.length)?`<button type="button" onclick="openResetHistory()">📜 سجل التصفيرات (${P.archive.length})</button><button type="button" onclick="restorePartnerReset()">↩ استرجاع آخر تصفير</button>`:''}
+        <button type="button" class="neg" onclick="openPartnerResetModal()">🗑 تصفير أرقام الشراكة</button></div></details></div></div>
   </div>
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
@@ -6260,6 +6269,7 @@ function openResetHistory(){
     });
   const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='760px';
 }
+document.addEventListener('click',e=>{ document.querySelectorAll('.pt-more[open]').forEach(d=>{ if(!d.contains(e.target)||e.target.closest('.pt-menu button')) d.removeAttribute('open'); }); });
 function openPartnerResetModal(){
   document.querySelectorAll('.row-menu.show').forEach(m=>m.classList.remove('show'));
   const P=PS(), today=todayISO();
