@@ -800,6 +800,14 @@
   .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
   .gp-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .kt{background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:10px 13px;min-width:0;} .kt-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim);font-weight:700;} .kt-h i{font-style:normal;font-size:13px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:var(--surface-3);} .kt-h span{flex:1;} .kt-h em{font-style:normal;}
+  .kt-b{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:6px;} .kt-v{font-family:'Cairo',sans-serif;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;} .kt.neg .kt-v{color:var(--negative);} .kt-s{font-size:11px;color:var(--text-faint);margin-top:3px;line-height:1.5;}
+  .spk{width:84px;height:28px;flex:none;}
+  .kt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px;}
+  .rc-kt{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;} .rc-kt>.kt{padding:10px 13px !important;display:block !important;} .rc-kt .kt-v{font-size:19px !important;}
+  .or-card{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:center;} .or-donut .dn-wrap{flex-direction:column;gap:8px;} .or-kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;}
+  @media (max-width:800px){.or-card{grid-template-columns:1fr;}}
+  .gp3-st{grid-template-columns:1fr 1fr;} .gp3-st b{font-size:13.5px;}
   .gp-wrap{display:grid;grid-template-columns:230px 1fr;gap:12px;align-items:stretch;} .gp-donut{margin:0;padding:12px;display:grid;place-items:center;} .gp-donut .dn-wrap{flex-direction:column;gap:10px;}
   .gp-wrap .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
   .gp3{border:1px solid var(--border);border-radius:16px;padding:14px;background:var(--glass),var(--surface-2);transition:transform .2s var(--ease),border-color .2s;} .gp3:hover{border-color:var(--border-strong);transform:translateY(-2px);}
@@ -3311,7 +3319,7 @@ function renderSales(){
 
   return `
   <div class="page-head">
-    <div><h1>الوارد / المبيعات</h1><div class="desc">الوارد: <b>${money(totalRevenue)}</b> &nbsp;·&nbsp; الربح: <b class="${totalProfit>=0?'pos':'neg'}">${money(totalProfit)}</b>${totalRemaining>0?` &nbsp;·&nbsp; متبقٍ على زبائن: <b class="accent">${money(totalRemaining)}</b>`:''}</div></div>
+    <div><h1>الوارد / المبيعات</h1><div class="desc">الوارد: <b>${money(totalRevenue)}</b> &nbsp;·&nbsp; الربح: <b class="${totalProfit>=0?'pos':'neg'}">${money(totalProfit)}</b>${totalRemaining>0?` &nbsp;·&nbsp; متبقٍ على زبائن: <b class="accent">${money(totalRemaining)}</b>`:''}${(()=>{ const R=(state.returns||[]).filter(r=>inMonth(r.saleDate||r.date, salesFilter.month==='ALL'?null:salesFilter.month) && (salesFilter.channel==='ALL'||(r.channel||'shop')===salesFilter.channel)); const q=R.reduce((a,r)=>a+num(r.qty),0); return R.length?` &nbsp;·&nbsp; <a href="#" onclick="navigate('returns');return false" style="color:var(--negative);font-weight:700">↩ راجع: ${q} قطعة (${money(R.reduce((a,r)=>a+num(r.amount),0))})</a>`:''; })()}</div></div>
     <button class="btn primary" onclick="openSaleModal()">+ تسجيل عملية بيع</button> <button class="btn ghost" onclick="navigate('returns')">↩️ المرتجعات</button>
   </div>
   <div class="toolbar">
@@ -4884,8 +4892,11 @@ function pageData(from,to){
   const first={}; state.sales.filter(s=>(s.channel||'shop')==='page' && (s.customerName||'').trim()).forEach(s=>{const k=s.customerName.trim(); if(!first[k]||s.date<first[k]) first[k]=s.date;});
   const names=[...new Set(ps.map(s=>(s.customerName||'').trim()).filter(Boolean))];
   const newC=names.filter(k=>inRange(first[k],from,to)).length;
+  const rets=(state.returns||[]).filter(r=>(r.channel||'shop')==='page' && !skip.has(r.saleId) && inRange(r.saleDate||r.date,from,to));
+  const okeys=new Set(ps.map(x=>x.orderId||x.id)), rkeys=new Set(rets.map(r=>r.orderId||r.saleId)), allk=new Set([...okeys,...rkeys]);
+  const retQty=rets.reduce((a,r)=>a+num(r.qty),0), retAmt=rets.reduce((a,r)=>a+num(r.amount),0), retProfit=rets.reduce((a,r)=>a+num(r.profit),0);
   const parts=P.partners.map(p=>({id:p.id,name:p.name,pct:num(p.pct),gross:profit*num(p.pct)/100,ads:ads*num(p.pct)/100,exp:wage*num(p.pct)/100,net:net*num(p.pct)/100}));
-  return {ps,exps,revenue,profit,ads,other,empPieces:empPcs,wage,wagePaid,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
+  return {ps,exps,revenue,profit,ads,other,empPieces:empPcs,wage,wagePaid,net,pieces:ps.reduce((s,x)=>s+num(x.quantity),0),orders:ps.length,ordersN:okeys.size,rets,retOrders:rkeys.size,ordersAll:allk.size,retQty,retAmt,retProfit,wh:agg(w),rt:agg(r),custs:names.length,newC,retC:names.length-newC,parts};
 }
 function ptTotals(pid){
   const P=PS();
@@ -4902,12 +4913,13 @@ function donutChart(segs,centerTop,centerSub){
   <div class="dn-leg">${segs.map(x=>`<div class="dn-row"><i style="background:${x.c}"></i><span>${x.l}</span><b>${x.t}</b><em>${tot>0?Math.round(Math.max(0,x.v)/tot*100):0}%</em></div>`).join('')}</div></div>`;
 }
 function absNum(n){ n=Math.round(n); if(n>=1e6){ const m=n/1e6; return (Math.round(m*100)/100)+' مليون'; } if(n>=1e3){ return (Math.round(n/100)/10)+' ألف'; } return String(n); }
-function revChart(rows,unitLabel){
+function revChart(rows,unitLabel,prevTotal){
   const mx=Math.max(...rows.map(r=>r.v),0), tot=rows.reduce((a,r)=>a+r.v,0), act=rows.filter(r=>r.v>0);
   if(!act.length) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
   const step=Math.pow(10,Math.floor(Math.log10(mx||1))), top=Math.ceil(mx/step*2)/2*step||1, best=rows.reduce((a,r)=>r.v>a.v?r:a,rows[0]);
   const grid=[1,.75,.5,.25,0].map(f=>`<div class="rc-g" style="bottom:${f*100}%"><span>${f?absNum(top*f):'0'}</span></div>`).join('');
-  return `<div class="rc-sum"><div><span>إجمالي الوارد</span><b>${money(tot)}</b></div><div><span>أعلى ${unitLabel}</span><b>${money(best.v)}</b><em>${esc(best.full)}</em></div><div><span>معدل ${unitLabel}</span><b>${money(tot/act.length)}</b><em>من ${act.length} ${unitLabel} فيها مبيعات</em></div></div>
+  const prev=prevTotal, sp=spark(rows.map((r,i)=>rows.slice(0,i+1).reduce((x,y)=>x+y.v,0)),'var(--accent)'), pr=(prev===null||prev===undefined)?'':deltaBadge(tot,prev,true);
+  return `<div class="rc-sum rc-kt">${kpiT('💰','إجمالي الوارد',money(tot),'من '+act.length+' '+unitLabel+' فيها مبيعات',pr,sp)}${kpiT('🏆','أعلى '+unitLabel,money(best.v),esc(best.full),'','','')}${kpiT('📊','معدل '+unitLabel,money(tot/act.length),'متوسط '+unitLabel+' فيه مبيعات','','','')}</div>
   <div class="rc-plot"><div class="rc-grid">${grid}</div><div class="rc-bars">${rows.map(r=>`<div class="rc-b ${r===best&&r.v>0?'top':''}" title="${esc(r.full)} — ${money(r.v)}"><div class="rc-v">${(r.v>0&&(rows.length<=10||r.v>=mx*0.3))?absNum(r.v):''}</div><div class="rc-col"><i style="height:${r.v>0?Math.max(2,r.v/top*100):0}%"></i></div><div class="rc-x">${esc(r.l)}</div></div>`).join('')}</div></div>
   <div class="rc-note">كل عمود = ${unitLabel==='يوم'?'وارد يوم':unitLabel==='أسبوع'?'وارد أسبوع (يبدأ السبت)':unitLabel==='شهر'?'وارد شهر':'وارد سنة'} · مرّر على العمود لتشوف التفاصيل</div>`;
 }
@@ -4940,8 +4952,9 @@ function renderPartnership(){
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
+  <div id="ptOrders">${ptOrdersRetHtml(D,PD)}</div>
   <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
-  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel)}</div>
+  <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel,PD?PD.ps.reduce((a,x)=>a+saleRevenue(x),0):null)}</div>
 
   <div id="ptDaily">${ptDailyHtml()}</div>
 
@@ -5441,6 +5454,22 @@ function openGoalModal(){
     <div class="form-row"><label>نبّهني إذا الإعلانات تجاوزت (% من الأرباح)</label><input type="number" id="f_ga" value="${g.adsPct||30}" min="1" max="100"><div class="hint">مثلاً 30 يعني: إذا الإعلانات صارت أكثر من 30% من أرباح الصفحة يطلع تنبيه أحمر.</div></div>`,
   onSave(){ const sales=num(document.getElementById('f_gs').value), adsPct=num(document.getElementById('f_ga').value); P.goal={sales,adsPct:adsPct>0?adsPct:30}; saveState(); closeModal(); render(); toast('تم حفظ الهدف'); }});
 }
+function spark(vals,col){
+  vals=vals.map(num); if(vals.length<2) return ''; const w=84,h=28,mx=Math.max(...vals,1),mn=Math.min(...vals,0), rg=(mx-mn)||1;
+  const pts=vals.map((v,i)=>[i/(vals.length-1)*w, h-3-(v-mn)/rg*(h-8)]), line=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  return `<svg class="spk" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polygon points="0,${h} ${line} ${w},${h}" fill="${col||'var(--accent)'}" opacity=".13"/><polyline points="${line}" fill="none" stroke="${col||'var(--accent)'}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="2.4" fill="${col||'var(--accent)'}"/></svg>`;
+}
+function kpiT(ic,label,val,sub,delta,spk,cls,click){
+  return `<div class="kt ${cls||''}" ${click?`onclick="${click}" style="cursor:pointer"`:''}><div class="kt-h"><i>${ic}</i><span>${label}</span>${delta?`<em>${delta}</em>`:''}</div><div class="kt-b"><b class="kt-v">${val}</b>${spk||''}</div>${sub?`<div class="kt-s">${sub}</div>`:''}</div>`;
+}
+function ptOrdersRetHtml(D,PD){
+  const per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), ok=D.ordersN, rt=D.retOrders, all=D.ordersAll||0, rate=all?rt/all*100:0, prate=PD&&PD.ordersAll?PD.retOrders/PD.ordersAll*100:null;
+  const segs=[{v:ok,c:'var(--positive)',l:'طلبات ناجحة',t:ok+' طلب'},{v:rt,c:'var(--negative)',l:'طلبات راجعة',t:rt+' طلب'}];
+  return `<div class="section-title"><span class="ic">🧾</span> الطلبات والرواجع <span class="muted" style="font-size:12px;font-weight:500">${per}</span></div>
+  <div class="card or-card"><div class="or-donut">${donutChart(segs,all,'طلب كلي')}</div>
+  <div class="or-kp">${kpiT('🧾','الطلبات الكلية',all,ok+' ناجحة + '+rt+' راجعة',PD?deltaBadge(all,PD.ordersAll,true):'')}${kpiT('↩️','الرواجع',D.retQty+' قطعة',rt+' طلب راجع · '+money(D.retAmt),PD?deltaBadge(D.retQty,PD.retQty,false):'','','neg')}${kpiT('📉','نسبة الرجوع',(Math.round(rate*10)/10)+'%',D.retProfit?'ربح ضائع '+money(D.retProfit):'من الطلبات الكلية',prate===null?'':deltaBadge(rate,prate,false),'',rate>15?'neg':'')}${kpiT('✅','صافي الطلبات الناجحة',ok,D.pieces+' قطعة · وارد '+money(D.revenue),PD?deltaBadge(ok,PD.ordersN,true):'')}</div></div>
+  ${D.rets.length?`<details class="pt-sec"><summary>↩️ تفاصيل الرواجع (${D.rets.length})</summary><div class="table-wrap"><table><thead><tr><th>تاريخ الرجوع</th><th>الموديل</th><th>الزبون</th><th>القطع</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody>${D.rets.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r=>`<tr><td class="muted">${esc(r.date)}</td><td>${esc(r.product||'')}</td><td>${esc(r.customerName||'—')}</td><td class="num">${num(r.qty)}</td><td class="num neg">${money(r.amount)}</td><td class="muted">${esc(r.reason||'')}</td></tr>`).join('')}</tbody></table></div></details>`:''}`;
+}
 function ptTopStats(D,PD){
   const P=PS(), db=(c,p,up)=>PD?deltaBadge(c,p,up):'', T=empsTotal();
   const k=(cls,ic,l,v,sub,d,click,vc)=>`<div class="ptk ${cls}" ${click?`onclick="${click}"`:''}><div class="ptk-h"><span>${l}</span><i>${ic}</i></div><b class="ptk-v ${vc||''}">${v}</b><div class="ptk-s">${sub}</div>${d?`<div class="ptk-d">${d}</div>`:''}</div>`;
@@ -5448,7 +5477,8 @@ function ptTopStats(D,PD){
   const eC=T.list.length?k('','👤','مستحقات الموظفين',money(T.mDue),`${T.mPieces} قطعة مفرد · مسدد ${money(T.paid)} · متبقي ${money(T.remaining)}`,'',"currentDetail='emps';render();window.scrollTo(0,0)"):'';
   return `<div class="pt-kpis">
     ${k('hero','📊','صافي الأرباح للتوزيع',money(D.net),'بعد الإعلانات'+((P.empDeduct&&D.wage)?' وأجور الموظفين':'')+' · على '+P.partners.length+' شركاء',db(D.net,PD&&PD.net,true),"var e=document.getElementById('ptPartners');if(e)e.scrollIntoView({behavior:'smooth'})",D.net<0?'neg':'')}
-    ${k('','💰','وارد الصفحة',money(D.revenue),D.orders+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
+    ${k('','💰','وارد الصفحة',money(D.revenue),D.ordersN+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
+    ${k('','🧾','الطلبات الكلية',D.ordersAll,D.retOrders?D.ordersN+' ناجحة · '+D.retOrders+' راجعة ('+D.retQty+' قطعة)':D.ordersN+' ناجحة · بدون رواجع',db(D.ordersAll,PD&&PD.ordersAll,true),"var e=document.getElementById('ptOrders');if(e)e.scrollIntoView({behavior:'smooth'})")}
     ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
     ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),'','neg')}
     ${eC}
@@ -5467,7 +5497,7 @@ function ptGoalPartners(D){
   <div class="gp-row">${D.parts.map((p,i)=>{ const t=ptTotals(p.id), due=t.earned+t.adj, pr=due>0?t.paid/due*100:0, col=cols[i%cols.length]; return `<div class="gp3">
     <div class="gp3-top" onclick="openPartnerDetail('${p.id}')"><span class="gp3-av" style="background:${col}">${esc((p.name||'?').trim().charAt(0))}</span><span class="gp3-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
     <div class="gp3-mid"><div><small>صافي حصته بهذي الفترة</small><b class="gp3-v ${p.net>=0?'pos':'neg'}">${money(p.net)}</b></div>${ptRing(pr,col,'مستلم')}</div>
-    <div class="gp3-st"><div><small>المستلم</small><b>${money(t.paid)}</b></div><div><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>
+    <div class="gp3-st"><div><small>📣 دفع للإعلانات</small><b class="neg">${money(p.ads)}</b></div><div><small>👤 ساهم بالموظفين${PS().empDeduct?'':' (للعلم)'}</small><b class="${PS().empDeduct?'neg':''}">${money(p.exp)}</b></div><div><small>المستلم</small><b>${money(t.paid)}</b></div><div><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>
     <div class="gp3-b"><button type="button" class="btn sm primary" onclick="openPartnerPayModal('${p.id}')">💵 تسديد</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}',null,'sub')">➖ خصم</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}',null,'add')">➕ إضافة</button></div></div>`; }).join('')}</div></div></div>`;
 }
 function goalCardHtml(D){
@@ -5510,7 +5540,7 @@ function ptDailyHtml(){
   <div class="btn-row" style="margin:0 0 12px;align-items:end;">${chip('today','اليوم')}${chip('yest','أمس')}${chip('7d','آخر 7 أيام')}${chip('month','الشهر المحدد')}
     <label class="ol-f" style="margin-inline-start:10px;"><small>من</small><input type="date" id="pd_from" value="${ptRange.mode==='custom'?esc(ptRange.from):''}" onchange="ptCustom()"></label>
     <label class="ol-f"><small>إلى</small><input type="date" id="pd_to" value="${ptRange.mode==='custom'?esc(ptRange.to):''}" onchange="ptCustom()"></label></div>
-  <div class="hero-kpis" style="margin:0 0 12px;"><div class="hk"><small>الطلبات</small><b>${tot.o}</b><small>${list.length} يوم فيه مبيعات</small></div><div class="hk"><small>القطع</small><b>${tot.p}</b><small>${list.length?'معدل '+(Math.round(tot.o/list.length*10)/10)+' طلب باليوم':''}</small></div><div class="hk"><small>الوارد</small><b>${money(tot.r)}</b></div><div class="hk"><small>الربح</small><b class="${tot.f>=0?'pos':'neg'}">${money(tot.f)}</b></div></div>
+  <div class="kt-row">${kpiT('🧾','الطلبات',D.ordersAll,(list.length?'معدل '+(Math.round(D.ordersN/list.length*10)/10)+' طلب باليوم · ':'')+list.length+' يوم'+(D.retOrders?' · '+D.retOrders+' راجع':''),'',spark(list.slice().reverse().map(g=>g.orders.size),'var(--accent)'))}${kpiT('👗','القطع',tot.p,'قطعة مباعة','',spark(list.slice().reverse().map(g=>g.pcs),'var(--info)'))}${kpiT('💰','الوارد',money(tot.r),'','',spark(list.slice().reverse().map(g=>g.rev),'var(--positive)'))}${kpiT('📈','الربح',money(tot.f),tot.r?'هامش '+Math.round(tot.f/tot.r*1000)/10+'%':'','',spark(list.slice().reverse().map(g=>g.profit),'var(--positive)'),tot.f<0?'neg':'')}${kpiT('↩️','الراجع',D.retQty+' قطعة',D.retQty?money(D.retAmt)+' · '+D.retOrders+' طلب':'ما اكو رواجع','','',D.retQty?'neg':'')}</div>
   <div class="table-wrap"><table><thead><tr><th></th><th>اليوم</th><th>الطلبات</th><th>القطع</th><th>الوارد</th><th>الربح</th></tr></thead><tbody>
   ${list.length?list.map(g=>{ const dn=AR_DAYS[new Date(g.date+'T12:00:00').getDay()]; return `<tr style="cursor:pointer" onclick="ptToggleDay('${g.date}')"><td class="muted" id="pdc_${g.date}">▸</td><td><b>${esc(g.date)}</b> <span class="muted">${dn}</span></td><td class="num">${g.orders.size}</td><td class="num">${g.pcs}</td><td class="num accent">${money(g.rev)}</td><td class="num ${g.profit>=0?'pos':'neg'}">${money(g.profit)}</td></tr>
     <tr id="pdd_${g.date}" style="display:none"><td></td><td colspan="5"><table class="sub-table" style="width:100%"><thead><tr><th>الوقت</th><th>المنتج</th><th>الزبون</th><th>النوع</th><th>القطع</th><th>الوارد</th><th></th></tr></thead><tbody>${g.list.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(x=>`<tr><td class="muted">${tmLabel(x)||'—'}</td><td>${esc(saleProductLabel(x))}</td><td>${esc(x.customerName||'—')}</td><td><span class="pill ${x.customerType==='wholesale'?'wholesale':'retail'}">${x.customerType==='wholesale'?'جملة':'مفرد'}</span></td><td class="num">${num(x.quantity)}</td><td class="num accent">${money(saleRevenue(x))}</td><td><button class="btn sm" onclick="event.stopPropagation();openReturnModal('${x.id}')">↩ راجع</button></td></tr>`).join('')}</tbody></table></td></tr>`; }).join(''):'<tr class="empty-row"><td colspan="6">لا توجد مبيعات بهذي الفترة</td></tr>'}</tbody></table></div>
