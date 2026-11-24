@@ -799,6 +799,28 @@
   .gp2-r{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-top:1px dashed var(--border);color:var(--text-dim);} .gp2-r b{color:var(--text);}
   .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
+  .gp-t{display:flex;align-items:center;gap:8px;}
+  .sf-iss{background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--info);border-radius:12px;margin:8px 0;padding:0 14px;} .sf-iss.bad{border-right-color:var(--negative);} .sf-iss.warn{border-right-color:var(--warn);}
+  .sf-iss summary{cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 0;list-style:none;} .sf-iss summary::-webkit-details-marker{display:none;} .sf-iss summary b{flex:1;font-size:14px;} .sf-iss summary em{font-style:normal;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 9px;font-size:12px;}
+  .sf-hint{font-size:12.5px;color:var(--text-dim);padding:0 0 8px;}
+  .sf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 0;border-top:1px dashed var(--border);} .sf-t{font-size:13px;flex:1;min-width:200px;line-height:1.6;}
+  .gp-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;gap:2px;background:var(--surface-3);margin-bottom:6px;} .gp-bar i{display:block;height:100%;}
+  .gl-r{display:grid;grid-template-columns:1.3fr 1fr 1fr 14px;align-items:center;gap:10px;padding:10px 4px;border-top:1px dashed var(--border);cursor:pointer;border-radius:10px;transition:background .2s;} .gl-r:first-child{border-top:0;} .gl-r:hover{background:var(--surface-2);}
+  .gl-n{font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;} .gl-n i{width:10px;height:10px;border-radius:50%;display:inline-block;} .gl-n em{font-style:normal;font-size:11.5px;font-weight:700;background:var(--surface-3);border-radius:99px;padding:1px 8px;color:var(--text-dim);}
+  .gl-c small{display:block;font-size:11px;color:var(--text-faint);} .gl-c b{font-family:'Cairo',sans-serif;font-size:15px;font-variant-numeric:tabular-nums;} .gl-go{color:var(--text-faint);font-size:20px;}
+  @media (max-width:640px){.gl-r{grid-template-columns:1fr 1fr 12px;} .gl-n{grid-column:1/3;} .gl-c{grid-row:2;} .gl-go{grid-row:1;grid-column:3;}}
+  .adj-hd{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px;background:var(--surface-2);border-right:3px solid var(--positive);} .adj-hd.neg{border-right-color:var(--negative);}
+  .pd-hero{background:var(--glass),var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;display:grid;grid-template-columns:auto 1fr;gap:18px 24px;align-items:center;box-shadow:var(--card-shadow);}
+  .pd-who{display:flex;align-items:center;gap:14px;} .pd-who h1{margin:0 0 4px;font-size:24px;} .pd-av{width:60px;height:60px;border-radius:18px;display:grid;place-items:center;font-family:'Cairo',sans-serif;font-weight:800;font-size:28px;color:var(--on-accent);}
+  .pd-rem small{display:block;font-size:12px;color:var(--text-faint);} .pd-rem b{display:block;font-family:'Cairo',sans-serif;font-size:34px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;} .pd-rem b.neg{color:var(--negative);} .pd-rem b.pos{color:var(--positive);} .pd-rem span{font-size:11.5px;color:var(--text-faint);}
+  .pd-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:14px;border-top:1px dashed var(--border);}
+  .pd-kp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;} .pd-kp>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;} .pd-kp small{display:block;font-size:11.5px;color:var(--text-faint);margin-bottom:3px;} .pd-kp b{font-family:'Cairo',sans-serif;font-size:18px;font-variant-numeric:tabular-nums;} .pd-kp b.pos{color:var(--positive);} .pd-kp b.neg{color:var(--negative);} .pd-prog .gbar{margin-top:6px;}
+  .pd-card{margin-top:0;} .pd-ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;} .pd-ch b{font-size:15px;}
+  .pd-st{padding:8px 0;border-top:1px dashed var(--border);} .pd-st:first-of-type{border-top:0;} .pd-st-t{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13.5px;} .pd-st-t small{display:block;font-size:11px;color:var(--text-faint);margin-top:2px;} .pd-st-t b{font-variant-numeric:tabular-nums;white-space:nowrap;} .pd-st-b{height:5px;border-radius:99px;background:var(--surface-3);margin-top:6px;overflow:hidden;} .pd-st-b i{display:block;height:100%;border-radius:99px;opacity:.85;}
+  .pd-sum{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);font-weight:800;} .pd-sum b{font-family:'Cairo',sans-serif;font-size:20px;} .pd-sum b.pos{color:var(--positive);} .pd-sum b.neg{color:var(--negative);}
+  .pd-led{display:flex;flex-direction:column;gap:8px;} .pd-lr{display:grid;grid-template-columns:38px 1fr auto auto;align-items:center;gap:12px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--border-strong);border-radius:14px;} .pd-lr.close{border-right-color:var(--positive);} .pd-lr.pay{border-right-color:var(--info);} .pd-lr.adj{border-right-color:var(--warn);}
+  .pd-li{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--surface-3);font-size:16px;} .pd-lm b{display:block;font-size:14px;} .pd-lm small,.pd-la small{display:block;font-size:11.5px;color:var(--text-faint);margin-top:2px;} .pd-la{text-align:left;} .pd-la b{font-family:'Cairo',sans-serif;font-size:16px;font-variant-numeric:tabular-nums;}
+  @media (max-width:700px){.pd-hero{grid-template-columns:1fr;} .pd-kp{grid-template-columns:1fr 1fr;} .pd-lr{grid-template-columns:34px 1fr auto;} .pd-lb{grid-column:1/-1;}}
   .ps-card{margin-bottom:6px;} .ps-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
   .ps-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;} .ps-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px;}
   .ps-r small{display:block;font-size:11px;color:var(--text-faint);margin-top:2px;} .ps-r b{font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -4965,57 +4987,68 @@ function ptPartnerSummary(pid){
   const P=PS(), [f,t]=mRange(partMonth), D=pageData(f,t), p=D.parts.find(x=>x.id===pid); if(!p) return '';
   const adjM=P.adj.filter(a=>a.pid===pid && inRange(a.date,f,t)), adjS=adjM.reduce((a,x)=>a+num(x.amount),0);
   const paidM=P.pays.filter(a=>a.pid===pid && inRange(a.date,f,t)).reduce((a,x)=>a+num(x.amount),0);
-  const fin=p.net+adjS, rev=D.revenue||0, eff=D.net?Math.round(fin/D.net*1000)/10:null, tot=ptTotals(pid), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
-  const r=(l,v,c,sub)=>`<div class="ps-r"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b class="${c||''}">${v}</b></div>`;
-  return `<div class="card ps-card"><div class="ps-h"><b>تفاصيل نسبته — ${per}</b><span class="muted">المتفق عليه: <b>${pctTxt(p.pct)}</b> من الأرباح ومن الإعلانات</span></div>
-    <div class="ps-grid"><div>
-      ${r('حصته من أرباح الصفحة (قبل الخصم)',money(p.gross),'',pctTxt(p.pct)+' من '+money(D.profit))}
-      ${r('مساهمته بتكاليف الإعلانات','−'+money(p.ads),'neg',pctTxt(p.pct)+' من '+money(D.ads))}
-      ${p.exp?r('مساهمته بمستحقات الموظفين','−'+money(p.exp),'neg'):''}
-      ${adjS?r('إضافات / خصومات عليه',(adjS>0?'+':'−')+money(Math.abs(adjS)),adjS>0?'pos':'neg',adjM.map(a=>esc(a.note||'')).filter(Boolean).join('، ')):''}
-      ${r('صافي حصته بعد الخصم',money(fin),fin>=0?'pos':'neg')}
-      ${r('المستلم بهذي الفترة',money(paidM),'')}
-    </div><div class="ps-eff">
-      <div class="ps-e"><small>نسبته المتفق عليها</small><b>${pctTxt(p.pct)}</b></div>
-      <div class="ps-e"><small>نسبته الفعلية بعد الخصم</small><b>${eff===null?'—':eff+'%'}</b><small>من صافي الأرباح</small></div>
-      <div class="ps-e"><small>من الوارد</small><b>${rev?Math.round(p.gross/rev*1000)/10:0}%</b><small>قبل الخصم · وبعده ${rev?Math.round(fin/rev*1000)/10:0}%</small></div>
-    </div></div>
-    <div class="ps-foot">المتبقي له (كل الفترات) بعد كل الخصومات والتسديدات: <b class="${tot.remaining>0?'neg':'pos'}">${money(tot.remaining)}</b></div></div>`;
+  const fin=p.net+adjS, per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), mx=Math.max(Math.abs(p.gross),Math.abs(p.ads),Math.abs(p.exp||0),Math.abs(adjS),Math.abs(fin),1);
+  const r=(l,v,c,sub,w,bc)=>`<div class="pd-st"><div class="pd-st-t"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b class="${c||''}">${v}</b></div><div class="pd-st-b"><i style="width:${Math.min(100,Math.abs(w)/mx*100)}%;background:${bc}"></i></div></div>`;
+  return `<div class="card pd-card"><div class="pd-ch"><b>كيف انحسبت حصته</b><span class="pill wholesale">${per}</span></div>
+    ${r('حصته من أرباح الصفحة',money(p.gross),'',pctTxt(p.pct)+' من '+money(D.profit),p.gross,'var(--positive)')}
+    ${r('− مساهمته بالإعلانات','−'+money(p.ads),'neg',pctTxt(p.pct)+' من '+money(D.ads),p.ads,'var(--negative)')}
+    ${p.exp?r('− مساهمته بمستحقات الموظفين','−'+money(p.exp),'neg','',p.exp,'var(--negative)'):''}
+    ${adjS?r(adjS>0?'+ إضافات على حصته':'− خصومات من حصته',(adjS>0?'+':'−')+money(Math.abs(adjS)),adjS>0?'pos':'neg',adjM.map(a=>esc(a.note||'')).filter(Boolean).join('، '),adjS,adjS>0?'var(--positive)':'var(--negative)'):''}
+    <div class="pd-sum"><span>= صافي حصته بعد كل الخصومات</span><b class="${fin>=0?'pos':'neg'}">${money(fin)}</b></div>
+    ${paidM?`<div class="pd-st-t" style="padding:8px 0 0"><span>المستلم بهذي الفترة</span><b>${money(paidM)}</b></div>`:''}</div>`;
+}
+function ptPartnerLedger(pid){
+  const P=PS(), rows=[];
+  P.closes.forEach(c=>{ const x=(c.parts||[]).find(y=>y.id===pid); if(x) rows.push({d:c.date||(c.month+'-28'),o:0,amt:num(x.net),kind:'close',lbl:'حصته من '+monthLabelAr(c.month),note:'أرباح شهر مقفل · '+pctTxt(x.pct)}); });
+  P.adj.filter(a=>a.pid===pid).forEach(a=>rows.push({d:a.date,o:1,amt:num(a.amount),kind:'adj',lbl:num(a.amount)>=0?'إضافة على الحصة':'خصم من الحصة',note:a.note||'',id:a.id}));
+  P.pays.filter(a=>a.pid===pid).forEach(a=>rows.push({d:a.date,o:2,amt:-num(a.amount),kind:'pay',lbl:'تسديد للشريك',note:a.note||'',id:a.id}));
+  rows.sort((a,b)=>a.d.localeCompare(b.d)||a.o-b.o); let bal=0; rows.forEach(r=>{ bal+=r.amt; r.bal=bal; }); rows.reverse();
+  const ico={close:'🔒',adj:'✏️',pay:'💵'};
+  return `<div class="section-title"><span class="ic">📒</span> حركات الحساب <span class="muted" style="font-size:12px;font-weight:500">كل شي بالترتيب مع الرصيد المتبقي بعد كل حركة</span></div>
+  ${rows.length?`<div class="pd-led">${rows.map(r=>`<div class="pd-lr ${r.kind}"><span class="pd-li">${ico[r.kind]}</span><div class="pd-lm"><b>${esc(r.lbl)}</b><small>${esc(r.d)}${r.note?' · '+esc(r.note):''}</small></div><div class="pd-la"><b class="${r.amt>=0?'pos':'neg'}">${r.amt>=0?'+':'−'}${money(Math.abs(r.amt))}</b><small>الرصيد ${money(r.bal)}</small></div>${r.id?`<div class="btn-row pd-lb"><button class="btn sm ghost" onclick="${r.kind==='adj'?`openPartnerAdjModal('${pid}','${r.id}')`:`openPartnerPayModal('${pid}','${r.id}')`}">تعديل</button><button class="btn sm danger" onclick="deletePartnerRec('${r.kind==='adj'?'adj':'pays'}','${r.id}')">حذف</button></div>`:'<div class="pd-lb"></div>'}</div>`).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو حركات بعد — تظهر هنا الأرباح المقفلة والخصومات والتسديدات</div></div>'}`;
 }
 function renderPartnerDetail(pid){
   if(pid==='emps') return renderEmployeesPage();
   if(typeof pid==='string' && pid.startsWith('emp:')) return renderEmployeeDetail(pid.slice(4));
   const P=PS(), p=P.partners.find(x=>x.id===pid);
   if(!p){ currentDetail=null; return renderPartnership(); }
-  const t=ptTotals(pid), cl=P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month));
-  const adj=P.adj.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date)), pays=P.pays.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date));
-  return `<div class="page-head"><div><h1>${esc(p.name)} <span class="pill wholesale">${pctTxt(p.pct)}</span></h1><div class="desc">كشف حساب الشريك — الأرباح المقفلة، التعديلات، والمبالغ المستلمة</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
-  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">💵 تسديد مبلغ للشريك</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">± خصم أو إضافة على حصته</button><button class="btn" onclick="printPartnerStatement(partMonth==='ALL'?thisMonth():partMonth,'${pid}')">📄 كشف حسابه</button></div>
+  const t=ptTotals(pid), cl=P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month)), cols=['var(--accent)','var(--info)','#c98a00','var(--positive)'], ci=P.partners.indexOf(p);
+  const due=t.earned+t.adj, pr=due>0?Math.min(100,Math.max(0,t.paid/due*100)):0;
+  return `<div class="page-head"><div><div class="desc">كشف حساب الشريك</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
+  <div class="pd-hero"><div class="pd-who"><div class="pd-av" style="background:${cols[ci%cols.length]}">${esc((p.name||'?').trim().charAt(0))}</div><div><h1>${esc(p.name)}</h1><span class="pill wholesale">نسبته ${pctTxt(p.pct)}</span></div></div>
+    <div class="pd-rem"><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b><span>أرباح مقفلة + تعديلات − مستلم</span></div>
+    <div class="pd-acts"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">💵 تسديد مبلغ</button><button class="btn" onclick="openPartnerAdjModal('${pid}',null,'sub')">➖ خصم من الحصة</button><button class="btn" onclick="openPartnerAdjModal('${pid}',null,'add')">➕ إضافة على الحصة</button><button class="btn" onclick="printPartnerStatement(partMonth==='ALL'?thisMonth():partMonth,'${pid}')">📄 كشف حسابه</button></div></div>
+  <div class="pd-kp"><div><small>الأرباح المقفلة</small><b class="pos">${money(t.earned)}</b></div><div><small>إضافات / خصومات</small><b class="${t.adj>=0?'pos':'neg'}">${t.adj>0?'+':t.adj<0?'−':''}${money(Math.abs(t.adj))}</b></div><div><small>المستلم</small><b>${money(t.paid)}</b></div><div class="pd-prog"><small>نسبة المستلم من المستحق</small><b>${Math.round(pr)}%</b><div class="gbar" style="height:6px"><i style="width:${pr}%"></i></div></div></div>
+  <div class="field-inline" style="margin:14px 0 8px"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>
   ${ptPartnerSummary(pid)}
-  <div class="grid stats" style="margin-top:14px;">${statCard('المتبقي له',money(t.remaining),t.remaining>0?'neg':'pos','أرباح + تعديلات − مستلم',true)}${statCard('أرباح الأشهر المقفلة',money(t.earned),'pos')}${statCard('مبالغ إضافية / خصومات',money(t.adj),t.adj>=0?'':'neg')}${statCard('المستلم',money(t.paid),'accent')}</div>
+  ${ptPartnerLedger(pid)}
   <div class="section-title"><span class="ic">🔒</span> الأشهر المقفلة</div>
   <div class="table-wrap"><table><thead><tr><th>الشهر</th><th>حصته من الأرباح</th><th>مساهمة الإعلانات</th><th>مستحقات الموظفين</th><th>الصافي له</th></tr></thead><tbody>
-  ${cl.length?cl.map(c=>{const x=(c.parts||[]).find(y=>y.id===pid)||{};return `<tr><td><b>${monthLabelAr(c.month)}</b> <span class="muted">(${pctTxt(x.pct)})</span></td><td class="num">${money(x.gross)}</td><td class="num neg">−${money(x.ads)}</td><td class="num">${money(x.exp||0)}</td><td class="num pos">${money(x.net)}</td></tr>`;}).join(''):'<tr class="empty-row"><td colspan="5">لا توجد أشهر مقفلة</td></tr>'}</tbody></table></div>
-  <div class="section-title"><span class="ic">✏️</span> المبالغ الإضافية والخصومات</div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>السبب</th><th></th></tr></thead><tbody>
-  ${adj.length?adj.map(a=>`<tr><td class="muted">${esc(a.date)}</td><td class="num ${num(a.amount)>=0?'pos':'neg'}">${money(a.amount)}</td><td class="muted">${esc(a.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openPartnerAdjModal('${pid}','${a.id}')">تعديل</button><button class="btn sm danger" onclick="deletePartnerRec('adj','${a.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد</td></tr>'}</tbody></table></div>
-  <div class="section-title"><span class="ic">💵</span> المبالغ المستلمة</div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead><tbody>
-  ${pays.length?pays.map(a=>`<tr><td class="muted">${esc(a.date)}</td><td class="num pos">${money(a.amount)}</td><td class="muted">${esc(a.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openPartnerPayModal('${pid}','${a.id}')">تعديل</button><button class="btn sm danger" onclick="deletePartnerRec('pays','${a.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد</td></tr>'}</tbody></table></div>`;
+  ${cl.length?cl.map(c=>{const x=(c.parts||[]).find(y=>y.id===pid)||{};return `<tr><td><b>${monthLabelAr(c.month)}</b> <span class="muted">(${pctTxt(x.pct)})</span></td><td class="num">${money(x.gross)}</td><td class="num neg">−${money(x.ads)}</td><td class="num">${money(x.exp||0)}</td><td class="num pos">${money(x.net)}</td></tr>`;}).join(''):'<tr class="empty-row"><td colspan="5">لا توجد أشهر مقفلة</td></tr>'}</tbody></table></div>`;
 }
 function partnerRecModal(kind,pid,id,title,amountLabel,noteLabel){
   const P=PS(), item=id?P[kind].find(x=>x.id===id):null;
-  openModal({title,bodyHtml:`<div class="form-grid2"><div class="form-row"><label>${amountLabel}</label><input type="number" id="f_amount" value="${item?item.amount:''}"></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div></div><div class="form-row"><label>${noteLabel}</label><textarea id="f_notes">${esc(item?.note||'')}</textarea></div>${kind==='adj'?'<div class="hint">اكتب المبلغ بالموجب للإضافة، وبالسالب (مثل -50000) للخصم.</div>':''}`,
+  openModal({title,bodyHtml:`<div class="form-grid2"><div class="form-row"><label>${amountLabel}</label><input type="number" id="f_amount" data-fmt value="${item?item.amount:''}"></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div></div><div class="form-row"><label>${noteLabel}</label><textarea id="f_notes">${esc(item?.note||'')}</textarea></div>`,
   onSave(){
-    const amount=num(document.getElementById('f_amount').value); if(!amount) return toast('اكتب المبلغ');
-    if(kind==='pays' && amount<0) return toast('مبلغ الاستلام لازم يكون موجب');
+    const amount=num(document.getElementById('f_amount').value); if(!amount||amount<=0) return toast('اكتب المبلغ');
     const d={pid,amount,date:document.getElementById('f_date').value||todayISO(),note:document.getElementById('f_notes').value.trim()};
     if(item) Object.assign(item,d); else P[kind].push({id:uid(),...d});
     saveState(); closeModal(); render(); toast('تم الحفظ');
   }});
 }
 function openPartnerPayModal(pid,id){ partnerRecModal('pays',pid,id,'تسديد مبلغ للشريك','المبلغ المسدد','ملاحظات'); }
-function openPartnerAdjModal(pid,id){ partnerRecModal('adj',pid,id,'خصم أو إضافة على حصة الشريك','المبلغ (موجب = إضافة، سالب = خصم)','السبب'); }
+function openPartnerAdjModal(pid,id,mode){
+  const P=PS(), item=id?P.adj.find(x=>x.id===id):null, m=mode||(item&&num(item.amount)<0?'sub':'add'), sub=m==='sub';
+  openModal({title:sub?'➖ خصم من حصة الشريك':'➕ إضافة على حصة الشريك',bodyHtml:`<div class="adj-hd ${sub?'neg':'pos'}">${sub?'المبلغ اللي تكتبه راح ينخصم من حصة':'المبلغ اللي تكتبه راح ينضاف على حصة'} <b>${esc((P.partners.find(x=>x.id===pid)||{}).name||'')}</b></div>
+    <div class="form-grid2"><div class="form-row"><label>${sub?'شكد تريد تخصم؟':'شكد تريد تضيف؟'} (دينار)</label><input type="number" id="f_amount" data-fmt value="${item?Math.abs(num(item.amount)):''}" placeholder="مثال: 50000" autofocus></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${item?.date||todayISO()}"></div></div>
+    <div class="form-row"><label>السبب</label><textarea id="f_notes" placeholder="${sub?'مثال: سحب مبلغ مقدماً':'مثال: مكافأة'}">${esc(item?.note||'')}</textarea></div>`,
+  onSave(){
+    const a=Math.abs(num(document.getElementById('f_amount').value)); if(!a) return toast('اكتب المبلغ');
+    const d={pid,amount:sub?-a:a,date:document.getElementById('f_date').value||todayISO(),note:document.getElementById('f_notes').value.trim()};
+    if(item) Object.assign(item,d); else P.adj.push({id:uid(),...d});
+    saveState(); closeModal(); render(); toast(sub?'تم الخصم من الحصة':'تمت الإضافة على الحصة');
+  }});
+}
 function deletePartnerRec(kind,id){ confirmDelete('حذف هذا السجل؟',()=>{ PS()[kind]=PS()[kind].filter(x=>x.id!==id); saveState(); render(); toast('تم الحذف'); }); }
 
 /* ===== الديون (علينا + الزبائن) بقائمة وحدة ===== */
@@ -5411,13 +5444,11 @@ function ptTopStats(D,PD){
 }
 function openPartnerDetail(id){ currentDetail=id; render(); window.scrollTo(0,0); }
 function ptGoalPartners(D){
-  return `<div class="gpartners" id="ptPartners"><div class="gp-t">👥 الشركاء ونسبهم <span class="muted" style="font-weight:500">— اضغط على الاسم لتفاصيل نسبته وكشف حسابه</span></div><div class="gp-row">${D.parts.map(p=>{ const t=ptTotals(p.id); return `<div class="gp2">
-    <div class="gp2-top" onclick="openPartnerDetail('${p.id}')"><span class="gp-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
-    <b class="gp2-v ${p.net>=0?'pos':'neg'}">${money(p.net)}</b><div class="gp2-s">صافي حصته بهذي الفترة</div>
-    <div class="gp2-r"><span>المستلم</span><b>${money(t.paid)}</b></div><div class="gp2-r"><span>المتبقي له</span><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div>
-    <div class="gp2-b"><button type="button" class="btn sm primary" onclick="openPartnerPayModal('${p.id}')">💵 تسديد</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}')">± خصم / إضافة</button></div></div>`; }).join('')}</div></div>`;
+  const cols=['var(--accent)','var(--info)','#c98a00','var(--positive)','var(--text-faint)'], tot=D.parts.reduce((a,p)=>a+num(p.pct),0)||1;
+  return `<div class="gpartners" id="ptPartners"><div class="gp-t">👥 الشركاء ونسبهم <button type="button" class="btn sm" style="margin-inline-start:auto" onclick="openPartnersModal()">✏️ تعديل النسب</button></div>
+  <div class="gp-bar">${D.parts.map((p,i)=>`<i style="width:${num(p.pct)/tot*100}%;background:${cols[i%cols.length]}"></i>`).join('')}</div>
+  <div class="gl">${D.parts.map((p,i)=>{ const t=ptTotals(p.id); return `<div class="gl-r" onclick="openPartnerDetail('${p.id}')"><span class="gl-n"><i style="background:${cols[i%cols.length]}"></i>${esc(p.name)} <em>${pctTxt(p.pct)}</em></span><span class="gl-c"><small>حصته بالفترة</small><b class="${p.net>=0?'pos':'neg'}">${money(p.net)}</b></span><span class="gl-c"><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></span><span class="gl-go">›</span></div>`; }).join('')}</div></div>`;
 }
-
 function goalCardHtml(D){
   const P=PS(), g=P.goal||{}, all=partMonth==='ALL';
   if(all) return '';
@@ -6316,6 +6347,9 @@ function opsSnap(){
     (P.pays||[]).forEach(p=>add('استلام شريك',p.id,[p.amount,p.date].join('~'),money(p.amount)));
     (P.adj||[]).forEach(p=>add('تعديل حساب شريك',p.id,[p.amount,p.date].join('~'),money(p.amount)));
     if(P.emp) (P.emp.pays||[]).forEach(p=>add('تسديد موظف',p.id,[p.amount,p.date].join('~'),money(p.amount)));
+    (P.emps||[]).forEach(E=>(E.pays||[]).forEach(p=>add('تسديد موظف',p.id,[p.amount,p.date].join('~'),`${E.name||''} ${money(p.amount)}`)));
+    add('نسب الشركاء','pct',(P.partners||[]).map(x=>x.name+':'+x.pct).join('|'),(P.partners||[]).map(x=>x.name+' '+pctTxt(x.pct)).join(' · '));
+    add('هدف الشراكة','goal',JSON.stringify(P.goal||{}),P.goal&&P.goal.sales?`هدف ${money(P.goal.sales)} · حد الإعلانات ${P.goal.adsPct||30}%`:'بدون هدف');
     add('حالة الشراكة','state',String(P.resetAt||'')+'~'+(P.emp?P.emp.name+P.emp.rate+(P.emp.from||''):'-'),`تصفير: ${P.resetAt||'—'} · الموظف: ${P.emp?P.emp.name+' ('+money(P.emp.rate)+' للقطعة)':'محذوف'}`);
   }
   return m;
@@ -6333,36 +6367,45 @@ function opsDiff(){
 }
 function integrityIssues(){
   const out=[], today=todayISO(), S=state;
-  const sRow=s=>({label:`${s.date} · ${saleProductLabel(s)}${s.customerName&&s.customerName!=='بدون اسم'?' · '+s.customerName:''} · ${money(num(s.unitPrice)*num(s.quantity))}`,edit:s.orderId?`openOrderModal('${s.orderId}')`:`openSaleModal('${s.id}')`,del:`deleteSale('${s.id}')`});
-  const add=(kind,t,hint,items)=>{ if(items.length) out.push({kind,t,hint,items}); };
-  add('bad','مبيعات بتاريخ مستقبلي','عدّل التاريخ إلى اليوم أو قبله، أو احذف العملية إذا كانت خطأ.',S.sales.filter(s=>s.date>today).map(sRow));
-  add('warn','مبيعات بموديل وبدون كلفة محفوظة','افتح العملية واحفظها من جديد حتى تنحسب الكلفة والربح بشكل صحيح.',S.sales.filter(s=>s.modelId && !num(s.costSnapshot)).map(sRow));
-  add('info','مبيعات بسعر أقل من الكلفة (خسارة)','تأكد إن السعر مكتوب صح. إذا صحيح (تخفيض مقصود) تجاهل التنبيه.',S.sales.filter(s=>s.modelId && num(s.costSnapshot)>0 && num(s.unitPrice)<num(s.costSnapshot)).map(sRow));
+  const add=(kind,t,items,hint)=>{ if(items.length) out.push({kind,t,n:items.length,items,hint}); };
+  const saleItem=s=>({txt:`${s.date} · ${saleProductLabel(s)}${s.customerName?' · '+s.customerName:''} · سعر ${money(s.unitPrice)}${num(s.costSnapshot)?' / كلفة '+money(s.costSnapshot):''}${num(s.amountRemaining)>0?' · متبقي '+money(s.amountRemaining):''}`,
+    edit:s.orderId?`openOrderModal('${s.orderId}')`:`openSaleModal('${s.id}')`, del:`deleteSale('${s.id}')`, key:s.orderId||s.id});
+  const uniq=l=>{ const seen={}; return l.filter(x=>seen[x.key]?false:(seen[x.key]=1)); };
+  const sales=f=>uniq(S.sales.filter(f).map(saleItem));
+  add('bad','مبيعات بتاريخ مستقبلي',sales(s=>s.date>today),'صحّح التاريخ من «تعديل»');
+  add('warn','مبيعات بموديل وبدون كلفة محفوظة',sales(s=>s.modelId && !num(s.costSnapshot)),'افتح البيع واحفظه حتى تنسجل الكلفة');
+  add('info','مبيعات بسعر أقل من الكلفة (خسارة)',sales(s=>s.modelId && num(s.costSnapshot)>0 && num(s.unitPrice)<num(s.costSnapshot)),'تأكد من السعر — إذا مقصود (تخفيض) تجاهل التنبيه');
   const hasDebt=s=>(s.orderId?S.sales.filter(v=>v.orderId===s.orderId):[s]).some(v=>v.linkedDebtId && customerDebtById(v.linkedDebtId));
-  add('bad','مبيعات فيها متبقي بدون دين مسجل','افتح العملية واحفظها حتى ينسجل الدين، أو اجعل المتبقي صفر إذا انسدد.',S.sales.filter(s=>num(s.amountRemaining)>0 && !hasDebt(s)).map(sRow));
-  add('bad','ديون زبائن المسدد منها أكثر من مبلغها','افتح الدين وصحح المبلغ أو التسديدات.',S.customerDebts.filter(d=>customerDebtTotals(d.id).paid>num(d.amount)+1).map(d=>({label:`${d.date} · ${d.customerName||'بدون اسم'} · ${money(d.amount)}`,edit:`openCustomerDebtModal('${d.id}')`,del:`deleteCustomerDebt('${d.id}')`})));
-  add('warn','مصاريف بدون مبلغ','افتح المصروف وأضف المبلغ، أو احذفه.',S.expenses.filter(e=>!num(e.amount)).map(e=>({label:`${e.date} · ${e.type}`,edit:`openExpenseModal('${e.id}')`,del:`deleteExpense('${e.id}')`})));
-  try{ const P=PS(), sum=P.partners.reduce((a,p)=>a+num(p.pct),0);
-    if(Math.abs(sum-100)>0.001) add('bad','مجموع نسب الشركاء ليس 100%','عدّل النسب حتى يصير المجموع 100%.',[{label:'المجموع الحالي '+sum+'%',edit:'openPartnerManage()'}]);
-    add('warn','أشهر مقفلة تغيّرت أرقامها بعد الإقفال','افتح نظام الشراكة واضغط "تحديث إقفال الشهر" إذا التغيير مقصود.',P.closes.filter(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); return Math.round(D.net)!==Math.round(c.net); }).map(c=>({label:monthLabelAr(c.month),edit:`partMonth='${c.month}';navigate('partnership')`}))); }catch(e){}
+  add('bad','مبيعات فيها متبقي بدون دين مسجل',sales(s=>num(s.amountRemaining)>0 && !hasDebt(s)),'افتح البيع: إما اجعل المستلم كامل أو سجّل الباقي دين على الزبون');
+  const dItem=d=>({txt:`${d.date} · ${(d.customerName||'').trim()||'بدون اسم'} · ${money(d.amount)} · مسدد ${money(customerDebtTotals(d.id).paid)}`,edit:`openCustomerDebtModal('${d.id}')`,hist:`openCustomerDebtHistoryModal('${d.id}')`,del:`deleteCustomerDebt('${d.id}')`});
+  add('warn','ديون زبائن بدون اسم',S.customerDebts.filter(d=>!(d.customerName||'').trim()).map(dItem),'اكتب اسم الزبون من «تعديل»');
+  add('bad','ديون زبائن المسدد منها أكثر من المبلغ',S.customerDebts.filter(d=>customerDebtTotals(d.id).paid>num(d.amount)+1).map(dItem),'افتح «السجل» لحذف التسديد الزايد أو عدّل مبلغ الدين');
+  add('warn','مصاريف بدون مبلغ',S.expenses.filter(e=>!num(e.amount)).map(e=>({txt:`${e.date} · ${e.type}${e.notes?' · '+e.notes:''}`,edit:`openExpenseModal('${e.id}')`,del:`deleteExpense('${e.id}')`})),'أدخل المبلغ أو احذف المصروف');
+  try{ const P=PS(); const sum=P.partners.reduce((a,p)=>a+num(p.pct),0);
+    if(Math.abs(sum-100)>0.001) out.push({kind:'bad',t:'مجموع نسب الشركاء ليس 100%',n:1,hint:'عدّل النسب حتى يصير المجموع 100%',items:[{txt:'المجموع الحالي '+sum+'% — '+P.partners.map(p=>p.name+' '+pctTxt(p.pct)).join(' · '),edit:'openPartnersModal()'}]});
+    add('warn','أشهر مقفلة تغيّرت أرقامها',P.closes.filter(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); return Math.round(D.net)!==Math.round(c.net); }).map(c=>({txt:`${monthLabelAr(c.month)} — صافي الإقفال ${money(c.net)}`,edit:`partMonth='${c.month}';navigate('partnership')`,editLbl:'فتح الشهر',del:`deletePartnerClose('${c.id}')`,delLbl:'إلغاء الإقفال'})),'افتح الشهر واضغط «تحديث إقفال الشهر» أو ألغِ الإقفال'); }catch(e){}
   return out;
 }
-var safetyTab='debts';
-const OPS_TABS=[['debts','💸 الديون',['دين علينا','دين زبون','تسديد دين','تحصيل دين']],['sales','📦 المبيعات',['بيع','مرتجع']],['pt','🤝 الشراكة وسوالفها',['إقفال شراكة','استلام شريك','تعديل حساب شريك','تسديد موظف','حالة الشراكة']],['other','🧾 مصاريف وعمال',['مصروف','تسديد خياط','تسديد فصال','تسديد هودارية']]];
+let safeLogTab='sales';
+const LOG_GROUPS=[['sales','🛒 المبيعات',['بيع','مرتجع']],['debts','💳 الديون',['دين علينا','دين زبون','تسديد دين','تحصيل دين']],['partner','🤝 الشراكة وسوالفها',['إقفال شراكة','استلام شريك','تعديل حساب شريك','تسديد موظف','حالة الشراكة','نسب الشركاء','هدف الشراكة']],['other','📋 أخرى (مصاريف، عمال)',null]];
+function logGroupOf(c){ for(const g of LOG_GROUPS){ if(g[2]&&g[2].includes(c)) return g[0]; } return 'other'; }
 function renderSafety(){
-  const I=integrityIssues(), all=(state.opsLog||[]).slice().reverse();
-  const tab=OPS_TABS.find(t=>t[0]===safetyTab)||OPS_TABS[0], L=all.filter(e=>tab[2].includes(e.c)).slice(0,150);
-  const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''}, ic={bad:'⛔',warn:'⚠️',info:'ℹ️'};
-  return `<div class="page-head"><div><h1>الحماية والسجل</h1><div class="desc">فحص أخطاء البيانات بأزرار تفتح العملية نفسها (تعديل أو حذف)، وسجل مقسم حسب النوع</div></div></div>
-  <div class="section-title"><span class="ic">🩺</span> فحص سلامة البيانات</div>
-  ${I.length?I.map(x=>`<div class="card issue ${x.kind}"><div class="issue-h"><b>${ic[x.kind]} ${esc(x.t)} (${x.items.length})</b></div><div class="hint">${esc(x.hint)}</div>
-    ${x.items.slice(0,15).map(it=>`<div class="issue-row"><span>${esc(it.label)}</span><span class="btn-row">${it.edit?`<button type="button" class="btn sm" onclick="${it.edit}">تعديل</button>`:''}${it.del?`<button type="button" class="btn sm danger" onclick="${it.del}">حذف</button>`:''}</span></div>`).join('')}
-    ${x.items.length>15?`<div class="muted" style="padding:6px 2px">… و${x.items.length-15} غيرها (صحح الأولى وتظهر اللي بعدها)</div>`:''}</div>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}
+  const I=integrityIssues(), ALL=(state.opsLog||[]).slice().reverse();
+  const cnt={}; LOG_GROUPS.forEach(g=>cnt[g[0]]=0); ALL.forEach(e=>cnt[logGroupOf(e.c)]++);
+  if(!LOG_GROUPS.some(g=>g[0]===safeLogTab)) safeLogTab='sales';
+  const L=ALL.filter(e=>logGroupOf(e.c)===safeLogTab).slice(0,150);
+  const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''};
+  const ic=k=>k==='bad'?'⛔':k==='warn'?'⚠️':'ℹ️';
+  return `<div class="page-head"><div><h1>الحماية والسجل</h1><div class="desc">فحص تلقائي لأخطاء البيانات — اضغط على أي تنبيه يفتح لك العنصر نفسه تعدّله أو تحذفه. وبالأسفل سجل بكل إضافة وتعديل وحذف مقسّم حسب القسم.</div></div></div>
+  <div class="section-title"><span class="ic">🩺</span> فحص سلامة البيانات ${I.length?`<span class="muted" style="font-size:12px;font-weight:500">${I.reduce((a,x)=>a+x.n,0)} ملاحظة</span>`:''}</div>
+  ${I.length?I.map((x,xi)=>`<details class="sf-iss ${x.kind}" ${xi===0?'open':''}><summary><span class="np-ic">${ic(x.kind)}</span><b>${esc(x.t)}</b><em>${x.n}</em></summary>
+    <div class="sf-hint">${esc(x.hint||'')}</div>
+    ${x.items.slice(0,60).map(it=>`<div class="sf-row"><span class="sf-t">${esc(it.txt)}</span><div class="btn-row">${it.edit?`<button class="btn sm primary" onclick="${it.edit}">${it.editLbl||'فتح / تعديل'}</button>`:''}${it.hist?`<button class="btn sm" onclick="${it.hist}">السجل</button>`:''}${it.del?`<button class="btn sm danger" onclick="${it.del}">${it.delLbl||'حذف'}</button>`:''}</div></div>`).join('')}
+    ${x.items.length>60?`<div class="muted" style="padding:6px 0">… و${x.items.length-60} غيرها</div>`:''}</details>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}
   <div class="section-title"><span class="ic">🕒</span> سجل العمليات</div>
-  <div class="tabs no-print">${OPS_TABS.map(t=>`<button type="button" class="${tab[0]===t[0]?'on':''}" onclick="safetyTab='${t[0]}';render();">${t[1]} <span style="opacity:.6">(${all.filter(e=>t[2].includes(e.c)).length})</span></button>`).join('')}</div>
-  ${tab[0]==='debts'?`<div class="btn-row" style="margin:-6px 0 10px;"><button type="button" class="btn sm ghost" onclick="navigate('debtlog')">📋 سجل تعديلات الديون بالتفصيل (باسم المستخدم)</button></div>`:''}
+  <div class="tabs" style="margin-bottom:12px">${LOG_GROUPS.map(g=>`<button type="button" class="${safeLogTab===g[0]?'on':''}" onclick="safeLogTab='${g[0]}';render();">${g[1]} <small>(${cnt[g[0]]})</small></button>`).join('')}</div>
   <div class="table-wrap"><table><thead><tr><th>الوقت</th><th>العملية</th><th>النوع</th><th>التفاصيل</th></tr></thead><tbody>
-  ${L.length?L.map(e=>`<tr><td class="muted">${new Date(e.t).toLocaleString('ar-IQ',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td class="${colr[e.a]||''}"><b>${e.a}</b></td><td>${esc(e.c)}</td><td class="muted">${esc(e.d)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">ما اكو عمليات مسجلة بهذا القسم لحد هسه</td></tr>'}</tbody></table></div>`;
+  ${L.length?L.map(e=>`<tr><td class="muted">${new Date(e.t).toLocaleString('ar-IQ',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td class="${colr[e.a]||''}"><b>${e.a}</b></td><td>${esc(e.c)}</td><td class="muted">${esc(e.d)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">ما اكو عمليات بهذا القسم — كل تغيير تسويه ينكتب هنا</td></tr>'}</tbody></table></div>`;
 }
 
 function renderReturns(){
