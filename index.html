@@ -799,7 +799,17 @@
   .gp2-r{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-top:1px dashed var(--border);color:var(--text-dim);} .gp2-r b{color:var(--text);}
   .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
-  .gp-t{display:flex;align-items:center;gap:8px;}
+  .gp-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .gp-wrap{display:grid;grid-template-columns:230px 1fr;gap:12px;align-items:stretch;} .gp-donut{margin:0;padding:12px;display:grid;place-items:center;} .gp-donut .dn-wrap{flex-direction:column;gap:10px;}
+  .gp-wrap .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
+  .gp3{border:1px solid var(--border);border-radius:16px;padding:14px;background:var(--glass),var(--surface-2);transition:transform .2s var(--ease),border-color .2s;} .gp3:hover{border-color:var(--border-strong);transform:translateY(-2px);}
+  .gp3-top{display:flex;align-items:center;gap:9px;cursor:pointer;} .gp3-av{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--on-accent);font-family:'Cairo',sans-serif;font-weight:800;} .gp3-n{font-weight:800;font-size:16px;flex:1;} .gp3-top:hover .gp3-n{text-decoration:underline;}
+  .gp3-mid{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;} .gp3-mid small,.gp3-st small{display:block;font-size:11px;color:var(--text-faint);} .gp3-v{display:block;font-family:'Cairo',sans-serif;font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;} .gp3-v.pos{color:var(--positive);} .gp3-v.neg{color:var(--negative);}
+  .ring{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;flex:none;} .ring-c{width:44px;height:44px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;} .ring-c b{font-size:12px;} .ring-c small{font-size:8.5px;color:var(--text-faint);}
+  .gp3-st{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .gp3-st>div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 10px;} .gp3-st b{font-size:14px;font-variant-numeric:tabular-nums;} .gp3-st b.neg{color:var(--negative);} .gp3-st b.pos{color:var(--positive);}
+  .gp3-b{display:flex;gap:6px;margin-top:10px;} .gp3-b .btn{flex:1;justify-content:center;padding-inline:4px;white-space:nowrap;font-size:12px;} .gp3-b .btn.primary{flex:1.3;}
+  .pd-split{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:center;} .pd-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:7px;}
+  @media (max-width:800px){.gp-wrap{grid-template-columns:1fr;} .pd-split{grid-template-columns:1fr;}}
   .sf-iss{background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--info);border-radius:12px;margin:8px 0;padding:0 14px;} .sf-iss.bad{border-right-color:var(--negative);} .sf-iss.warn{border-right-color:var(--warn);}
   .sf-iss summary{cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 0;list-style:none;} .sf-iss summary::-webkit-details-marker{display:none;} .sf-iss summary b{flex:1;font-size:14px;} .sf-iss summary em{font-style:normal;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 9px;font-size:12px;}
   .sf-hint{font-size:12.5px;color:var(--text-dim);padding:0 0 8px;}
@@ -4987,15 +4997,17 @@ function ptPartnerSummary(pid){
   const P=PS(), [f,t]=mRange(partMonth), D=pageData(f,t), p=D.parts.find(x=>x.id===pid); if(!p) return '';
   const adjM=P.adj.filter(a=>a.pid===pid && inRange(a.date,f,t)), adjS=adjM.reduce((a,x)=>a+num(x.amount),0);
   const paidM=P.pays.filter(a=>a.pid===pid && inRange(a.date,f,t)).reduce((a,x)=>a+num(x.amount),0);
-  const fin=p.net+adjS, per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), mx=Math.max(Math.abs(p.gross),Math.abs(p.ads),Math.abs(p.exp||0),Math.abs(adjS),Math.abs(fin),1);
-  const r=(l,v,c,sub,w,bc)=>`<div class="pd-st"><div class="pd-st-t"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b class="${c||''}">${v}</b></div><div class="pd-st-b"><i style="width:${Math.min(100,Math.abs(w)/mx*100)}%;background:${bc}"></i></div></div>`;
+  const fin=p.net+adjS, per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
+  const r=(l,v,c,sub,dot)=>`<div class="pd-st"><div class="pd-st-t"><span>${dot?`<i class="pd-dot" style="background:${dot}"></i>`:''}${l}${sub?`<small>${sub}</small>`:''}</span><b class="${c||''}">${v}</b></div></div>`;
+  const segs=[{v:Math.max(0,fin),c:'var(--positive)',l:'صافي حصته',t:money(Math.max(0,fin))},{v:p.ads,c:'var(--negative)',l:'الإعلانات',t:money(p.ads)},{v:p.exp||0,c:'#c98a00',l:'الموظفين',t:money(p.exp||0)},{v:adjS<0?-adjS:0,c:'var(--info)',l:'خصومات',t:money(adjS<0?-adjS:0)}].filter(x=>x.v>0);
   return `<div class="card pd-card"><div class="pd-ch"><b>كيف انحسبت حصته</b><span class="pill wholesale">${per}</span></div>
-    ${r('حصته من أرباح الصفحة',money(p.gross),'',pctTxt(p.pct)+' من '+money(D.profit),p.gross,'var(--positive)')}
-    ${r('− مساهمته بالإعلانات','−'+money(p.ads),'neg',pctTxt(p.pct)+' من '+money(D.ads),p.ads,'var(--negative)')}
-    ${p.exp?r('− مساهمته بمستحقات الموظفين','−'+money(p.exp),'neg','',p.exp,'var(--negative)'):''}
-    ${adjS?r(adjS>0?'+ إضافات على حصته':'− خصومات من حصته',(adjS>0?'+':'−')+money(Math.abs(adjS)),adjS>0?'pos':'neg',adjM.map(a=>esc(a.note||'')).filter(Boolean).join('، '),adjS,adjS>0?'var(--positive)':'var(--negative)'):''}
+    <div class="pd-split"><div>${segs.length?donutChart(segs,pctTxt(p.pct),'نسبته'):'<div class="notes-empty">ما اكو أرقام بهذي الفترة</div>'}</div><div>
+    ${r('حصته من أرباح الصفحة',money(p.gross),'',pctTxt(p.pct)+' من '+money(D.profit),'var(--positive)')}
+    ${r('− مساهمته بالإعلانات','−'+money(p.ads),'neg',pctTxt(p.pct)+' من '+money(D.ads),'var(--negative)')}
+    ${p.exp?r('− مساهمته بمستحقات الموظفين','−'+money(p.exp),'neg','','#c98a00'):''}
+    ${adjS?r(adjS>0?'+ إضافات على حصته':'− خصومات من حصته',(adjS>0?'+':'−')+money(Math.abs(adjS)),adjS>0?'pos':'neg',adjM.map(a=>esc(a.note||'')).filter(Boolean).join('، '),'var(--info)'):''}
     <div class="pd-sum"><span>= صافي حصته بعد كل الخصومات</span><b class="${fin>=0?'pos':'neg'}">${money(fin)}</b></div>
-    ${paidM?`<div class="pd-st-t" style="padding:8px 0 0"><span>المستلم بهذي الفترة</span><b>${money(paidM)}</b></div>`:''}</div>`;
+    ${paidM?`<div class="pd-st-t" style="padding:8px 0 0"><span>المستلم بهذي الفترة</span><b>${money(paidM)}</b></div>`:''}</div></div></div>`;
 }
 function ptPartnerLedger(pid){
   const P=PS(), rows=[];
@@ -5443,11 +5455,20 @@ function ptTopStats(D,PD){
   </div>`;
 }
 function openPartnerDetail(id){ currentDetail=id; render(); window.scrollTo(0,0); }
+function ptRing(pct,col,label){
+  const v=Math.max(0,Math.min(100,pct));
+  return `<div class="ring" style="background:conic-gradient(${col} ${v*3.6}deg,var(--surface-3) 0)"><div class="ring-c"><b>${Math.round(v)}%</b><small>${label}</small></div></div>`;
+}
 function ptGoalPartners(D){
-  const cols=['var(--accent)','var(--info)','#c98a00','var(--positive)','var(--text-faint)'], tot=D.parts.reduce((a,p)=>a+num(p.pct),0)||1;
-  return `<div class="gpartners" id="ptPartners"><div class="gp-t">👥 الشركاء ونسبهم <button type="button" class="btn sm" style="margin-inline-start:auto" onclick="openPartnersModal()">✏️ تعديل النسب</button></div>
-  <div class="gp-bar">${D.parts.map((p,i)=>`<i style="width:${num(p.pct)/tot*100}%;background:${cols[i%cols.length]}"></i>`).join('')}</div>
-  <div class="gl">${D.parts.map((p,i)=>{ const t=ptTotals(p.id); return `<div class="gl-r" onclick="openPartnerDetail('${p.id}')"><span class="gl-n"><i style="background:${cols[i%cols.length]}"></i>${esc(p.name)} <em>${pctTxt(p.pct)}</em></span><span class="gl-c"><small>حصته بالفترة</small><b class="${p.net>=0?'pos':'neg'}">${money(p.net)}</b></span><span class="gl-c"><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></span><span class="gl-go">›</span></div>`; }).join('')}</div></div>`;
+  const cols=['var(--accent)','var(--info)','#c98a00','var(--positive)','var(--text-faint)'];
+  const segs=D.parts.map((p,i)=>({v:num(p.pct),c:cols[i%cols.length],l:esc(p.name),t:pctTxt(p.pct)}));
+  return `<div class="gpartners" id="ptPartners"><div class="gp-t">👥 الشركاء ونسبهم <span class="muted" style="font-weight:500">— اضغط على الاسم لتفاصيل نسبته وكشف حسابه</span><button type="button" class="btn sm" style="margin-inline-start:auto" onclick="openPartnersModal()">✏️ تعديل النسب</button></div>
+  <div class="gp-wrap"><div class="gp-donut card">${donutChart(segs,D.parts.length,'شركاء')}</div>
+  <div class="gp-row">${D.parts.map((p,i)=>{ const t=ptTotals(p.id), due=t.earned+t.adj, pr=due>0?t.paid/due*100:0, col=cols[i%cols.length]; return `<div class="gp3">
+    <div class="gp3-top" onclick="openPartnerDetail('${p.id}')"><span class="gp3-av" style="background:${col}">${esc((p.name||'?').trim().charAt(0))}</span><span class="gp3-n">${esc(p.name)}</span><span class="pill wholesale">${pctTxt(p.pct)}</span></div>
+    <div class="gp3-mid"><div><small>صافي حصته بهذي الفترة</small><b class="gp3-v ${p.net>=0?'pos':'neg'}">${money(p.net)}</b></div>${ptRing(pr,col,'مستلم')}</div>
+    <div class="gp3-st"><div><small>المستلم</small><b>${money(t.paid)}</b></div><div><small>المتبقي له</small><b class="${t.remaining>0?'neg':'pos'}">${money(t.remaining)}</b></div></div>
+    <div class="gp3-b"><button type="button" class="btn sm primary" onclick="openPartnerPayModal('${p.id}')">💵 تسديد</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}',null,'sub')">➖ خصم</button><button type="button" class="btn sm" onclick="openPartnerAdjModal('${p.id}',null,'add')">➕ إضافة</button></div></div>`; }).join('')}</div></div></div>`;
 }
 function goalCardHtml(D){
   const P=PS(), g=P.goal||{}, all=partMonth==='ALL';
