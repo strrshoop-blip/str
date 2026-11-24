@@ -4945,7 +4945,7 @@ function closePartnerMonth(ym){
     const old=P.closes.find(c=>c.month===ym);
     const rec={id:old?old.id:uid(),month:ym,date:todayISO(),revenue:D.revenue,profit:D.profit,ads:D.ads,other:D.other,wage:D.wage,empPieces:D.empPieces,net:D.net,pieces:D.pieces,orders:D.orders,parts:D.parts.map(p=>({id:p.id,name:p.name,pct:p.pct,gross:p.gross,ads:p.ads,exp:p.exp,net:p.net}))};
     if(old) Object.assign(old,rec); else P.closes.push(rec);
-    saveState(); render(); toast('تم إقفال الشهر وتوزيع الأرباح');
+    saveState(); render(); toast('تم إقفال الشهر وتوزيع الأرباح'); setTimeout(()=>printPartnerStatement(ym),350);
   },{title:'إقفال الشهر',yesLabel:'إقفال وتوزيع'});
 }
 function deletePartnerClose(id){ confirmDelete('إلغاء إقفال هذا الشهر؟ يرجع الشهر مفتوح وتنحذف حصصه من كشوف الحساب (التعديلات والاستلامات تبقى).',()=>{ PS().closes=PS().closes.filter(c=>c.id!==id); saveState(); render(); toast('تم الإلغاء'); }); }
@@ -4990,7 +4990,7 @@ function renderPartnerDetail(pid){
   const t=ptTotals(pid), cl=P.closes.slice().sort((a,b)=>b.month.localeCompare(a.month));
   const adj=P.adj.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date)), pays=P.pays.filter(a=>a.pid===pid).sort((a,b)=>b.date.localeCompare(a.date));
   return `<div class="page-head"><div><h1>${esc(p.name)} <span class="pill wholesale">${pctTxt(p.pct)}</span></h1><div class="desc">كشف حساب الشريك — الأرباح المقفلة، التعديلات، والمبالغ المستلمة</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
-  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">💵 تسديد مبلغ للشريك</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">± خصم أو إضافة على حصته</button></div>
+  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openPartnerPayModal('${pid}')">💵 تسديد مبلغ للشريك</button><button class="btn" onclick="openPartnerAdjModal('${pid}')">± خصم أو إضافة على حصته</button><button class="btn" onclick="printPartnerStatement(partMonth==='ALL'?thisMonth():partMonth,'${pid}')">📄 كشف حسابه</button></div>
   ${ptPartnerSummary(pid)}
   <div class="grid stats" style="margin-top:14px;">${statCard('المتبقي له',money(t.remaining),t.remaining>0?'neg':'pos','أرباح + تعديلات − مستلم',true)}${statCard('أرباح الأشهر المقفلة',money(t.earned),'pos')}${statCard('مبالغ إضافية / خصومات',money(t.adj),t.adj>=0?'':'neg')}${statCard('المستلم',money(t.paid),'accent')}</div>
   <div class="section-title"><span class="ic">🔒</span> الأشهر المقفلة</div>
@@ -5350,15 +5350,45 @@ function empFreshStart(E,skipExisting){
   const d=todayISO(); E.v2=true; E.v3=true;
   E.from=d; E.skip=skipExisting?state.sales.filter(s=>(s.channel||'shop')==='page' && s.customerType!=='wholesale' && s.date>=d).map(s=>s.id):[]; E.adjs={};
 }
-function printPartnerStatement(ym){
-  const P=PS(), c=P.closes.find(x=>x.month===ym), D=c?null:pageData(ym+'-01',ym+'-31');
+function printPartnerStatement(ym,pid){
+  const P=PS(), c=P.closes.find(x=>x.month===ym), [f,t]=mRange(ym), D=pageData(f,t), pm=ymAdd(ym,-1), PD=pageData(pm+'-01',pm+'-31');
   const R=c?{revenue:c.revenue,profit:c.profit,ads:c.ads,wage:c.wage||0,net:c.net,parts:c.parts||[]}:{revenue:D.revenue,profit:D.profit,ads:D.ads,wage:D.wage,net:D.net,parts:D.parts};
-  openReceipt({prefix:'كشف-شراكة',modalTitle:'🖨 كشف الشراكة — '+monthLabelAr(ym),title:'كشف الشراكة',date:dateAr(),nameLabel:'الشهر',name:monthLabelAr(ym),
-    sub:(c?'مقفل بتاريخ '+c.date:'غير مقفل بعد — أرقام حالية')+' · مبيعات الصفحة وإعلاناتها',
-    cols:[{label:'الشريك',w:3},{label:'النسبة',w:1.5,num:true},{label:'حصته من الأرباح',w:2.6,num:true},{label:'الإعلانات',w:2.2,num:true},{label:'مستحقات موظفين',w:2.6,num:true},{label:'الصافي له',w:2.4,num:true}],
-    rows:R.parts.map(p=>[p.name,pctTxt(p.pct),money(p.gross),'−'+money(p.ads),money(p.exp||0),money(p.net)]),
-    totals:[{label:'الوارد',value:money(R.revenue)},{label:'الأرباح',value:money(R.profit)},{label:'الإعلانات',value:money(R.ads)},{label:'صافي للتوزيع',value:money(R.net),strong:true}],
-    footer:'كشف الشراكة — ستر'});
+  const parts=pid?R.parts.filter(p=>p.id===pid):R.parts;
+  const mg=R.revenue>0?Math.round(R.profit/R.revenue*1000)/10:0;
+  const dl=(a,b)=>b?((a>=b?'▲ ':'▼ ')+Math.abs(Math.round((a-b)/Math.abs(b)*100))+'%'):'—';
+  const rets=(state.returns||[]).filter(r=>(r.channel||'shop')==='page' && (r.date||'').slice(0,7)===ym), rq=rets.reduce((a,r)=>a+num(r.qty),0), rby={};
+  rets.forEach(r=>{ const k=normReason(r.reason); rby[k]=(rby[k]||0)+num(r.qty); });
+  const topR=Object.entries(rby).sort((a,b)=>b[1]-a[1])[0], g=(P.goal&&P.goal.sales)||0;
+  const items=[['عدد الطلبات',D.orders+' طلب'],['القطع المباعة',D.pieces+' قطعة'],['جملة',D.wh.n+' طلب · '+D.wh.pcs+' قطعة'],['مفرد',D.rt.n+' طلب · '+D.rt.pcs+' قطعة'],['هامش الربح',mg+'%'],['الوارد مقابل الشهر السابق',dl(R.revenue,PD.revenue)],['الصافي مقابل الشهر السابق',dl(R.net,PD.net)],['المرتجعات',rq?rq+' قطعة ('+(Math.round(rq/(D.pieces+rq)*1000)/10)+'%)':'لا يوجد']];
+  if(topR) items.push(['أكثر سبب ترجيع',topR[0]]);
+  if(g) items.push(['تحقيق هدف الوارد',Math.round(R.revenue/g*100)+'% من '+money(g)]);
+  if(R.wage) items.push(['أجور الموظفين المخصومة',money(R.wage)]);
+  const prs=[]; for(let i=0;i<items.length;i+=2) prs.push([items[i][0],items[i][1],items[i+1]?items[i+1][0]:'',items[i+1]?items[i+1][1]:'']);
+  const ids=new Set(parts.map(p=>p.id)), nm=id=>(R.parts.find(x=>x.id===id)||{}).name||'',
+    mv=[...P.pays.filter(x=>ids.has(x.pid)&&(x.date||'').slice(0,7)===ym).map(x=>[x.date,money(x.amount),nm(x.pid)+' — تسديد'+(x.note?': '+x.note:'')]),
+        ...P.adj.filter(x=>ids.has(x.pid)&&(x.date||'').slice(0,7)===ym).map(x=>[x.date,(num(x.amount)>=0?'+':'−')+money(Math.abs(num(x.amount))),nm(x.pid)+' — '+(num(x.amount)>=0?'إضافة':'خصم')+(x.note?': '+x.note:'')])].sort((a,b)=>a[0].localeCompare(b[0]));
+  const wa=`📊 كشف شراكة ستر — ${monthLabelAr(ym)}${pid&&parts[0]?' — '+parts[0].name:''}\nوارد الصفحة: ${money(R.revenue)}\nالأرباح: ${money(R.profit)}\nالإعلانات: ${money(R.ads)}${R.wage?'\nأجور الموظفين: '+money(R.wage):''}\nصافي للتوزيع: ${money(R.net)}\n`+parts.map(p=>`${p.name} (${pctTxt(p.pct)}): ${money(p.net)}`).join('\n');
+  openReceipt({prefix:pid?'كشف-شريك':'كشف-شراكة',modalTitle:'📄 '+(pid?'كشف حساب شريك':'كشف الشراكة')+' — '+monthLabelAr(ym),title:pid?'كشف حساب شريك':'كشف الشراكة الشهري',date:dateAr(),nameLabel:pid?'الشريك':'الشهر',name:pid&&parts[0]?parts[0].name+' — '+monthLabelAr(ym):monthLabelAr(ym),
+    sub:(c?'مقفل بتاريخ '+c.date:'غير مقفل بعد — أرقام حالية')+' · مبيعات الصفحة وإعلاناتها فقط',
+    cols:[{label:'الشريك',w:2.6},{label:'النسبة',w:1.3,num:true},{label:'حصته (قبل الخصم)',w:2.6,num:true},{label:'الإعلانات',w:2,num:true},{label:'الموظفين',w:1.9,num:true},{label:'الصافي له',w:2.3,num:true},{label:'المتبقي له',w:2.3,num:true}],
+    rows:parts.map(p=>[p.name,pctTxt(p.pct),money(p.gross),'−'+money(p.ads),money(p.exp||0),money(p.net),money(ptTotals(p.id).remaining)]),
+    totals:[{label:'وارد الصفحة',value:money(R.revenue)},{label:'الأرباح قبل الإعلانات',value:money(R.profit)},{label:'الإعلانات',value:money(R.ads)},{label:'صافي للتوزيع',value:money(R.net),strong:true}],
+    extra:{title:'أرقام الشهر',cols:[{label:'البيان',w:3},{label:'القيمة',w:3,num:true},{label:'البيان',w:3},{label:'القيمة',w:3,num:true}],rows:prs},
+    pays:mv.length?mv:null,payTitle:'التسديدات والتعديلات بهذا الشهر',waText:wa,
+    footer:'الإعلانات تُخصم مرة واحدة وتتوزع بنفس نسب الأرباح · كشف الشراكة — ستر'});
+}
+function receiptPdf(){
+  const cv=window._rcpCanvas; if(!cv) return;
+  const w=cv.width, h=cv.height, bin=atob(cv.toDataURL('image/jpeg',0.92).split(',')[1]), jpg=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) jpg[i]=bin.charCodeAt(i);
+  const enc=new TextEncoder(), PW=595, PH=Math.round(595*h/w), parts=[], offs=[]; let len=0;
+  const add=x=>{ const u=typeof x==='string'?enc.encode(x):x; parts.push(u); len+=u.length; };
+  const obj=(n,body)=>{ offs[n]=len; add(n+' 0 obj\n'+body+'\nendobj\n'); };
+  add('%PDF-1.4\n'); obj(1,'<< /Type /Catalog /Pages 2 0 R >>'); obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+  offs[4]=len; add('4 0 obj\n<< /Type /XObject /Subtype /Image /Width '+w+' /Height '+h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n'); add(jpg); add('\nendstream\nendobj\n');
+  const ct='q '+PW+' 0 0 '+PH+' 0 0 cm /Im0 Do Q'; obj(5,'<< /Length '+ct.length+' >>\nstream\n'+ct+'\nendstream');
+  const xr=len; add('xref\n0 6\n0000000000 65535 f \n'); for(let i=1;i<=5;i++) add(String(offs[i]).padStart(10,'0')+' 00000 n \n'); add('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF');
+  downloadBlob(new Blob(parts,{type:'application/pdf'}),receiptFileName().replace(/\.png$/,'.pdf'),'application/pdf');
 }
 function openGoalModal(){
   const P=PS(), g=P.goal||{};
@@ -5524,6 +5554,30 @@ function resetEmp(eid){ askConfirm('تصفير حساب الموظف: يبدأ �
 function deleteEmp(eid){ confirmDelete('حذف حساب الموظف نهائياً مع تسديداته؟ أرباح الشركاء ما تتأثر.',()=>{ const P=PS(); P.emps=P.emps.filter(e=>e.id!==eid); currentDetail='emps'; saveState(); render(); toast('تم حذف الحساب'); }); }
 
 { const __ss=saveState; saveState=function(){ try{ opsDiff(); }catch(e){ console.error(e); } return __ss.apply(this,arguments); }; }
+/* ===== قفل الأشهر المقفلة بكلمة تأكيد ===== */
+function closedMonthOf(rec){
+  const P=state.partnership; if(!P||!P.closes||!rec||(rec.channel||'shop')!=='page') return null;
+  const m=(rec.date||'').slice(0,7); return P.closes.find(c=>c.month===m)?m:null;
+}
+function lockConfirm(month,go){
+  openModal({title:'🔒 شهر مقفل بالشراكة',bodyHtml:`<div class="rule-box" style="border-color:var(--negative);margin-bottom:12px;">هذا السجل يخص <b>${monthLabelAr(month)}</b> وهو <b>مقفل</b> بنظام الشراكة. تعديله أو حذفه يغيّر أرقام الشركاء بعد توزيع الأرباح.</div>
+    <div class="form-row"><label>اكتب كلمة «تأكيد» للمتابعة</label><input type="text" id="f_lock" placeholder="تأكيد" autocomplete="off"></div>
+    <div class="hint">بعد التعديل افتح نظام الشراكة وحدّث إقفال الشهر إذا التغيير مقصود.</div>`,
+  onSave(){ if(document.getElementById('f_lock').value.trim()!=='تأكيد') return toast('اكتب كلمة تأكيد للمتابعة'); closeModal(); go(); }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb){ sb.textContent='متابعة'; }
+}
+function installClosedLocks(){
+  const wrap=(name,getRec)=>{ const f=window[name]; if(typeof f!=='function'||f.__locked) return;
+    const w=function(...a){ let m=null; try{ m=closedMonthOf(getRec(...a)); }catch(e){} if(m){ lockConfirm(m,()=>f.apply(this,a)); return; } return f.apply(this,a); }; w.__locked=true; window[name]=w; };
+  wrap('openSaleModal',id=>id?state.sales.find(x=>x.id===id):null);
+  wrap('openOrderModal',oid=>oid?state.sales.find(x=>x.orderId===oid):null);
+  wrap('deleteSale',id=>state.sales.find(x=>x.id===id));
+  wrap('openExpenseModal',id=>{ const e=id?state.expenses.find(x=>x.id===id):null; return e&&e.type==='إعلانات'?e:null; });
+  wrap('deleteExpense',id=>{ const e=state.expenses.find(x=>x.id===id); return e&&e.type==='إعلانات'?e:null; });
+  wrap('openReturnModal',id=>state.sales.find(x=>x.id===id));
+}
+installClosedLocks();
+
 function exportModelReportCSV(){
   const from = reportRange.from||null, to = reportRange.to||null;
   const sales = state.sales.filter(s=>inRange(s.date,from,to));
@@ -6132,7 +6186,7 @@ async function openReceipt(spec){
     window._rcpCanvas = cv;
     const box = document.getElementById('rcpBox'); if(!box) return;
     box.className = ''; box.style.padding = '0';
-    box.innerHTML = `<div class="btn-row" style="margin-bottom:12px;"><button class="btn primary" onclick="receiptSave()">💾 حفظ كصورة</button><button class="btn" onclick="receiptPrint()">🖨 طباعة</button><button class="btn" onclick="receiptWhatsApp()">💬 واتساب</button>${navigator.canShare?'<button class="btn" onclick="receiptShare()">📤 مشاركة</button>':''}</div>
+    box.innerHTML = `<div class="btn-row" style="margin-bottom:12px;"><button class="btn primary" onclick="receiptSave()">💾 حفظ كصورة</button><button class="btn" onclick="receiptPrint()">🖨 طباعة</button><button class="btn" onclick="receiptWhatsApp()">💬 واتساب</button><button class="btn" onclick="receiptPdf()">📄 PDF</button>${navigator.canShare?'<button class="btn" onclick="receiptShare()">📤 مشاركة</button>':''}</div>
       <img alt="وصل" src="${cv.toDataURL('image/png')}" style="width:100%;border:1px solid var(--border-strong);border-radius:10px;background:#fff;display:block;">`;
   }catch(e){ const box = document.getElementById('rcpBox'); if(box) box.textContent = 'تعذر تجهيز الوصل: ' + e.message; }
 }
