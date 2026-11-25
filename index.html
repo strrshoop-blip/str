@@ -471,7 +471,7 @@
   .ms-grid button span{font-size:22px;}
   .ms-grid button.on{background:var(--ink);color:var(--on-ink);}
   @media (max-width:900px){
-    .mobile-nav{padding:8px 6px calc(8px + env(safe-area-inset-bottom));}
+    .mobile-nav{padding:8px 2px calc(8px + env(safe-area-inset-bottom));} .mobile-nav button{min-width:0 !important;font-size:10.5px !important;}
     .mobile-nav button{min-height:58px;font-size:11.5px;}
     .mobile-nav button .ic{font-size:21px;}
   }
@@ -800,6 +800,24 @@
   .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
   .gp-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .od-kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px;} .od-kp>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;} .od-kp small{display:block;font-size:11.5px;color:var(--text-faint);} .od-kp b{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;line-height:1.15;} .od-kp em{display:block;font-style:normal;font-size:11px;color:var(--text-faint);margin-top:2px;} .od-kp .ok b{color:var(--positive);} .od-kp .rt b{color:var(--negative);}
+  .od-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px;} .od-tools select{padding:8px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;} .od-tools .search-box{flex:1;min-width:150px;}
+  .od-day{display:flex;justify-content:space-between;align-items:center;margin:16px 4px 6px;font-size:13px;} .od-day b{font-size:14px;} .od-day span{color:var(--text-faint);font-size:12px;}
+  .od{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px 14px;background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--positive);border-radius:14px;padding:10px 14px;margin-bottom:6px;transition:box-shadow .2s,transform .2s;} .od:hover{box-shadow:var(--card-shadow);} .od.ret{border-right-color:var(--negative);background:var(--surface-2);} .od.part{border-right-color:#c98a00;}
+  .od.new{animation:odNew 3.5s ease;} @keyframes odNew{0%{box-shadow:0 0 0 3px var(--accent);transform:scale(1.01);background:var(--surface-2);}100%{box-shadow:none;}}
+  .od-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;} .od-c{font-size:14.5px;} .od-tm{font-size:11.5px;margin-inline-start:auto;}
+  .od-st{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--surface-3);} .od-st.pos{color:var(--positive);} .od-st.neg{color:var(--negative);} .od-st.warn{color:#b07400;}
+  .od-prods{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;} .od-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px 9px;font-size:12.5px;} .od-chip button{border:0;background:transparent;cursor:pointer;color:var(--negative);font-weight:700;padding:0 2px;}
+  .od-ret{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:var(--negative);} .od-x{border:0;background:transparent;color:var(--text-faint);cursor:pointer;font-size:14px;}
+  .od-sum{text-align:end;} .od-sum b{display:block;font-family:'Cairo',sans-serif;font-size:16px;font-variant-numeric:tabular-nums;} .od-sum small{font-size:11px;color:var(--text-faint);}
+  .od-act{display:flex;gap:6px;} .od-b{border:1px solid var(--border);background:var(--surface-2);border-radius:10px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;} .od-b:hover{background:var(--surface-3);} .od-b.pri{background:var(--accent);color:var(--on-accent);border-color:var(--accent);} .od-b.del{color:var(--negative);}
+  @media (max-width:700px){.od{grid-template-columns:1fr auto;} .od-act{grid-column:1/-1;} .od-act .od-b{flex:1;padding:10px 6px;} .od-act .od-b.del{flex:none;padding-inline:16px;} .od-kp b{font-size:20px;}}
+  @media (max-width:900px){
+    .notif-panel{position:fixed !important;top:62px;left:10px !important;right:10px !important;width:auto !important;max-width:none !important;max-height:calc(100vh - 150px);}
+  }
+  .ret-al{border-radius:14px;padding:11px 14px;margin:12px 0;border:1px solid var(--border);background:var(--surface-2);} .ret-al.ok{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-dim);} .ret-al.bad{border-color:var(--negative);border-right:4px solid var(--negative);background:var(--surface);}
+  .ret-al-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;} .ret-al-b{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;} .ret-al-b small{display:block;color:var(--text-faint);font-size:11px;margin-bottom:2px;} .ret-al-b em{font-style:normal;color:var(--text-faint);font-size:12px;}
+  .mp-sum{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13.5px;margin-bottom:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);} .mp-n{display:flex;align-items:center;gap:8px;} .mp-n img,.mp-n span{width:32px;height:32px;border-radius:9px;object-fit:cover;display:grid;place-items:center;background:var(--surface-3);flex:none;}
   .ord-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;} .ord-it{background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--positive);border-radius:14px;padding:10px 14px;} .ord-it.ret{border-right-color:var(--negative);background:var(--surface-2);} .ord-it.part{border-right-color:#c98a00;}
   .ord-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;} .ord-h em{font-style:normal;margin-inline-start:auto;font-weight:800;font-variant-numeric:tabular-nums;}
   .ord-ln{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed var(--border);font-size:13px;} .ord-ln.ret{color:var(--negative);} .ord-act{margin-top:8px;}
@@ -1509,10 +1527,10 @@ function buildNav(){
     + PAGES.filter(p=>MORE.includes(p.id)).map(p=>li(p,'nm')).join('');
 
   const mobileNav = document.getElementById('mobileNav');
-  const MAIN4 = ['dashboard','sales','debtshub','workers'];
+  const MAIN4 = ['dashboard','partnership','sales','debtshub','workers'];
   mobileNav.innerHTML = PAGES.filter(p=>MAIN4.includes(p.id)).map(p => `
     <button type="button" class="${isNavActive(p.id)?'active':''}" onclick="navigate('${p.id}')">
-      <span class="ic">${p.icon}</span><span>${p.label.split(' / ')[0]}</span>
+      <span class="ic">${p.icon}</span><span>${p.id==='partnership'?'الشراكة':p.label.split(' / ')[0]}</span>
     </button>`).join('') + `<button type="button" onclick="openMoreSheet()"><span class="ic">☰</span><span>المزيد</span></button>`;
 }
 function toggleNavMore(){ const nl=document.getElementById('navList'); const on=nl.classList.toggle('more-open'); try{ localStorage.setItem('str_more',on?'1':'0'); }catch(e){} }
@@ -2096,6 +2114,9 @@ function openExpenseModal(id, presetChannel, presetType){
         </select>
         <div class="hint">رأس المال: ينقص من رأس المال فقط. الأرباح: ينقص من صافي الربح (وينعكس على رأس المال). غير ذلك: يُسجَّل بدون ما ينقص من أي شي.</div>
       </div>
+      <div class="form-row"><label>ربط الإعلان بموديل (للإعلانات فقط — اختياري)</label>
+        <select id="f_admodel"><option value="">إعلان عام للصفحة</option>${state.models.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar')).map(m=>`<option value="${m.id}" ${item&&item.modelId===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select>
+        <div class="hint">إذا الإعلان لموديل معين اربطه حتى تعرف ربحية الموديل بعد الإعلان بدقة.</div></div>
       <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(item?.notes||'')}</textarea></div>
     `,
     onSave(){
@@ -2106,8 +2127,9 @@ function openExpenseModal(id, presetChannel, presetType){
       const channel = document.getElementById('f_channel').value;
       const source = document.getElementById('f_source').value;
       if(!type) return toast('الرجاء إدخال نوع المصروف');
-      if(item){ Object.assign(item, {type,amount,date,notes,channel,source}); }
-      else state.expenses.push({id:uid(),type,amount,date,notes,channel,source});
+      const modelId=(type==='إعلانات'&&document.getElementById('f_admodel').value)||null;
+      if(item){ Object.assign(item, {type,amount,date,notes,channel,source,modelId}); }
+      else state.expenses.push({id:uid(),type,amount,date,notes,channel,source,modelId});
       saveState(); closeModal(); render(); toast('تم الحفظ بنجاح');
     }
   });
@@ -4955,6 +4977,7 @@ function renderPartnership(){
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
   ${closed?`<div class="rule-box" style="margin-bottom:14px;">🔒 هذا الشهر مُقفل بتاريخ ${esc(closed.date)} — صافي الأرباح الموزع: <b>${money(closed.net)}</b>. ${changed?`<b style="color:var(--warn)">⚠️ الأرقام الحالية تغيرت بعد الإقفال (صافي الآن ${money(D.net)}). اضغط "تحديث الإقفال" إذا تريد تعتمد التغيير.</b>`:'الأرقام مطابقة للإقفال.'}</div>`:''}
+  ${ptRetAlertHtml(D)}
   <div id="ptOrders">${ptOrdersRetHtml(D,PD)}</div>
   <div class="section-title"><span class="ic">📈</span> مبيعات الصفحة — الوارد</div>
   <div class="card"><div class="toolbar" style="margin:0 0 6px;"><div></div><div class="tabs" style="margin:0;">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['year','سنوي']].map(([k,l])=>`<button type="button" class="${partGran===k?'on':''}" onclick="partGran='${k}';render();">${l}</button>`).join('')}</div></div>${revChart(rows,unitLabel,PD?PD.ps.reduce((a,x)=>a+saleRevenue(x),0):null)}</div>
@@ -4968,6 +4991,9 @@ function renderPartnership(){
 
   <div class="section-title"><span class="ic">🏆</span> أكثر الموديلات طلباً <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
   <div class="card">${ptModelsHtml(D)}</div>
+
+  <div class="section-title"><span class="ic">🎯</span> ربحية الموديلات بعد الإعلانات <span class="muted" style="font-size:12px;font-weight:500">${partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth)}</span></div>
+  <div class="card">${ptModelProfitHtml(D)}</div>
 
   ${ptHeroHtml(D,PD)}
 
@@ -5158,6 +5184,7 @@ function buildAlertsRaw(){
   const lateW=state.debts.map(d=>{ const t=debtTotals(d.id); const last=[d.date,...state.debtPayments.filter(p=>p.debtId===d.id).map(p=>p.date)].sort().pop(); return {d,rem:t.remaining,age:dayDiff(last,today)}; }).filter(x=>x.rem>0 && x.age>A.lateDays);
   if(lateW.length) out.push({id:cm+':wdebt',kind:'bad',ic:'📒',t:`تأخر تسديد ${lateW.length} دين علينا`,d:`إجمالي ${money(lateW.reduce((s,x)=>s+x.rem,0))} — أقدمها من ${Math.max(...lateW.map(x=>x.age))} يوم`,go:'debts'});
   try{ const lm=lowMaterials(); if(lm.length) out.push({id:cm+':stock',kind:'warn',ic:'🧵',t:`مخزون يحتاج شراء (${lm.length} صنف)`,d:lm.slice(0,4).map(m=>m.name).join('، ')+(lm.length>4?' …':''),go:'materials'}); }catch(e){}
+  try{ const D0=pageData(cm+'-01',cm+'-31'), ra=retRateInfo(D0); if(ra.over) out.push({id:cm+':retrate',kind:'bad',ic:'↩️',t:`نسبة الرجوع ${ra.rateTxt}% (الحد ${A.retRate}%)`,d:`${D0.retOrders} طلب راجع من ${D0.ordersAll}${ra.topModel?' — أكثر موديل: '+ra.topModel.name+' ('+ra.topModel.n+')':''}${ra.topReason?' — أكثر سبب: '+ra.topReason.name:''}`,go:'partnership'}); }catch(e){}
   try{ const P=PS(), D=pageData(pm+'-01',pm+'-31'); if(D.orders>0 && !P.closes.find(c=>c.month===pm)) out.push({id:cm+':close',kind:'info',ic:'🔒',t:'شهر الشراكة السابق غير مقفل',d:`${monthLabelAr(pm)} فيه ${D.orders} بيع بالصفحة وما انقفل بعد`,go:'partnership'}); }catch(e){}
   try{ const fr=addDaysISO(today,-29), byM={}, byR={};
     (state.returns||[]).forEach(r=>{ if((r.date||'')>=fr){ const m=r.product||'—', k=normReason(r.reason); byM[m]=(byM[m]||0)+1; byR[k]=(byR[k]||0)+1; } });
@@ -5383,7 +5410,9 @@ function openOrderModal(orderId,presetChannel){
     }
     const recs=B.lines.map((l,i)=>({id:oldIds[i]||uid(),orderId:oid,modelId:l.modelId,quantity:l.qty,unitPrice:l.price,date,channel,customerType:type,paymentMethod:pay,customerName,amountReceived:l.rec,amountRemaining:l.remn,notes,costSnapshot:l.cost,linkedDebtId:i===0?debtId:null}));
     state.sales=state.sales.filter(s=>!oldIds.includes(s.id)).concat(recs);
-    saveState(); closeModal(); render();
+    saveState(); closeModal();
+    if(channel==='page' && (currentPage==='partnership'||currentDetail==='orders')){ ordHi=oid; ordFilter='all'; ordQ=''; ordLimit=60; if(partMonth!=='ALL' && date.slice(0,7)!==partMonth) partMonth=date.slice(0,7); currentPage='partnership'; currentDetail='orders'; render(); window.scrollTo(0,0); setTimeout(()=>{ ordHi=null; },4000); }
+    else render();
     const rs=(channel==='page' && PS().resetAt && date<PS().resetAt)?PS().resetAt:null;
     toast(rs?`تم الحفظ، لكن تاريخ البيع قبل تصفير الشراكة (${rs}) فما يدخل بحساب الشراكة`:(B.remaining>0?`تم الحفظ — ${B.pieces} قطع، وسُجّل ${money(B.remaining)} كدين على ${customerName}`:`تم الحفظ — ${B.lines.length>1?B.lines.length+' موديلات، ':''}${B.pieces} قطعة`));
   }});
@@ -5466,6 +5495,37 @@ function spark(vals,col){
 function kpiT(ic,label,val,sub,delta,spk,cls,click){
   return `<div class="kt ${cls||''}" ${click?`onclick="${click}" style="cursor:pointer"`:''}><div class="kt-h"><i>${ic}</i><span>${label}</span>${delta?`<em>${delta}</em>`:''}</div><div class="kt-b"><b class="kt-v">${val}</b>${spk||''}</div>${sub?`<div class="kt-s">${sub}</div>`:''}</div>`;
 }
+function retRateInfo(D){
+  const A=alCfg(), all=D.ordersAll||0, rate=all?D.retOrders/all*100:0, byM={}, byR={};
+  D.rets.forEach(r=>{ const m=r.product||'—', k=normReason(r.reason); byM[m]=(byM[m]||0)+num(r.qty); byR[k]=(byR[k]||0)+num(r.qty); });
+  const top=o=>{ const e=Object.entries(o).sort((a,b)=>b[1]-a[1])[0]; return e?{name:e[0],n:e[1]}:null; };
+  return {rate,rateTxt:Math.round(rate*10)/10,limit:A.retRate,over:all>=5&&rate>A.retRate,topModel:top(byM),topReason:top(byR),byM,byR};
+}
+function ptRetAlertHtml(D){
+  const R=retRateInfo(D); if(!D.ordersAll) return '';
+  const lim=R.limit;
+  if(!R.over) return `<div class="ret-al ok"><span>↩️ نسبة الرجوع <b>${R.rateTxt}%</b> — ضمن الحد (${lim}%)${D.ordersAll<5?' · عدد الطلبات قليل للحكم':''}</span><button class="btn sm ghost" onclick="openAlertCfgModal()">⚙️ الحد</button></div>`;
+  const rs=Object.entries(R.byR).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  return `<div class="ret-al bad"><div class="ret-al-h"><b>⚠️ نسبة الرجوع ${R.rateTxt}% — أعلى من الحد (${lim}%)</b><div class="btn-row"><button class="btn sm" onclick="ordFilter='ret';openPartnerDetail('orders')">عرض الراجعة</button><button class="btn sm ghost" onclick="openAlertCfgModal()">⚙️ الحد</button></div></div>
+  <div class="ret-al-b"><div><small>${D.retOrders} طلب راجع من ${D.ordersAll} (${D.retQty} قطعة · ${money(D.retAmt)})</small></div>
+  ${R.topModel?`<div><small>أكثر موديل يرجع</small><b>${esc(R.topModel.name)}</b> <em>${R.topModel.n} قطعة</em></div>`:''}
+  <div><small>أسباب الرجوع</small>${rs.map(x=>`<span class="pill wholesale">${esc(x[0])} · ${x[1]}</span>`).join(' ')}</div></div></div>`;
+}
+function ptModelProfitHtml(D){
+  const g={}; D.ps.forEach(x=>{ const k=x.modelId||('x:'+saleProductLabel(x)), m=x.modelId?modelById(x.modelId):null; const o=g[k]=g[k]||{id:x.modelId||null,name:m?m.name:saleProductLabel(x),img:m&&m.images&&m.images[0],qty:0,rev:0,profit:0,direct:0}; o.qty+=num(x.quantity); o.rev+=saleRevenue(x); o.profit+=saleProfit(x); });
+  let direct=0; D.exps.forEach(e=>{ if(e.modelId){ const k=e.modelId, m=modelById(k); const o=g[k]=g[k]||{id:k,name:m?m.name:'موديل محذوف',img:m&&m.images&&m.images[0],qty:0,rev:0,profit:0,direct:0}; o.direct+=num(e.amount); direct+=num(e.amount); } });
+  const rows=Object.values(g); if(!rows.length) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
+  const general=Math.max(0,D.ads-direct), totRev=rows.reduce((a,o)=>a+o.rev,0)||1;
+  rows.forEach(o=>{ o.share=general*o.rev/totRev; o.adsT=o.direct+o.share; o.net=o.profit-o.adsT; o.roas=o.adsT>0?o.rev/o.adsT:null; o.mg=o.rev?o.net/o.rev*100:0;
+    o.v=o.rev===0?{c:'neg',t:'صرف بدون مبيعات',h:'أطفئ إعلانه'}:o.net<0?{c:'neg',t:'خسران بعد الإعلان',h:'أطفئ أو قلل إعلانه'}:(o.adsT>0&&o.adsT>o.profit*0.5)?{c:'warn',t:'الإعلان ياكل أرباحه',h:'راقبه أو غيّر الإعلان'}:{c:'pos',t:'رابح',h:o.adsT>0?'كمّل وزِد إذا تريد':'ما عليه إعلانات'}; });
+  rows.sort((a,b)=>b.net-a.net);
+  const bad=rows.filter(o=>o.v.c==='neg'), best=rows.find(o=>o.v.c==='pos'&&o.rev>0);
+  const sum=bad.length?`🔻 ${bad.map(o=>esc(o.name)).join('، ')} — ${bad.length>1?'يستحقون':'يستحق'} تطفي إعلانه أو تغيّره.`:'✅ كل الموديلات رابحة بعد الإعلانات.';
+  return `<div class="mp-sum"><span>${sum}</span>${best?`<span>⭐ الأربح بعد الإعلان: <b>${esc(best.name)}</b> (${money(best.net)})</span>`:''}</div>
+  <div class="table-wrap" style="border:none"><table><thead><tr><th>الموديل</th><th>القطع</th><th>الوارد</th><th>الربح قبل الإعلان</th><th>الإعلان</th><th>الصافي بعد الإعلان</th><th>الحكم</th></tr></thead><tbody>
+  ${rows.map(o=>`<tr><td><div class="mp-n">${o.img?`<img src="${o.img}" loading="lazy">`:'<span>👗</span>'}<b>${esc(o.name)}</b></div></td><td class="num">${o.qty}</td><td class="num">${money(o.rev)}</td><td class="num">${money(o.profit)}</td><td class="num">${o.adsT>0?money(o.adsT)+(o.direct&&o.share>0.5?'<small class="muted"> (مباشر '+money(o.direct)+')</small>':(o.direct?'':'<small class="muted"> ~تقديري</small>')):'—'}${o.roas?`<small class="muted"> · عائد ×${(Math.round(o.roas*10)/10)}</small>`:''}</td><td class="num ${o.net>=0?'pos':'neg'}"><b>${money(o.net)}</b></td><td><span class="pill ${o.v.c==='pos'?'retail':o.v.c==='warn'?'wholesale':'neg'}" title="${o.v.h}">${o.v.t}</span><small class="muted" style="display:block">${o.v.h}</small></td></tr>`).join('')}</tbody></table></div>
+  ${general>0?`<div class="hint">${direct?'إعلانات مربوطة بموديل: '+money(direct)+' — ':''}الباقي ${money(general)} إعلانات عامة توزعت تقديرياً حسب وارد كل موديل. اربط الإعلان بموديل من «+ إعلان» لتصير الأرقام دقيقة.</div>`:''}`;
+}
 function ptOrdersRetHtml(D,PD){
   const per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), ok=D.ordersN, rt=D.retOrders, all=D.ordersAll||0, rate=all?rt/all*100:0, prate=PD&&PD.ordersAll?PD.retOrders/PD.ordersAll*100:null;
   const segs=[{v:ok,c:'var(--positive)',l:'طلبات ناجحة',t:ok+' طلب'},{v:rt,c:'var(--negative)',l:'طلبات راجعة',t:rt+' طلب'}];
@@ -5488,27 +5548,37 @@ function ptTopStats(D,PD){
     ${eC}
   </div>`;
 }
-let ordFilter='all', ordQ='';
+let ordFilter='all', ordQ='', ordHi=null, ordLimit=60;
 function renderPtOrders(){
   const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
-  const G={}; D.ps.forEach(x=>{ const k=x.orderId||x.id; (G[k]=G[k]||{k,lines:[],date:x.date,cust:x.customerName||'',ct:x.customerType}).lines.push(x); });
+  const G={}; D.ps.forEach(x=>{ const k=x.orderId||x.id; (G[k]=G[k]||{k,lines:[],date:x.date,cust:x.customerName||'',ct:x.customerType,ca:''}).lines.push(x); if(String(x.createdAt||'')>G[k].ca) G[k].ca=String(x.createdAt||''); });
   const rk={}; D.rets.forEach(r=>{ const k=r.orderId||r.saleId; (rk[k]=rk[k]||[]).push(r); });
-  const rows=Object.values(G).map(g=>({k:g.k,date:g.date,cust:g.cust,ct:g.ct,lines:g.lines,rets:rk[g.k]||[],st:(rk[g.k]||[]).length?'part':'ok'}));
-  Object.keys(rk).forEach(k=>{ if(!G[k]){ const r=rk[k][0]; rows.push({k,date:r.saleDate||r.date,cust:r.customerName||'',ct:r.customerType,lines:[],rets:rk[k],st:'ret'}); } });
-  rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const rows=Object.values(G).map(g=>({...g,rets:rk[g.k]||[],st:(rk[g.k]||[]).length?'part':'ok'}));
+  Object.keys(rk).forEach(k=>{ if(!G[k]){ const r=rk[k][0]; rows.push({k,date:r.saleDate||r.date,cust:r.customerName||'',ct:r.customerType,lines:[],rets:rk[k],st:'ret',ca:String(r.createdAt||'')}); } });
+  rows.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.ca.localeCompare(a.ca));
   const q=ordQ.trim().toLowerCase();
   const view=rows.filter(r=>(ordFilter==='all'||(ordFilter==='ok'&&r.st!=='ret')||(ordFilter==='ret'&&r.rets.length))&&(!q||(r.cust+' '+r.lines.map(saleProductLabel).join(' ')+' '+r.rets.map(x=>x.product).join(' ')).toLowerCase().includes(q)));
-  const nRet=rows.filter(r=>r.rets.length).length, nOk=D.ordersN, nAll=rows.length;
-  const chip=(id,l,n,c)=>`<button type="button" class="${ordFilter===id?'on':''}" onclick="ordFilter='${id}';render();">${l} <small>(${n})</small></button>`;
-  return `<div class="page-head"><div><h1>طلبات الصفحة</h1><div class="desc">${per} — كل الطلبات الواصلة والراجعة، تكدر ترجّع أو تعدّل أو تحذف أي طلب من هنا.</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
-  <div class="kt-row" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${kpiT('🧾','الطلبات الكلية',nAll,'واصلة + راجعة')}${kpiT('✅','وصلت',nOk,D.pieces+' قطعة · '+money(D.revenue))}${kpiT('↩️','راجعة',D.retOrders,D.retQty+' قطعة · '+money(D.retAmt),'','',D.retOrders?'neg':'')}</div>
-  <div class="field-inline" style="margin:12px 0 8px"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>
-  <div class="toolbar"><div class="tabs">${chip('all','الكل',nAll)}${chip('ok','الواصلة',nOk)}${chip('ret','الراجعة',nRet)}</div><input type="text" class="search-box" placeholder="بحث باسم الزبون أو الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;render();this.focus();"></div>
-  <div class="ord-list">${view.length?view.map(r=>{ const rev=r.lines.reduce((a,x)=>a+saleRevenue(x),0), pcs=r.lines.reduce((a,x)=>a+num(x.quantity),0), edit=r.lines.length?(String(r.k).length&&r.lines[0].orderId?`openOrderModal('${r.k}')`:`openSaleModal('${r.lines[0].id}')`):'';
-    return `<div class="ord-it ${r.st}"><div class="ord-h"><span class="pill ${r.st==='ret'?'neg':r.st==='part'?'wholesale':'retail'}">${r.st==='ret'?'↩ راجع بالكامل':r.st==='part'?'وصل (فيه راجع جزئي)':'✅ وصل'}</span><b>${esc(r.cust||'بدون اسم')}</b><span class="muted">${esc(r.date||'')}</span><span class="pill ${r.ct==='wholesale'?'wholesale':'retail'}">${r.ct==='wholesale'?'جملة':'مفرد'}</span><em>${r.lines.length?pcs+' قطعة · '+money(rev):''}</em></div>
-      ${r.lines.map(x=>`<div class="ord-ln"><span>${esc(saleProductLabel(x))} × ${num(x.quantity)} <small class="muted">${money(saleRevenue(x))}</small></span><button class="btn sm" onclick="openReturnModal('${x.id}')">↩ راجع</button></div>`).join('')}
-      ${r.rets.map(x=>`<div class="ord-ln ret"><span>↩ ${esc(x.product||'')} × ${num(x.qty)} <small class="muted">${money(x.amount)} · رجع ${esc(x.date)} · ${esc(x.reason||'')}</small></span><button class="btn sm danger" onclick="deleteReturnRec('${x.id}')">حذف السجل</button></div>`).join('')}
-      ${r.lines.length?`<div class="btn-row ord-act"><button class="btn sm primary" onclick="${edit}">✏️ تعديل الطلب</button><button class="btn sm danger" onclick="deleteSale('${r.lines[0].id}')">🗑 حذف</button></div>`:''}</div>`; }).join(''):'<div class="card"><div class="np-empty">ما اكو طلبات بهذا العرض</div></div>'}</div>`;
+  const nRet=rows.filter(r=>r.rets.length).length, nOk=D.ordersN, nAll=rows.length, shown=view.slice(0,ordLimit);
+  const chip=(id,l,n)=>`<button type="button" class="${ordFilter===id?'on':''}" onclick="ordFilter='${id}';ordLimit=60;render();">${l} <small>(${n})</small></button>`;
+  const days=[]; shown.forEach(r=>{ let d=days[days.length-1]; if(!d||d.date!==r.date){ d={date:r.date,rows:[]}; days.push(d); } d.rows.push(r); });
+  const dn=d=>{ try{ return DAYS_AR[new Date(d+'T00:00:00').getDay()]; }catch(e){ return ''; } };
+  const row=r=>{
+    const rev=r.lines.reduce((a,x)=>a+saleRevenue(x),0), pcs=r.lines.reduce((a,x)=>a+num(x.quantity),0), rem=r.lines.reduce((a,x)=>a+num(x.amountRemaining),0), one=r.lines.length===1;
+    const edit=r.lines.length?(r.lines[0].orderId?`openOrderModal('${r.k}')`:`openSaleModal('${r.lines[0].id}')`):'';
+    const tm=r.lines.length?tmLabel(r.lines[0]):'';
+    const prods=r.lines.map(x=>`<span class="od-chip">${esc(saleProductLabel(x))} <b>×${num(x.quantity)}</b>${one?'':`<button type="button" title="راجع" onclick="openReturnModal('${x.id}')">↩</button>`}</span>`).join('');
+    const rets=r.rets.map(x=>`<div class="od-ret"><span>↩ ${esc(x.product||'')} <b>×${num(x.qty)}</b> · ${money(x.amount)} · رجع ${esc(x.date)}${x.reason?' · '+esc(x.reason):''}</span><button type="button" class="od-x" title="حذف سجل الرجوع" onclick="deleteReturnRec('${x.id}')">✕</button></div>`).join('');
+    return `<div class="od ${r.st}${ordHi&&r.k===ordHi?' new':''}" id="od_${r.k}">
+      <div class="od-main"><div class="od-top"><b class="od-c">${esc(r.cust||'بدون اسم')}</b><span class="pill ${r.ct==='wholesale'?'wholesale':'retail'}">${r.ct==='wholesale'?'جملة':'مفرد'}</span>${r.st==='ret'?'<span class="od-st neg">↩ راجع بالكامل</span>':r.st==='part'?'<span class="od-st warn">فيه راجع جزئي</span>':'<span class="od-st pos">✓ وصل</span>'}${rem>0?`<span class="od-st warn">متبقي ${money(rem)}</span>`:''}${tm?`<span class="muted od-tm">${tm}</span>`:''}</div>
+      ${r.lines.length?`<div class="od-prods">${prods}</div>`:''}${rets}</div>
+      ${r.lines.length?`<div class="od-sum"><b>${money(rev)}</b><small>${pcs} قطعة</small></div>
+      <div class="od-act">${one?`<button type="button" class="od-b" onclick="openReturnModal('${r.lines[0].id}')">↩ راجع</button>`:''}<button type="button" class="od-b pri" onclick="${edit}">✏️ تعديل</button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')">🗑</button></div>`:'<div></div><div></div>'}</div>`;
+  };
+  return `<div class="page-head"><div><h1>طلبات الصفحة</h1><div class="desc">${per} — الأحدث أولاً. كل بيع جديد من الصفحة يظهر هنا مباشرة.</div></div><div class="btn-row"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
+  <div class="od-kp"><div><small>الكلية</small><b>${nAll}</b></div><div class="ok"><small>وصلت</small><b>${nOk}</b><em>${D.pieces} قطعة · ${money(D.revenue)}</em></div><div class="rt"><small>راجعة</small><b>${D.retOrders}</b><em>${D.retQty} قطعة · ${money(D.retAmt)}</em></div></div>
+  <div class="od-tools"><select onchange="partMonth=this.value;ordLimit=60;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><div class="tabs">${chip('all','الكل',nAll)}${chip('ok','الواصلة',nOk)}${chip('ret','الراجعة',nRet)}</div><input type="text" class="search-box" placeholder="بحث بالزبون أو الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;ordLimit=60;render();var e=document.querySelector('.od-tools .search-box');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}"></div>
+  ${days.length?days.map(d=>{ const dv=d.rows.reduce((a,r)=>a+r.lines.reduce((x,y)=>x+saleRevenue(y),0),0); return `<div class="od-day"><b>${dn(d.date)} ${esc(d.date)}</b><span>${d.rows.length} طلب · ${money(dv)}</span></div>${d.rows.map(row).join('')}`; }).join(''):'<div class="card"><div class="np-empty">ما اكو طلبات بهذا العرض</div></div>'}
+  ${view.length>ordLimit?`<div style="text-align:center;margin:14px 0"><button class="btn" onclick="ordLimit+=60;render();">عرض المزيد (${view.length-ordLimit})</button></div>`:''}`;
 }
 function openPartnerDetail(id){ currentDetail=id; render(); window.scrollTo(0,0); }
 function ptRing(pct,col,label){
@@ -6362,13 +6432,14 @@ function deleteReturnRec(id){ confirmDelete('حذف سجل المرتجع؟ (م�
 ========================================================= */
 let retGran='d', retRange='m';
 /* ===== ضبط نسب الإشعارات ===== */
-const AL_DEF={surge:30,profitDrop:20,lateDays:30,retRepeat:2};
+const AL_DEF={surge:30,profitDrop:20,lateDays:30,retRepeat:2,retRate:15};
 function alCfg(){ return Object.assign({},AL_DEF,(state.settings&&state.settings.alerts)||{}); }
 function openAlertCfgModal(){
   const A=alCfg(), f=(id,l,v,h)=>`<div class="form-row"><label>${l}</label><input type="number" id="ac_${id}" value="${v}" min="1">${h?`<div class="hint">${h}</div>`:''}</div>`;
   openModal({title:'⚙️ ضبط الإشعارات',bodyHtml:`${f('surge','تنبيه ارتفاع أو انخفاض المبيعات (%)',A.surge,'مقارنة بنفس الفترة من الشهر الماضي')}
     ${f('profitDrop','تنبيه نزول الأرباح (%)',A.profitDrop,'إذا صافي الربح نزل بهذي النسبة أو أكثر عن الشهر الماضي')}
     ${f('lateDays','تأخر الديون (يوم بدون حركة)',A.lateDays)}
+    ${f('retRate','حد نسبة الرجوع بالشهر (%)',A.retRate,'إذا نسبة الطلبات الراجعة من كل طلبات الصفحة بالشهر تعدت هذا الحد يطلعلك تنبيه')}
     ${f('retRepeat','تنبيه تكرار الراجع (مرة)',A.retRepeat,'إذا نفس الموديل أو نفس السبب تكرر بالمرتجعات هذا العدد خلال آخر 30 يوم')}`,
   onSave(){ const g=k=>Math.max(1,num(document.getElementById('ac_'+k).value)); state.settings.alerts={}; Object.keys(AL_DEF).forEach(k=>{ state.settings.alerts[k]=g(k)||AL_DEF[k]; }); saveState(); closeModal(); refreshBell(); render(); toast('تم حفظ الإشعارات'); }});
 }
