@@ -800,6 +800,9 @@
   .gp2-b{display:flex;gap:6px;margin-top:9px;} .gp2-b .btn{flex:1;justify-content:center;padding-inline:6px;white-space:nowrap;font-size:12.5px;}
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
   .gp-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ord-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;} .ord-it{background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--positive);border-radius:14px;padding:10px 14px;} .ord-it.ret{border-right-color:var(--negative);background:var(--surface-2);} .ord-it.part{border-right-color:#c98a00;}
+  .ord-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;} .ord-h em{font-style:normal;margin-inline-start:auto;font-weight:800;font-variant-numeric:tabular-nums;}
+  .ord-ln{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed var(--border);font-size:13px;} .ord-ln.ret{color:var(--negative);} .ord-act{margin-top:8px;}
   .kt{background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:10px 13px;min-width:0;} .kt-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim);font-weight:700;} .kt-h i{font-style:normal;font-size:13px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:var(--surface-3);} .kt-h span{flex:1;} .kt-h em{font-style:normal;}
   .kt-b{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:6px;} .kt-v{font-family:'Cairo',sans-serif;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;} .kt.neg .kt-v{color:var(--negative);} .kt-s{font-size:11px;color:var(--text-faint);margin-top:3px;line-height:1.5;}
   .spk{width:84px;height:28px;flex:none;}
@@ -5033,6 +5036,7 @@ function ptPartnerLedger(pid){
   ${rows.length?`<div class="pd-led">${rows.map(r=>`<div class="pd-lr ${r.kind}"><span class="pd-li">${ico[r.kind]}</span><div class="pd-lm"><b>${esc(r.lbl)}</b><small>${esc(r.d)}${r.note?' · '+esc(r.note):''}</small></div><div class="pd-la"><b class="${r.amt>=0?'pos':'neg'}">${r.amt>=0?'+':'−'}${money(Math.abs(r.amt))}</b><small>الرصيد ${money(r.bal)}</small></div>${r.id?`<div class="btn-row pd-lb"><button class="btn sm ghost" onclick="${r.kind==='adj'?`openPartnerAdjModal('${pid}','${r.id}')`:`openPartnerPayModal('${pid}','${r.id}')`}">تعديل</button><button class="btn sm danger" onclick="deletePartnerRec('${r.kind==='adj'?'adj':'pays'}','${r.id}')">حذف</button></div>`:'<div class="pd-lb"></div>'}</div>`).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو حركات بعد — تظهر هنا الأرباح المقفلة والخصومات والتسديدات</div></div>'}`;
 }
 function renderPartnerDetail(pid){
+  if(pid==='orders') return renderPtOrders();
   if(pid==='emps') return renderEmployeesPage();
   if(typeof pid==='string' && pid.startsWith('emp:')) return renderEmployeeDetail(pid.slice(4));
   const P=PS(), p=P.partners.find(x=>x.id===pid);
@@ -5465,9 +5469,9 @@ function kpiT(ic,label,val,sub,delta,spk,cls,click){
 function ptOrdersRetHtml(D,PD){
   const per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), ok=D.ordersN, rt=D.retOrders, all=D.ordersAll||0, rate=all?rt/all*100:0, prate=PD&&PD.ordersAll?PD.retOrders/PD.ordersAll*100:null;
   const segs=[{v:ok,c:'var(--positive)',l:'طلبات ناجحة',t:ok+' طلب'},{v:rt,c:'var(--negative)',l:'طلبات راجعة',t:rt+' طلب'}];
-  return `<div class="section-title"><span class="ic">🧾</span> الطلبات والرواجع <span class="muted" style="font-size:12px;font-weight:500">${per}</span></div>
+  return `<div class="section-title"><span class="ic">🧾</span> الطلبات والرواجع <span class="muted" style="font-size:12px;font-weight:500">${per}</span><button type="button" class="btn sm primary" style="margin-inline-start:auto" onclick="openPartnerDetail('orders')">عرض كل الطلبات ›</button></div>
   <div class="card or-card"><div class="or-donut">${donutChart(segs,all,'طلب كلي')}</div>
-  <div class="or-kp">${kpiT('🧾','الطلبات الكلية',all,ok+' ناجحة + '+rt+' راجعة',PD?deltaBadge(all,PD.ordersAll,true):'')}${kpiT('↩️','الرواجع',D.retQty+' قطعة',rt+' طلب راجع · '+money(D.retAmt),PD?deltaBadge(D.retQty,PD.retQty,false):'','','neg')}${kpiT('📉','نسبة الرجوع',(Math.round(rate*10)/10)+'%',D.retProfit?'ربح ضائع '+money(D.retProfit):'من الطلبات الكلية',prate===null?'':deltaBadge(rate,prate,false),'',rate>15?'neg':'')}${kpiT('✅','صافي الطلبات الناجحة',ok,D.pieces+' قطعة · وارد '+money(D.revenue),PD?deltaBadge(ok,PD.ordersN,true):'')}</div></div>
+  <div class="or-kp">${kpiT('🧾','الطلبات الكلية',all,ok+' واصلة + '+rt+' راجعة · اضغط لعرضها',PD?deltaBadge(all,PD.ordersAll,true):'','','',"openPartnerDetail('orders')")}${kpiT('↩️','الرواجع',D.retQty+' قطعة',rt+' طلب راجع · '+money(D.retAmt),PD?deltaBadge(D.retQty,PD.retQty,false):'','','neg')}${kpiT('📉','نسبة الرجوع',(Math.round(rate*10)/10)+'%',D.retProfit?'ربح ضائع '+money(D.retProfit):'من الطلبات الكلية',prate===null?'':deltaBadge(rate,prate,false),'',rate>15?'neg':'')}${kpiT('✅','صافي الطلبات الناجحة',ok,D.pieces+' قطعة · وارد '+money(D.revenue),PD?deltaBadge(ok,PD.ordersN,true):'')}</div></div>
   ${D.rets.length?`<details class="pt-sec"><summary>↩️ تفاصيل الرواجع (${D.rets.length})</summary><div class="table-wrap"><table><thead><tr><th>تاريخ الرجوع</th><th>الموديل</th><th>الزبون</th><th>القطع</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody>${D.rets.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(r=>`<tr><td class="muted">${esc(r.date)}</td><td>${esc(r.product||'')}</td><td>${esc(r.customerName||'—')}</td><td class="num">${num(r.qty)}</td><td class="num neg">${money(r.amount)}</td><td class="muted">${esc(r.reason||'')}</td></tr>`).join('')}</tbody></table></div></details>`:''}`;
 }
 function ptTopStats(D,PD){
@@ -5478,11 +5482,33 @@ function ptTopStats(D,PD){
   return `<div class="pt-kpis">
     ${k('hero','📊','صافي الأرباح للتوزيع',money(D.net),'بعد الإعلانات'+((P.empDeduct&&D.wage)?' وأجور الموظفين':'')+' · على '+P.partners.length+' شركاء',db(D.net,PD&&PD.net,true),"var e=document.getElementById('ptPartners');if(e)e.scrollIntoView({behavior:'smooth'})",D.net<0?'neg':'')}
     ${k('','💰','وارد الصفحة',money(D.revenue),D.ordersN+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
-    ${k('','🧾','الطلبات الكلية',D.ordersAll,D.retOrders?D.ordersN+' ناجحة · '+D.retOrders+' راجعة ('+D.retQty+' قطعة)':D.ordersN+' ناجحة · بدون رواجع',db(D.ordersAll,PD&&PD.ordersAll,true),"var e=document.getElementById('ptOrders');if(e)e.scrollIntoView({behavior:'smooth'})")}
+    ${k('','🧾','الطلبات الواصلة',D.ordersN,'من '+D.ordersAll+' طلب كلي'+(D.retOrders?' · '+D.retOrders+' راجع':' · بدون رواجع'),db(D.ordersN,PD&&PD.ordersN,true),"openPartnerDetail('orders')")}
     ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
     ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),'','neg')}
     ${eC}
   </div>`;
+}
+let ordFilter='all', ordQ='';
+function renderPtOrders(){
+  const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
+  const G={}; D.ps.forEach(x=>{ const k=x.orderId||x.id; (G[k]=G[k]||{k,lines:[],date:x.date,cust:x.customerName||'',ct:x.customerType}).lines.push(x); });
+  const rk={}; D.rets.forEach(r=>{ const k=r.orderId||r.saleId; (rk[k]=rk[k]||[]).push(r); });
+  const rows=Object.values(G).map(g=>({k:g.k,date:g.date,cust:g.cust,ct:g.ct,lines:g.lines,rets:rk[g.k]||[],st:(rk[g.k]||[]).length?'part':'ok'}));
+  Object.keys(rk).forEach(k=>{ if(!G[k]){ const r=rk[k][0]; rows.push({k,date:r.saleDate||r.date,cust:r.customerName||'',ct:r.customerType,lines:[],rets:rk[k],st:'ret'}); } });
+  rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const q=ordQ.trim().toLowerCase();
+  const view=rows.filter(r=>(ordFilter==='all'||(ordFilter==='ok'&&r.st!=='ret')||(ordFilter==='ret'&&r.rets.length))&&(!q||(r.cust+' '+r.lines.map(saleProductLabel).join(' ')+' '+r.rets.map(x=>x.product).join(' ')).toLowerCase().includes(q)));
+  const nRet=rows.filter(r=>r.rets.length).length, nOk=D.ordersN, nAll=rows.length;
+  const chip=(id,l,n,c)=>`<button type="button" class="${ordFilter===id?'on':''}" onclick="ordFilter='${id}';render();">${l} <small>(${n})</small></button>`;
+  return `<div class="page-head"><div><h1>طلبات الصفحة</h1><div class="desc">${per} — كل الطلبات الواصلة والراجعة، تكدر ترجّع أو تعدّل أو تحذف أي طلب من هنا.</div></div><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div>
+  <div class="kt-row" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${kpiT('🧾','الطلبات الكلية',nAll,'واصلة + راجعة')}${kpiT('✅','وصلت',nOk,D.pieces+' قطعة · '+money(D.revenue))}${kpiT('↩️','راجعة',D.retOrders,D.retQty+' قطعة · '+money(D.retAmt),'','',D.retOrders?'neg':'')}</div>
+  <div class="field-inline" style="margin:12px 0 8px"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>
+  <div class="toolbar"><div class="tabs">${chip('all','الكل',nAll)}${chip('ok','الواصلة',nOk)}${chip('ret','الراجعة',nRet)}</div><input type="text" class="search-box" placeholder="بحث باسم الزبون أو الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;render();this.focus();"></div>
+  <div class="ord-list">${view.length?view.map(r=>{ const rev=r.lines.reduce((a,x)=>a+saleRevenue(x),0), pcs=r.lines.reduce((a,x)=>a+num(x.quantity),0), edit=r.lines.length?(String(r.k).length&&r.lines[0].orderId?`openOrderModal('${r.k}')`:`openSaleModal('${r.lines[0].id}')`):'';
+    return `<div class="ord-it ${r.st}"><div class="ord-h"><span class="pill ${r.st==='ret'?'neg':r.st==='part'?'wholesale':'retail'}">${r.st==='ret'?'↩ راجع بالكامل':r.st==='part'?'وصل (فيه راجع جزئي)':'✅ وصل'}</span><b>${esc(r.cust||'بدون اسم')}</b><span class="muted">${esc(r.date||'')}</span><span class="pill ${r.ct==='wholesale'?'wholesale':'retail'}">${r.ct==='wholesale'?'جملة':'مفرد'}</span><em>${r.lines.length?pcs+' قطعة · '+money(rev):''}</em></div>
+      ${r.lines.map(x=>`<div class="ord-ln"><span>${esc(saleProductLabel(x))} × ${num(x.quantity)} <small class="muted">${money(saleRevenue(x))}</small></span><button class="btn sm" onclick="openReturnModal('${x.id}')">↩ راجع</button></div>`).join('')}
+      ${r.rets.map(x=>`<div class="ord-ln ret"><span>↩ ${esc(x.product||'')} × ${num(x.qty)} <small class="muted">${money(x.amount)} · رجع ${esc(x.date)} · ${esc(x.reason||'')}</small></span><button class="btn sm danger" onclick="deleteReturnRec('${x.id}')">حذف السجل</button></div>`).join('')}
+      ${r.lines.length?`<div class="btn-row ord-act"><button class="btn sm primary" onclick="${edit}">✏️ تعديل الطلب</button><button class="btn sm danger" onclick="deleteSale('${r.lines[0].id}')">🗑 حذف</button></div>`:''}</div>`; }).join(''):'<div class="card"><div class="np-empty">ما اكو طلبات بهذا العرض</div></div>'}</div>`;
 }
 function openPartnerDetail(id){ currentDetail=id; render(); window.scrollTo(0,0); }
 function ptRing(pct,col,label){
@@ -5563,7 +5589,8 @@ function empStats(E){
   Object.keys(adjs).forEach(k=>{ (mo[k]=mo[k]||{m:k,pieces:0,paid:0}).pieces+=num(adjs[k]); });
   const months=Object.values(mo).sort((a,b)=>b.m.localeCompare(a.m)).map(x=>({...x,due:x.pieces*rate}));
   const mOrders=ls.filter(s=>s.date>=ms).length;
-  let excl=state.sales.filter(s=>(s.channel||'shop')==='page' && (!E.from||s.date>=E.from) && s.customerType==='wholesale').length; return {E,ls,pieces,rate,due,paid,remaining:due-paid,baseM,excl,mPieces,mDue:mPieces*rate,mPaid,months,orders:ls.length,mOrders,carry:due-paid-(mPieces*rate-mPaid),rMonth:rMonth,rMonthDue:rMonth*rate,rAll:rAll};
+  let excl=state.sales.filter(s=>(s.channel||'shop')==='page' && (!E.from||s.date>=E.from) && s.customerType==='wholesale').length; const dk=l=>new Set(l.map(x=>x.orderId||x.id)).size, rk2=new Set(rets.map(r=>r.orderId||r.saleId)), okM=new Set(ls.filter(s=>s.date>=ms).map(x=>x.orderId||x.id)), retM=rets.filter(r=>(r.saleDate||r.date)>=ms), rkM=new Set(retM.map(r=>r.orderId||r.saleId)), ordAllN=dk(ls), allSet=new Set([...ls.map(x=>x.orderId||x.id),...rk2]), allM=new Set([...okM,...rkM]);
+  return {E,ordAllN,retOrdAll:rk2.size,ordTotalAll:allSet.size,mOrdN:okM.size,mRetOrd:rkM.size,mRetPcs:retM.reduce((a,r)=>a+num(r.qty),0),mOrdTotal:allM.size,ls,pieces,rate,due,paid,remaining:due-paid,baseM,excl,mPieces,mDue:mPieces*rate,mPaid,months,orders:ls.length,mOrders,carry:due-paid-(mPieces*rate-mPaid),rMonth:rMonth,rMonthDue:rMonth*rate,rAll:rAll};
 }
 function empsTotal(){ const list=PS().emps.map(e=>empStats(e)); return {list,remaining:list.reduce((a,x)=>a+x.remaining,0),mPieces:list.reduce((a,x)=>a+x.mPieces,0),mDue:list.reduce((a,x)=>a+x.mDue,0),paid:list.reduce((a,x)=>a+x.mPaid,0)}; }
 function renderEmployeesPage(){
@@ -5583,6 +5610,7 @@ function renderEmployeeDetail(id){
   const ls=S.ls.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
   return `<div class="page-head"><div><h1>${esc(E.name)} <span class="pill retail">موظف</span> <span class="pill wholesale">${money(S.rate)} للقطعة</span></h1><div class="desc">يستحق أجرة على كل قطعة مفرد تنباع عبر الصفحة. حساب منفصل — ما يُخصم من أرباح الشركاء.</div></div><button class="btn" onclick="currentDetail='emps';render();">← رجوع للموظفين</button></div>
   <div class="grid stats">${statCard('المتبقي له',money(S.remaining),S.remaining>0?'neg':'pos',Math.round(S.carry)!==0?'يشمل '+money(S.carry)+' من أشهر سابقة':'المستحق − المسدد',true)}${statCard('قطع هذا الشهر',S.mPieces+' قطعة','accent',S.mOrders+' طلب · يبدأ من صفر كل شهر')}${statCard('مستحق هذا الشهر',money(S.mDue),'',S.mPieces+' × '+money(S.rate))}${statCard('مسدد هذا الشهر',money(S.mPaid),'pos')}</div>
+  <div class="grid stats" style="margin-top:10px">${statCard('طلباته هذا الشهر',S.mOrdN+' طلب','accent','من '+S.mOrdTotal+' كلي · '+S.mRetOrd+' راجع')}${statCard('رواجع هذا الشهر',S.mRetPcs+' قطعة',S.mRetPcs?'neg':'',S.mRetPcs?'ما تنحسب بأجرته':'ما اكو رواجع')}${statCard('كل طلباته',S.ordAllN+' طلب','','من '+S.ordTotalAll+' كلي منذ بداية حسابه')}${statCard('كل رواجعه',S.retOrdAll+' طلب',S.retOrdAll?'neg':'',S.rAll+' قطعة')}</div>
   <div class="rule-box" style="margin:10px 0 0;">📅 موعد تسليم الراتب: <b>${esc(empPayText(E))}</b> — يجيك إشعار 🔔 قبل الموعد بيوم ويبقى 5 أيام.${S.rMonth?`<br>↩️ راجع هذا الشهر: <b>${S.rMonth} قطعة</b> انخصمت من أجرته تلقائياً (${money(S.rMonthDue)}) — الأجرة تنحسب فقط على اللي انباع وبقى.`:''}</div>
   <div class="hint" style="margin:8px 0 0;">يبدأ حسابه من ${esc(E.from||'—')} — المبيعات قبل هذا التاريخ ما تنحسب له.${S.excl?` · ${S.excl} بيع جملة بالصفحة ما يحسب له (الأجرة على المفرد فقط)`:''}</div>
   <div class="btn-row" style="margin:20px 0 6px;"><button class="btn primary" onclick="openEmpPayModal('${E.id}')">+ تسديد مبلغ له</button><button class="btn" onclick="openEmpEditModal('${E.id}')">✏️ تعديل الاسم والأجرة</button><button class="btn" onclick="resetEmp('${E.id}')">🧹 تصفير الحساب</button><button class="btn danger" onclick="deleteEmp('${E.id}')">🗑 حذف الحساب</button></div>
