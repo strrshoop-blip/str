@@ -808,6 +808,14 @@
   .ro-mode{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;} .ro-mode label{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;}
   .ro-l{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:12px;margin-bottom:6px;background:var(--surface-2);} .ro-l.off{opacity:.45;} .ro-q{display:flex;align-items:center;gap:6px;} .ro-q input{width:64px;padding:6px 8px;} .ro-l label{display:flex;align-items:center;gap:8px;}
   @media (max-width:600px){.ro-l{grid-template-columns:1fr auto;} .ro-q{grid-column:1/-1;}}
+  .ad-parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;} .ad-parts>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;} .ad-parts small{display:block;font-size:11.5px;color:var(--text-faint);} .ad-parts b{font-family:'Cairo',sans-serif;font-size:19px;color:var(--negative);font-variant-numeric:tabular-nums;}
+  .ad-list{display:flex;flex-direction:column;gap:8px;} .ad-it{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px 14px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 16px;} .ad-i{width:40px;height:40px;border-radius:12px;background:var(--surface-3);display:grid;place-items:center;font-size:18px;} .ad-m b{font-size:14.5px;} .ad-tg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;font-size:12px;color:var(--text-faint);} .ad-a{text-align:end;} .ad-a b{display:block;font-family:'Cairo',sans-serif;font-size:18px;color:var(--negative);font-variant-numeric:tabular-nums;} .ad-a small{font-size:11px;color:var(--text-faint);}
+  @media (max-width:700px){.ad-it{grid-template-columns:auto 1fr auto;} .ad-it .od-act{grid-column:1/-1;} .ad-it .od-act .od-b{flex:1;padding:10px 6px;} .ad-it .od-act .od-b.del{flex:none;padding-inline:18px;}}
+  .od-rs{font:inherit;font-size:12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);padding:3px 6px;max-width:150px;color:var(--text-dim);cursor:pointer;margin-inline-end:6px;}
+  .cl-bn{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--accent);color:var(--on-accent);border-radius:16px;padding:12px 16px;margin:0 0 12px;} .cl-bn b{display:block;font-size:15px;} .cl-bn small{opacity:.8;font-size:12px;} .cl-bn .btn{background:var(--surface);color:var(--text);border:0;}
+  .cl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;} .cl-g>div{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:9px 12px;} .cl-g small{display:block;font-size:11.5px;color:var(--text-faint);} .cl-g b{font-family:'Cairo',sans-serif;font-size:16px;} .cl-g b.neg{color:var(--negative);} .cl-g em{font-style:normal;font-size:11px;color:var(--text-faint);} .cl-net{background:var(--accent) !important;color:var(--on-accent);} .cl-net small{color:inherit !important;opacity:.8;}
+  .cl-p{margin:10px 0;border:1px solid var(--border);border-radius:12px;} .cl-p>div{display:flex;justify-content:space-between;padding:9px 14px;border-top:1px dashed var(--border);} .cl-p>div:first-child{border-top:0;} .cl-p em{font-style:normal;font-size:11.5px;color:var(--text-faint);} .cl-p b{font-family:'Cairo',sans-serif;}
+  .cl-w{background:color-mix(in srgb,#c98a00 12%,transparent);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:8px;} .cl-w small{display:block;color:var(--text-faint);margin-top:4px;} .cl-ok{background:color-mix(in srgb,var(--positive) 12%,transparent);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:8px;}
   .od-th{display:flex;flex:none;} .od-th img,.od-th span{width:54px;height:62px;border-radius:12px;object-fit:cover;background:var(--surface-3);display:grid;place-items:center;font-size:22px;border:2px solid var(--surface);} .od-th.n2 img,.od-th.n2 span,.od-th.n3 img,.od-th.n3 span{width:44px;height:54px;margin-inline-start:-14px;} .od-th>*:first-child{margin-inline-start:0 !important;}
   .od-ttl{font-weight:800;font-size:15.5px;line-height:1.4;} .od-ttl em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--text-dim);background:var(--surface-3);border-radius:99px;padding:1px 8px;margin-inline-start:4px;} .od-q{font-family:'Cairo',sans-serif;color:var(--text-dim);}
   .od-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;} .od-tm{font-size:11.5px;color:var(--text-faint);margin-inline-start:4px;}
@@ -4842,7 +4850,7 @@ function openWhy(kind){
     const best=ms.filter(o=>o.id).sort((a,b)=>b.profit-a.profit)[0];
     if(tone!=='good'){ fx('قلل الصرف بالأيام الي ما تجيب مبيعات.'); if(best) fx('ركّز الإعلان على أربح موديل: «'+esc(best.name)+'».','فتح الموديل',"openModelDetail('"+best.id+"')"); fx('حدد حد يومي للإعلان وراقبه.','تعديل حد الإعلانات','openGoalModal()'); }
     else fx('استمر على نفس الوتيرة وراقب كلفة الطلب الواحد.');
-    fx('شوف كل إعلانات الفترة.','عرض الإعلانات',"openPtSection('ptAds')"); fx('سجل إعلان جديد.','+ إعلان',"openExpenseModal(null,'page','إعلانات')");
+    fx('شوف كل إعلانات الفترة.','عرض الإعلانات',"openPartnerDetail('ads')"); fx('سجل إعلان جديد.','+ إعلان',"openExpenseModal(null,'page','إعلانات')");
   } else if(kind==='wage'){
     title='👤 أجور الموظفين';
     const share=pct(D.wage,rev), rpp=M.r.pcs?M.r.profit/M.r.pcs:0, rate=(P.emps||[]).length?num(P.emps[0].rate):0;
@@ -4979,6 +4987,7 @@ function renderPartnership(){
   return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات الصفحة وإعلاناتها فقط — تتحدث الأرقام تلقائياً. مصاريف الصفحة الثانية (كارتات وغيرها) ما تدخل بالشراكة، فقط الإعلانات تتقاسمونها بالنسب.</div></div>
     <div class="toolbar" style="margin:0;"><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
   <div class="pt-bar"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="openPartnerManage()">⚙️ إدارة الشراكة</button></div>
+  ${ptCloseBannerHtml()}
   ${ptTopStats(D,PD)}
   ${goalCardHtml(D)}
   ${pctSum!==100?`<div class="rule-box" style="border-color:var(--negative);color:var(--negative);margin-bottom:14px;">⚠️ مجموع النسب ${pctTxt(pctSum)} وليس 100% — عدّل النسب قبل الإقفال.</div>`:''}
@@ -5017,16 +5026,37 @@ function renderPartnership(){
 
 `;
 }
+function ptCloseReviewData(ym){
+  const P=PS(), [f,t]=mRange(ym), D=pageData(f,t), warns=[];
+  if(Math.abs(P.partners.reduce((a,p)=>a+num(p.pct),0)-100)>0.001) warns.push('مجموع نسب الشركاء مو 100%');
+  const noCost=D.ps.filter(x=>x.modelId && !num(x.costSnapshot)).length; if(noCost) warns.push(noCost+' بيع بدون كلفة محفوظة');
+  const ra=retRateInfo(D); if(ra.over) warns.push('نسبة الرجوع '+ra.rateTxt+'% أعلى من الحد ('+ra.limit+'%)');
+  if(D.profit>0 && D.ads>D.profit*((P.goal&&P.goal.adsPct)||30)/100) warns.push('الإعلانات أكلت '+Math.round(D.ads/D.profit*100)+'% من الأرباح');
+  if(D.net<0) warns.push('صافي الأرباح سالب');
+  return {D,warns};
+}
 function closePartnerMonth(ym){
-  const P=PS();
-  if(P.partners.reduce((s,p)=>s+num(p.pct),0)!==100) return toast('مجموع النسب لازم يكون 100%');
-  const [f,t]=mRange(ym), D=pageData(f,t);
-  askConfirm(`إقفال ${monthLabelAr(ym)}: صافي الأرباح ${money(D.net)} يتوزع على الشركاء بالنسب. المتابعة؟`,()=>{
-    const old=P.closes.find(c=>c.month===ym);
+  const P=PS(), old=P.closes.find(c=>c.month===ym), {D,warns}=ptCloseReviewData(ym);
+  if(Math.abs(P.partners.reduce((s,p)=>s+num(p.pct),0)-100)>0.001) return toast('مجموع النسب لازم يكون 100%');
+  openModal({title:(old?'🔄 تحديث إقفال ':'🔒 إقفال ')+monthLabelAr(ym),bodyHtml:`
+    <div class="cl-g"><div><small>الوارد</small><b>${money(D.revenue)}</b><em>${D.ordersN} طلب${D.retOrders?' · '+D.retOrders+' راجع':''}</em></div><div><small>الأرباح قبل الإعلانات</small><b>${money(D.profit)}</b></div><div><small>الإعلانات</small><b class="neg">−${money(D.ads)}</b></div>${D.wage&&PS().empDeduct?`<div><small>الموظفين</small><b class="neg">−${money(D.wage)}</b></div>`:''}<div class="cl-net"><small>صافي للتوزيع</small><b>${money(D.net)}</b></div></div>
+    <div class="cl-p">${D.parts.map(p=>`<div><span>${esc(p.name)} <em>${pctTxt(p.pct)}</em></span><b>${money(p.net)}</b></div>`).join('')}</div>
+    ${warns.length?`<div class="cl-w">${warns.map(w=>`<div>⚠️ ${esc(w)}</div>`).join('')}<small>تقدر تقفل وتكمل، أو ترجع تعدّل أول.</small></div>`:'<div class="cl-ok">✅ ما لقيت أي ملاحظة — جاهز للإقفال</div>'}
+    <div class="hint">بعد الإقفال تظهر حصص الشركاء بحساباتهم ويتجهز كشف الشراكة. إذا غيّرت شي بعدين، تكدر تحدّث الإقفال.</div>`,
+  onSave(){
     const rec={id:old?old.id:uid(),month:ym,date:todayISO(),revenue:D.revenue,profit:D.profit,ads:D.ads,other:D.other,wage:D.wage,empPieces:D.empPieces,net:D.net,pieces:D.pieces,orders:D.orders,parts:D.parts.map(p=>({id:p.id,name:p.name,pct:p.pct,gross:p.gross,ads:p.ads,exp:p.exp,net:p.net}))};
     if(old) Object.assign(old,rec); else P.closes.push(rec);
-    saveState(); render(); toast('تم إقفال الشهر وتوزيع الأرباح'); setTimeout(()=>printPartnerStatement(ym),350);
-  },{title:'إقفال الشهر',yesLabel:'إقفال وتوزيع'});
+    saveState(); closeModal(); render(); toast('تم إقفال الشهر وتوزيع الأرباح'); setTimeout(()=>printPartnerStatement(ym),350);
+  }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent=old?'تحديث الإقفال':'🔒 إقفال وتوزيع';
+}
+function ptCloseBannerHtml(){
+  try{
+    const P=PS(), cur=thisMonth(), pm=ymAdd(cur,-1); if(P.closes.find(c=>c.month===pm)) return '';
+    const D=pageData(pm+'-01',pm+'-31'); if(!D.ordersAll && !D.ads) return '';
+    if(P.resetAt && pm+'-31'<P.resetAt) return '';
+    return `<div class="cl-bn"><div><b>🔒 ${monthLabelAr(pm)} جاهز للإقفال</b><small>صافي ${money(D.net)} · ${D.ordersN} طلب — راجع الأرقام وأقفل بخطوة وحدة</small></div><button class="btn primary" onclick="closePartnerMonth('${pm}')">راجع وأقفل</button></div>`;
+  }catch(e){ return ''; }
 }
 function deletePartnerClose(id){ confirmDelete('إلغاء إقفال هذا الشهر؟ يرجع الشهر مفتوح وتنحذف حصصه من كشوف الحساب (التعديلات والاستلامات تبقى).',()=>{ PS().closes=PS().closes.filter(c=>c.id!==id); saveState(); render(); toast('تم الإلغاء'); }); }
 function openPartnersModal(){
@@ -5069,6 +5099,7 @@ function ptPartnerLedger(pid){
 }
 function renderPartnerDetail(pid){
   if(pid==='orders') return renderPtOrders();
+  if(pid==='ads') return renderPtAds();
   if(pid==='emps') return renderEmployeesPage();
   if(typeof pid==='string' && pid.startsWith('emp:')) return renderEmployeeDetail(pid.slice(4));
   const P=PS(), p=P.partners.find(x=>x.id===pid);
@@ -5417,7 +5448,7 @@ function openOrderModal(orderId,presetChannel){
     const recs=B.lines.map((l,i)=>({id:oldIds[i]||uid(),orderId:oid,modelId:l.modelId,quantity:l.qty,unitPrice:l.price,date,channel,customerType:type,paymentMethod:pay,customerName,amountReceived:l.rec,amountRemaining:l.remn,notes,costSnapshot:l.cost,linkedDebtId:i===0?debtId:null}));
     state.sales=state.sales.filter(s=>!oldIds.includes(s.id)).concat(recs);
     saveState(); closeModal();
-    if(channel==='page' && (currentPage==='partnership'||currentDetail==='orders')){ ordHi=oid; ordFilter='all'; ordQ=''; ordLimit=60; if(partMonth!=='ALL' && date.slice(0,7)!==partMonth) partMonth=date.slice(0,7); currentPage='partnership'; currentDetail='orders'; render(); window.scrollTo(0,0); setTimeout(()=>{ ordHi=null; },4000); }
+    if(channel==='page' && (currentPage==='partnership'||currentDetail==='orders')){ ordHi=oid; ordFilter='ok'; ordQ=''; ordLimit=60; if(partMonth!=='ALL' && date.slice(0,7)!==partMonth) partMonth=date.slice(0,7); currentPage='partnership'; currentDetail='orders'; render(); window.scrollTo(0,0); setTimeout(()=>{ ordHi=null; },4000); }
     else render();
     const rs=(channel==='page' && PS().resetAt && date<PS().resetAt)?PS().resetAt:null;
     toast(rs?`تم الحفظ، لكن تاريخ البيع قبل تصفير الشراكة (${rs}) فما يدخل بحساب الشراكة`:(B.remaining>0?`تم الحفظ — ${B.pieces} قطع، وسُجّل ${money(B.remaining)} كدين على ${customerName}`:`تم الحفظ — ${B.lines.length>1?B.lines.length+' موديلات، ':''}${B.pieces} قطعة`));
@@ -5550,11 +5581,25 @@ function ptTopStats(D,PD){
     ${k('','💰','وارد الصفحة',money(D.revenue),D.ordersN+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
     ${k('','🧾','الطلبات الواصلة',D.ordersN,'من '+D.ordersAll+' طلب كلي'+(D.retOrders?' · '+D.retOrders+' راجع':' · بدون رواجع'),db(D.ordersN,PD&&PD.ordersN,true),"openPartnerDetail('orders')")}
     ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
-    ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),'','neg')}
+    ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),"openPartnerDetail('ads')",'neg')}
     ${eC}
   </div>`;
 }
-let ordFilter='all', ordQ='', ordHi=null, ordLimit=60;
+function renderPtAds(){
+  const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), P=PS();
+  const list=D.exps.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const closed=partMonth!=='ALL' && P.closes.find(c=>c.month===partMonth);
+  const prev=partMonth==='ALL'?null:(()=>{ const pm=ymAdd(partMonth,-1); return pageData(pm+'-01',pm+'-31'); })();
+  return `<div class="page-head"><div><h1>إعلانات الصفحة</h1><div class="desc">${per} — كل إعلان تعدّله أو تحذفه ينحسب تلقائياً: حصص الشركاء والأرباح ترجع لحالها.</div></div><div class="btn-row"><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
+  ${closed?`<div class="ret-al bad" style="margin-top:0"><b>🔒 هذا الشهر مقفل.</b> بعد أي تعديل أو حذف افتح الشهر وحدّث الإقفال حتى تنحسب الأرقام للشركاء.</div>`:''}
+  <div class="kt-row"><div style="display:contents">${kpiT('📣','إجمالي الإعلانات',money(D.ads),list.length+' إعلان',prev?deltaBadge(D.ads,prev.ads,false):'','','neg')}${kpiT('📊','معدل الإعلان',money(list.length?D.ads/list.length:0),'للإعلان الواحد')}${kpiT('📈','من الأرباح',(D.profit>0?Math.round(D.ads/D.profit*100):0)+'%','الأرباح قبل الإعلانات '+money(D.profit))}</div></div>
+  <div class="section-title"><span class="ic">👥</span> مساهمة الشركاء بالإعلانات</div>
+  <div class="ad-parts">${D.parts.map(p=>`<div><small>${esc(p.name)} · ${pctTxt(p.pct)}</small><b>${money(p.ads)}</b></div>`).join('')}</div>
+  <div class="section-title"><span class="ic">🧾</span> كل الإعلانات <span class="muted" style="font-size:12px;font-weight:500">الأحدث أولاً</span></div>
+  ${list.length?`<div class="ad-list">${list.map(e=>{ const m=e.modelId?modelById(e.modelId):null; return `<div class="ad-it"><div class="ad-i">📣</div><div class="ad-m"><b>${esc(e.notes||'إعلان')}</b><div class="ad-tg"><span>${esc(e.date)}</span>${m?`<span class="pill retail">🎯 ${esc(m.name)}</span>`:'<span class="pill wholesale">عام للصفحة</span>'}${e.source?`<span class="muted">${e.source==='capital'?'من رأس المال':e.source==='profit'?'من الأرباح':'مصدر آخر'}</span>`:''}</div></div><div class="ad-a"><b>${money(e.amount)}</b>${D.ads?`<small>${Math.round(num(e.amount)/D.ads*100)}% من الإعلانات</small>`:''}</div><div class="od-act"><button type="button" class="od-b pri" onclick="openExpenseModal('${e.id}')"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف" onclick="deleteExpense('${e.id}')"><i>🗑</i></button></div></div>`; }).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو إعلانات بهذي الفترة</div></div>'}
+  <div class="field-inline" style="margin:14px 0"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>`;
+}
+let ordFilter='ok', ordQ='', ordHi=null, ordLimit=60;
 function renderPtOrders(){
   const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
   const G={}; D.ps.forEach(x=>{ const k=x.orderId||x.id; (G[k]=G[k]||{k,lines:[],date:x.date,cust:x.customerName||'',ct:x.customerType,ca:''}).lines.push(x); if(String(x.createdAt||'')>G[k].ca) G[k].ca=String(x.createdAt||''); });
@@ -5575,18 +5620,18 @@ function renderPtOrders(){
     const tm=r.lines.length?tmLabel(r.lines[0]):'';
     const first=r.lines[0]||null, title=first?(one?esc(saleProductLabel(first)):esc(saleProductLabel(first))+' <em>+'+(r.lines.length-1)+' موديل</em>'):esc((r.rets[0]||{}).product||'');
     const ths=r.lines.length?r.lines.slice(0,3).map(thumb).join(''):'<span>↩</span>';
-    const more=one?'':`<div class="od-prods">${r.lines.map(x=>`<span class="od-chip">${esc(saleProductLabel(x))} <b>×${num(x.quantity)}</b><button type="button" title="رجّع هذا الموديل" onclick="openReturnModal('${x.id}')">↩</button></span>`).join('')}</div>`;
-    const rets=r.rets.map(x=>`<div class="od-ret"><span>↩ راجع: ${esc(x.product||'')} <b>×${num(x.qty)}</b> · ${money(x.amount)} · ${esc(x.date)}${x.reason?' · '+esc(x.reason):''}</span><button type="button" class="od-x" title="حذف سجل الرجوع" onclick="deleteReturnRec('${x.id}')">✕</button></div>`).join('');
+    const more=one?'':`<div class="od-prods">${r.lines.map(x=>`<span class="od-chip">${esc(saleProductLabel(x))} <b>×${num(x.quantity)}</b><button type="button" title="رجّع هذا الموديل" onclick="quickReturn('${x.id}')">↩</button></span>`).join('')}</div>`;
+    const rets=r.rets.map(x=>`<div class="od-ret"><span>↩ راجع: ${esc(x.product||'')} <b>×${num(x.qty)}</b> · ${money(x.amount)} · ${esc(x.date)}${x.reason?' · '+esc(x.reason):''}</span><span><select class="od-rs" onchange="setReturnReasonQuick('${x.id}',this.value)"><option value="">${x.reason&&x.reason!=='بدون سبب'?'السبب: '+esc(x.reason):'السبب؟'}</option>${RETURN_REASONS.map(z=>`<option>${esc(z)}</option>`).join('')}</select><button type="button" class="od-x" title="حذف سجل الرجوع" onclick="deleteReturnRec('${x.id}')">✕</button></span></div>`).join('');
     return `<div class="od ${r.st}${ordHi&&r.k===ordHi?' new':''}" id="od_${r.k}">
       <div class="od-th n${Math.min(3,Math.max(1,r.lines.length))}">${ths}</div>
       <div class="od-main"><div class="od-ttl">${title}${one?` <b class="od-q">×${num(first.quantity)}</b>`:''}</div>
         <div class="od-top"><span class="od-st ${r.st==='ret'?'neg':'pos'}">${r.st==='ret'?'↩ راجع بالكامل':r.st==='part'?'✓ وصل · فيه راجع':'✓ وصل'}</span><span class="od-ty ${r.ct==='wholesale'?'w':''}">${r.ct==='wholesale'?'جملة':'مفرد'}</span>${rem>0?`<span class="od-st warn">متبقي ${money(rem)}</span>`:''}${tm?`<span class="od-tm">${tm}</span>`:''}</div>${more}${rets}</div>
       ${r.lines.length?`<div class="od-sum"><b>${money(rev)}</b><small>${pcs} قطعة</small></div>
-      <div class="od-act"><button type="button" class="od-b" onclick="${one?`openReturnModal('${r.lines[0].id}')`:`openReturnOrderModal('${r.k}')`}"><i>↩</i><span>راجع</span></button><button type="button" class="od-b pri" onclick="${edit}"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')"><i>🗑</i></button></div>`:'<div class="od-sum"><b class="neg">'+money(r.rets.reduce((a,x)=>a+num(x.amount),0))+'</b><small>مرتجع</small></div><div></div>'}</div>`;
+      <div class="od-act"><button type="button" class="od-b" onclick="${one?`quickReturn('${r.lines[0].id}')`:`openReturnOrderModal('${r.k}')`}"><i>↩</i><span>راجع</span></button><button type="button" class="od-b pri" onclick="${edit}"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')"><i>🗑</i></button></div>`:'<div class="od-sum"><b class="neg">'+money(r.rets.reduce((a,x)=>a+num(x.amount),0))+'</b><small>مرتجع</small></div><div></div>'}</div>`;
   };
   return `<div class="page-head"><div><h1>طلبات الصفحة</h1><div class="desc">${per} — الأحدث أولاً. كل بيع جديد من الصفحة يظهر هنا مباشرة.</div></div><div class="btn-row"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
   <div class="od-kp"><div><small>الكلية</small><b>${nAll}</b></div><div class="ok"><small>وصلت</small><b>${nOk}</b><em>${D.pieces} قطعة · ${money(D.revenue)}</em></div><div class="rt"><small>راجعة</small><b>${D.retOrders}</b><em>${D.retQty} قطعة · ${money(D.retAmt)}</em></div></div>
-  <div class="od-tools"><select onchange="partMonth=this.value;ordLimit=60;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><div class="tabs">${chip('all','الكل',nAll)}${chip('ok','الواصلة',nOk)}${chip('ret','الراجعة',nRet)}</div><input type="text" class="search-box" placeholder="🔍 بحث باسم الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;ordLimit=60;render();var e=document.querySelector('.od-tools .search-box');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}"></div>
+  <div class="od-tools"><select onchange="partMonth=this.value;ordLimit=60;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><div class="tabs">${chip('ok','✓ الواصلة',nOk)}${chip('ret','↩ الراجعة',nRet)}${chip('all','الكل',nAll)}</div><input type="text" class="search-box" placeholder="🔍 بحث باسم الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;ordLimit=60;render();var e=document.querySelector('.od-tools .search-box');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}"></div>
   ${days.length?days.map(d=>{ const dv=d.rows.reduce((a,r)=>a+r.lines.reduce((x,y)=>x+saleRevenue(y),0),0); return `<div class="od-day"><b>${dn(d.date)} ${esc(d.date)}</b><span>${d.rows.length} طلب · ${money(dv)}</span></div>${d.rows.map(row).join('')}`; }).join(''):'<div class="card"><div class="np-empty">ما اكو طلبات بهذا العرض</div></div>'}
   ${view.length>ordLimit?`<div style="text-align:center;margin:14px 0"><button class="btn" onclick="ordLimit+=60;render();">عرض المزيد (${view.length-ordLimit})</button></div>`:''}`;
 }
@@ -6420,26 +6465,38 @@ function openReturnModal(saleId){
   }});
   const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='تأكيد الترجيع';
 }
+function toastUndo(msg,fn){
+  const root=document.getElementById('toastRoot'), el=document.createElement('div'); el.className='toast'; el.style.pointerEvents='auto';
+  el.innerHTML='<span></span> <button type="button" style="margin-inline-start:12px;background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:4px 12px;font:inherit;font-weight:700;cursor:pointer">تراجع</button>';
+  el.firstChild.textContent=msg; el.querySelector('button').onclick=()=>{ el.remove(); fn(); }; root.appendChild(el); setTimeout(()=>el.remove(),7000);
+}
+function snapReturnState(){ return JSON.stringify({sales:state.sales,returns:state.returns,customerDebts:state.customerDebts,customerDebtPayments:state.customerDebtPayments}); }
+function undoReturnState(snap){ const o=JSON.parse(snap); Object.assign(state,o); saveState(); render(); toast('تم التراجع'); }
+function quickReturn(saleId){
+  const x=state.sales.find(v=>v.id===saleId); if(!x) return; const snap=snapReturnState();
+  doReturnSale(saleId,num(x.quantity),'بدون سبب',true,todayISO(),'');
+  render(); toastUndo('↩ راجع — انشال من الطلبات والوارد',()=>undoReturnState(snap));
+}
+function setReturnReasonQuick(id,v){ const r=state.returns.find(x=>x.id===id); if(!r||!v) return; r.reason=v; r.custom=!RETURN_REASONS.includes(v); saveState(); render(); toast('تم تسجيل السبب'); }
+function setReturnReason(id){
+  const r=state.returns.find(v=>v.id===id); if(!r) return;
+  openModal({title:'سبب الرجوع',bodyHtml:`<div class="form-row"><label>سبب الترجيع</label><select id="f_rr" onchange="document.getElementById('f_rtbox').style.display=this.value==='__other'?'':'none'">${RETURN_REASONS.map(x=>`<option ${x===r.reason?'selected':''}>${x}</option>`).join('')}<option value="__other">سبب آخر (اكتبه)…</option></select></div><div class="form-row" id="f_rtbox" style="display:none"><label>اكتب السبب</label><input type="text" id="f_rt"></div>`,
+  onSave(){ let v=document.getElementById('f_rr').value, c=false; if(v==='__other'){ v=document.getElementById('f_rt').value.trim(); c=true; if(!v) return toast('اكتب السبب'); } r.reason=v; r.custom=c; saveState(); closeModal(); render(); toast('تم الحفظ'); }});
+}
 function openReturnOrderModal(oid){
   const L=state.sales.filter(v=>v.orderId===oid); if(!L.length) return;
   if(L.length===1) return openReturnModal(L[0].id);
   const hasDebt=L.some(v=>v.linkedDebtId);
-  openModal({title:'↩ راجع — طلب فيه '+L.length+' موديلات',bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">${esc(L[0].date)} · ${L.reduce((a,x)=>a+num(x.quantity),0)} قطعة · ${money(L.reduce((a,x)=>a+saleRevenue(x),0))}<br>اختار شنو الراجع: الطلب كله، أو موديل (أو قطع منه) بس. المبلغ ينشال من الوارد والأرباح والشراكة، وأجرة الموظف تنقص تلقائياً.${hasDebt?'<br><b>الطلب عليه دين:</b> ينخفض الدين بحصة الراجع.':''}</div>
+  openModal({title:'↩ راجع — طلب فيه '+L.length+' موديلات',bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">${esc(L[0].date)} · ${L.reduce((a,x)=>a+num(x.quantity),0)} قطعة · ${money(L.reduce((a,x)=>a+saleRevenue(x),0))}<br>اختار الراجع (الطلب كله أو موديل بس). ينشال فوراً من الوارد والشراكة، وتكدر تتراجع بعدها.${hasDebt?'<br><b>الطلب عليه دين:</b> ينخفض الدين بحصة الراجع.':''}</div>
     <div class="ro-mode"><label><input type="radio" name="ro_m" value="all" checked onchange="roCalc()"> <b>الطلب كله راجع</b> <small>(كل الموديلات)</small></label><label><input type="radio" name="ro_m" value="pick" onchange="roCalc()"> <b>موديل واحد أو أكثر فقط</b></label></div>
     <div class="ro-lines">${L.map(x=>`<div class="ro-l" data-id="${x.id}" data-q="${num(x.quantity)}" data-rev="${saleRevenue(x)}"><label><input type="checkbox" class="ro-c" checked onchange="roCalc()"> <b>${esc(saleProductLabel(x))}</b></label><span class="muted">${money(saleRevenue(x))}</span><span class="ro-q"><small>القطع الراجعة</small><input type="number" class="ro-n" min="1" max="${num(x.quantity)}" value="${num(x.quantity)}" oninput="roCalc()"> <small>من ${num(x.quantity)}</small></span></div>`).join('')}</div>
-    <div class="compute-box" style="margin-top:10px"><span>اللي ينخصم من الوارد</span><span><b id="ro_tot"></b> · <b id="ro_pcs"></b></span></div>
-    <div class="form-grid2"><div class="form-row"><label>تاريخ الترجيع</label><input type="date" id="f_rd" value="${todayISO()}"></div><div class="form-row"><label>سبب الترجيع</label><select id="f_rr" onchange="document.getElementById('f_rtbox').style.display=this.value==='__other'?'':'none'">${RETURN_REASONS.map(r=>`<option>${r}</option>`).join('')}<option value="__other">سبب آخر (اكتبه)…</option></select></div></div>
-    <div class="form-row" id="f_rtbox" style="display:none"><label>اكتب السبب</label><input type="text" id="f_rt"></div>
-    <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_rn"></textarea></div>`,
+    <div class="compute-box" style="margin-top:10px"><span>اللي ينخصم من الوارد</span><span><b id="ro_tot"></b> · <b id="ro_pcs"></b></span></div>`,
   onSave(){
     const picks=roPicks(); if(!picks.length) return toast('اختار موديل واحد على الأقل');
-    let reason=document.getElementById('f_rr').value, custom=false;
-    if(reason==='__other'){ reason=document.getElementById('f_rt').value.trim(); custom=true; if(!reason) return toast('اكتب سبب الترجيع'); }
-    const d=document.getElementById('f_rd').value||todayISO(), n=document.getElementById('f_rn').value.trim();
-    picks.forEach(p=>doReturnSale(p.id,p.q,reason,custom,d,n));
-    closeModal(); render(); toast('انسجل الراجع وانشال من المبيعات');
+    const snap=snapReturnState(); picks.forEach(p=>doReturnSale(p.id,p.q,'بدون سبب',true,todayISO(),''));
+    closeModal(); render(); toastUndo('↩ راجع — انشال من الطلبات والوارد',()=>undoReturnState(snap));
   }});
-  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='تأكيد الترجيع';
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='رجّع الآن';
   roCalc();
 }
 function roPicks(){
