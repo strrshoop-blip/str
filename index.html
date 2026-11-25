@@ -805,6 +805,9 @@
   .od-day{display:flex;justify-content:space-between;align-items:center;margin:16px 4px 6px;font-size:13px;} .od-day b{font-size:14px;} .od-day span{color:var(--text-faint);font-size:12px;}
   .od{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:6px 16px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 16px;margin-bottom:8px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s,border-color .2s;} .od::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:4px;background:var(--positive);} .od:hover{box-shadow:var(--card-shadow);border-color:var(--border-strong);} .od.ret{background:var(--surface-2);} .od.ret::before{background:var(--negative);} .od.part::before{background:#c98a00;}
   .od.new{animation:odNew 3.5s ease;} @keyframes odNew{0%{box-shadow:0 0 0 3px var(--accent);transform:scale(1.01);}100%{box-shadow:none;}}
+  .ro-mode{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;} .ro-mode label{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;}
+  .ro-l{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:12px;margin-bottom:6px;background:var(--surface-2);} .ro-l.off{opacity:.45;} .ro-q{display:flex;align-items:center;gap:6px;} .ro-q input{width:64px;padding:6px 8px;} .ro-l label{display:flex;align-items:center;gap:8px;}
+  @media (max-width:600px){.ro-l{grid-template-columns:1fr auto;} .ro-q{grid-column:1/-1;}}
   .od-th{display:flex;flex:none;} .od-th img,.od-th span{width:54px;height:62px;border-radius:12px;object-fit:cover;background:var(--surface-3);display:grid;place-items:center;font-size:22px;border:2px solid var(--surface);} .od-th.n2 img,.od-th.n2 span,.od-th.n3 img,.od-th.n3 span{width:44px;height:54px;margin-inline-start:-14px;} .od-th>*:first-child{margin-inline-start:0 !important;}
   .od-ttl{font-weight:800;font-size:15.5px;line-height:1.4;} .od-ttl em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--text-dim);background:var(--surface-3);border-radius:99px;padding:1px 8px;margin-inline-start:4px;} .od-q{font-family:'Cairo',sans-serif;color:var(--text-dim);}
   .od-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;} .od-tm{font-size:11.5px;color:var(--text-faint);margin-inline-start:4px;}
@@ -5579,7 +5582,7 @@ function renderPtOrders(){
       <div class="od-main"><div class="od-ttl">${title}${one?` <b class="od-q">×${num(first.quantity)}</b>`:''}</div>
         <div class="od-top"><span class="od-st ${r.st==='ret'?'neg':'pos'}">${r.st==='ret'?'↩ راجع بالكامل':r.st==='part'?'✓ وصل · فيه راجع':'✓ وصل'}</span><span class="od-ty ${r.ct==='wholesale'?'w':''}">${r.ct==='wholesale'?'جملة':'مفرد'}</span>${rem>0?`<span class="od-st warn">متبقي ${money(rem)}</span>`:''}${tm?`<span class="od-tm">${tm}</span>`:''}</div>${more}${rets}</div>
       ${r.lines.length?`<div class="od-sum"><b>${money(rev)}</b><small>${pcs} قطعة</small></div>
-      <div class="od-act">${one?`<button type="button" class="od-b" onclick="openReturnModal('${r.lines[0].id}')"><i>↩</i><span>راجع</span></button>`:''}<button type="button" class="od-b pri" onclick="${edit}"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')"><i>🗑</i></button></div>`:'<div class="od-sum"><b class="neg">'+money(r.rets.reduce((a,x)=>a+num(x.amount),0))+'</b><small>مرتجع</small></div><div></div>'}</div>`;
+      <div class="od-act"><button type="button" class="od-b" onclick="${one?`openReturnModal('${r.lines[0].id}')`:`openReturnOrderModal('${r.k}')`}"><i>↩</i><span>راجع</span></button><button type="button" class="od-b pri" onclick="${edit}"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')"><i>🗑</i></button></div>`:'<div class="od-sum"><b class="neg">'+money(r.rets.reduce((a,x)=>a+num(x.amount),0))+'</b><small>مرتجع</small></div><div></div>'}</div>`;
   };
   return `<div class="page-head"><div><h1>طلبات الصفحة</h1><div class="desc">${per} — الأحدث أولاً. كل بيع جديد من الصفحة يظهر هنا مباشرة.</div></div><div class="btn-row"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
   <div class="od-kp"><div><small>الكلية</small><b>${nAll}</b></div><div class="ok"><small>وصلت</small><b>${nOk}</b><em>${D.pieces} قطعة · ${money(D.revenue)}</em></div><div class="rt"><small>راجعة</small><b>${D.retOrders}</b><em>${D.retQty} قطعة · ${money(D.retAmt)}</em></div></div>
@@ -6416,6 +6419,39 @@ function openReturnModal(saleId){
     closeModal(); render(); toast('انسجل كراجع وانشال من المبيعات');
   }});
   const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='تأكيد الترجيع';
+}
+function openReturnOrderModal(oid){
+  const L=state.sales.filter(v=>v.orderId===oid); if(!L.length) return;
+  if(L.length===1) return openReturnModal(L[0].id);
+  const hasDebt=L.some(v=>v.linkedDebtId);
+  openModal({title:'↩ راجع — طلب فيه '+L.length+' موديلات',bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">${esc(L[0].date)} · ${L.reduce((a,x)=>a+num(x.quantity),0)} قطعة · ${money(L.reduce((a,x)=>a+saleRevenue(x),0))}<br>اختار شنو الراجع: الطلب كله، أو موديل (أو قطع منه) بس. المبلغ ينشال من الوارد والأرباح والشراكة، وأجرة الموظف تنقص تلقائياً.${hasDebt?'<br><b>الطلب عليه دين:</b> ينخفض الدين بحصة الراجع.':''}</div>
+    <div class="ro-mode"><label><input type="radio" name="ro_m" value="all" checked onchange="roCalc()"> <b>الطلب كله راجع</b> <small>(كل الموديلات)</small></label><label><input type="radio" name="ro_m" value="pick" onchange="roCalc()"> <b>موديل واحد أو أكثر فقط</b></label></div>
+    <div class="ro-lines">${L.map(x=>`<div class="ro-l" data-id="${x.id}" data-q="${num(x.quantity)}" data-rev="${saleRevenue(x)}"><label><input type="checkbox" class="ro-c" checked onchange="roCalc()"> <b>${esc(saleProductLabel(x))}</b></label><span class="muted">${money(saleRevenue(x))}</span><span class="ro-q"><small>القطع الراجعة</small><input type="number" class="ro-n" min="1" max="${num(x.quantity)}" value="${num(x.quantity)}" oninput="roCalc()"> <small>من ${num(x.quantity)}</small></span></div>`).join('')}</div>
+    <div class="compute-box" style="margin-top:10px"><span>اللي ينخصم من الوارد</span><span><b id="ro_tot"></b> · <b id="ro_pcs"></b></span></div>
+    <div class="form-grid2"><div class="form-row"><label>تاريخ الترجيع</label><input type="date" id="f_rd" value="${todayISO()}"></div><div class="form-row"><label>سبب الترجيع</label><select id="f_rr" onchange="document.getElementById('f_rtbox').style.display=this.value==='__other'?'':'none'">${RETURN_REASONS.map(r=>`<option>${r}</option>`).join('')}<option value="__other">سبب آخر (اكتبه)…</option></select></div></div>
+    <div class="form-row" id="f_rtbox" style="display:none"><label>اكتب السبب</label><input type="text" id="f_rt"></div>
+    <div class="form-row"><label>ملاحظات (اختياري)</label><textarea id="f_rn"></textarea></div>`,
+  onSave(){
+    const picks=roPicks(); if(!picks.length) return toast('اختار موديل واحد على الأقل');
+    let reason=document.getElementById('f_rr').value, custom=false;
+    if(reason==='__other'){ reason=document.getElementById('f_rt').value.trim(); custom=true; if(!reason) return toast('اكتب سبب الترجيع'); }
+    const d=document.getElementById('f_rd').value||todayISO(), n=document.getElementById('f_rn').value.trim();
+    picks.forEach(p=>doReturnSale(p.id,p.q,reason,custom,d,n));
+    closeModal(); render(); toast('انسجل الراجع وانشال من المبيعات');
+  }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='تأكيد الترجيع';
+  roCalc();
+}
+function roPicks(){
+  const all=(document.querySelector('input[name=ro_m]:checked')||{}).value==='all', out=[];
+  document.querySelectorAll('.ro-l').forEach(el=>{ const q0=num(el.dataset.q); const on=all||el.querySelector('.ro-c').checked; let q=all?q0:Math.min(q0,Math.max(0,Math.round(num(el.querySelector('.ro-n').value)))); if(on&&q>0) out.push({id:el.dataset.id,q,frac:q/q0,rev:num(el.dataset.rev)}); });
+  return out;
+}
+function roCalc(){
+  const all=(document.querySelector('input[name=ro_m]:checked')||{}).value==='all';
+  document.querySelectorAll('.ro-l').forEach(el=>{ el.querySelector('.ro-c').disabled=all; el.querySelector('.ro-n').disabled=all; if(all){ el.querySelector('.ro-c').checked=true; el.querySelector('.ro-n').value=el.dataset.q; } el.classList.toggle('off',!all&&!el.querySelector('.ro-c').checked); });
+  const P=roPicks(), t=document.getElementById('ro_tot'), c=document.getElementById('ro_pcs');
+  if(t) t.textContent=money(P.reduce((a,x)=>a+x.rev*x.frac,0)); if(c) c.textContent=P.reduce((a,x)=>a+x.q,0)+' قطعة';
 }
 function doReturnSale(saleId,r,reason,custom,date,notes){
   const x=state.sales.find(v=>v.id===saleId); if(!x) return; const q=num(x.quantity), frac=Math.min(1,r/q);
