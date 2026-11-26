@@ -822,6 +822,39 @@
     .cr-h{display:none;} .cr{grid-template-columns:1fr 1fr;gap:8px 12px;} .cr-n{grid-column:1/-1;} .cr>div[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--text-faint);} .cr-a{grid-column:1/-1;} .cr-a .od-b.pri{flex:1;} .ads-p>div{flex:1;min-width:100px;}
     .dr{grid-template-columns:44px 1fr auto;} .dr-b{grid-column:1/-1;justify-content:flex-end;}
   }
+  .cr-lk{all:unset;cursor:pointer;display:block;} .cr-lk b{display:block;border-bottom:1px dashed var(--text-faint);width:fit-content;} .cr-lk small{color:var(--accent,#555);}
+  /* ===== صفحة الاستقطاعات (تصميم جديد) ===== */
+  .ax-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .ax-back{all:unset;cursor:pointer;font-size:13.5px;color:var(--text-dim);padding:8px 4px;}
+  .ax-hero{position:relative;overflow:hidden;color:#fff;border-radius:26px;padding:24px 26px 20px;background:radial-gradient(120% 140% at 100% 0%,#3a3a44 0%,#17171b 55%,#0e0e11 100%);box-shadow:0 18px 40px -22px rgba(0,0,0,.55);}
+  .ax-hero::after{content:'';position:absolute;inset-inline-start:-60px;bottom:-80px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 38px rgba(255,255,255,.025),0 0 0 76px rgba(255,255,255,.02);pointer-events:none;}
+  .ax-hero-t{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:rgba(255,255,255,.65);}
+  .ax-hero-t button{all:unset;cursor:pointer;background:#fff;color:#111;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;}
+  .ax-big{font-family:'Cairo',sans-serif;font-weight:800;font-size:46px;line-height:1.15;margin:14px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
+  .ax-sub{font-size:13px;color:rgba(255,255,255,.6);} .ax-sub *{color:inherit;}
+  .ax-parts{display:flex;flex-wrap:wrap;margin-top:18px;border-top:1px solid rgba(255,255,255,.12);padding-top:14px;position:relative;z-index:1;}
+  .ax-parts>div{flex:1;min-width:110px;padding:0 4px;} .ax-parts>div+div{border-inline-start:1px solid rgba(255,255,255,.12);padding-inline-start:16px;}
+  .ax-parts small{display:block;font-size:11.5px;color:rgba(255,255,255,.55);} .ax-parts b{font-family:'Cairo',sans-serif;font-size:16px;font-variant-numeric:tabular-nums;}
+  .ax-h{display:flex;align-items:baseline;justify-content:space-between;margin:26px 4px 10px;} .ax-h h2{font-size:17px;margin:0;font-weight:800;}
+  .ax-ln{all:unset;cursor:pointer;font-size:13px;color:var(--text-dim);border-bottom:1px dashed var(--text-faint);}
+  .ax-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;}
+  .ax-c{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;} .ax-c.off{opacity:.6;}
+  .ax-c-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;} .ax-c-top b{display:block;font-size:15.5px;} .ax-c-top small{font-size:12px;color:var(--text-faint);} .ax-c-top .pill{font-size:11px;white-space:nowrap;}
+  .ax-st{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface-2);border-radius:16px;padding:12px 6px;} .ax-st[disabled]{cursor:default;}
+  .ax-st>div{padding:0 10px;text-align:start;} .ax-st>div+div{border-inline-start:1px solid var(--border);}
+  .ax-st small{display:block;font-size:11px;color:var(--text-faint);margin-bottom:2px;} .ax-st b{font-family:'Cairo',sans-serif;font-size:14.5px;font-variant-numeric:tabular-nums;white-space:nowrap;} .ax-st .neg{color:var(--negative);} .ax-st .pos{color:var(--positive);}
+  .ax-c-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;} .ax-c-foot>div{display:flex;gap:6px;align-items:center;}
+  .ax-roas{font-size:12px;color:var(--text-faint);} .ax-roas b{color:var(--text);}
+  .ax-add{all:unset;cursor:pointer;background:#111;color:#fff;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;} :root[data-theme=dark] .ax-add{background:#fff;color:#111;}
+  .ax-ic{all:unset;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--border);font-size:14px;}
+  .ax-empty{background:var(--surface);border:1px dashed var(--border);border-radius:20px;padding:26px;text-align:center;color:var(--text-faint);font-size:13.5px;line-height:1.8;}
+  .ax-day{margin-bottom:14px;} .ax-day-h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-faint);margin:0 6px 6px;} .ax-day-h b{font-family:'Cairo',sans-serif;color:var(--text-dim);font-variant-numeric:tabular-nums;}
+  .ax-day-l{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+  .ax-r{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--border);} .ax-r:first-child{border-top:0;}
+  .ax-r-n{flex:1;min-width:0;} .ax-r-n b{display:block;font-size:14px;} .ax-r-n small{font-size:11.5px;color:var(--text-faint);}
+  .ax-r-a{font-family:'Cairo',sans-serif;font-size:15px;color:var(--negative);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .ax-r-b{display:flex;gap:2px;} .ax-r-b button{all:unset;cursor:pointer;padding:6px 8px;border-radius:10px;opacity:.55;font-size:14px;} .ax-r-b button:hover{opacity:1;background:var(--surface-2);}
+  @media (max-width:760px){ .ax-hero{padding:20px 18px 16px;border-radius:22px;} .ax-big{font-size:38px;} .ax-grid{grid-template-columns:1fr;} .ax-parts>div{min-width:90px;} .ax-parts>div+div{padding-inline-start:10px;} .ax-st b{font-size:13.5px;} }
   .cp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;} .cp{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;} .cp.off{opacity:.78;background:var(--surface-2);}
   .cp-h{display:flex;align-items:center;gap:8px;} .cp-h b{font-size:15.5px;flex:1;} .cp-m{font-size:12.5px;color:var(--text-dim);} .cp-a small{display:block;font-size:11.5px;color:var(--text-faint);} .cp-a b{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;color:var(--negative);font-variant-numeric:tabular-nums;}
   .cp-s{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;} .cp-s>div{background:var(--surface-2);border-radius:10px;padding:7px 9px;} .cp-s small{display:block;font-size:10.5px;color:var(--text-faint);} .cp-s b{font-size:13px;font-variant-numeric:tabular-nums;} .cp-s b.pos{color:var(--positive);} .cp-s b.neg{color:var(--negative);}
@@ -5650,28 +5683,51 @@ function adCampCards(D){
     return {c,ads,n:mine.length,rev,profit,qty,net:profit-ads,roas:ads?rev/ads:null,v}; }).sort((a,b)=>(b.c.active!==false)-(a.c.active!==false)||b.ads-a.ads);
   const free=D.exps.filter(e=>!e.campaignId||!camps.find(c=>c.id===e.campaignId)), freeSum=free.reduce((a,e)=>a+num(e.amount),0);
   const mn=c=>c.modelId&&modelById(c.modelId)?modelById(c.modelId).name:'';
-  return `<div class="ads-h"><b>🎯 الحملات</b><button type="button" class="btn sm" onclick="openCampModal()">+ حملة جديدة</button></div>
-  ${rows.length?`<div class="cr-box"><div class="cr cr-h"><span>الحملة</span><span>المستقطع</span><span>الوارد</span><span>الربح بعد الاستقطاع</span><span>العائد</span><span></span></div>
-  ${rows.map(r=>`<div class="cr ${r.c.active===false?'off':''}"><div class="cr-n"><b>${esc(r.c.name)}</b><small>${mn(r.c)?'🎯 '+esc(mn(r.c)):'بدون موديل'}${r.c.active===false?' · متوقفة':''}</small><span class="pill ${r.v.c} cr-v">${r.v.t}</span></div>
-    <div data-l="المستقطع"><b class="neg">${money(r.ads)}</b><small>${r.n} استقطاع</small></div>
-    <div data-l="الوارد"><b>${r.c.modelId?money(r.rev):'—'}</b></div>
-    <div data-l="الربح بعد الاستقطاع"><b class="${r.net>=0?'pos':'neg'}">${r.c.modelId&&r.ads?money(r.net):'—'}</b></div>
-    <div data-l="العائد"><b>${r.roas&&r.c.modelId?'×'+(Math.round(r.roas*10)/10):'—'}</b></div>
-    <div class="cr-a"><button type="button" class="od-b pri" onclick="openAdQuickModal('${r.c.id}')">＋ استقطاع</button><button type="button" class="od-b" title="تعديل الحملة" onclick="openCampModal('${r.c.id}')">✏️</button></div></div>`).join('')}</div>`:'<div class="card"><div class="np-empty">سوّي أول حملة (مثلاً «حملة القياس الخاص») وبعدها كل استقطاع يجيك من البطاقة تسجله بثواني.</div></div>'}
+  return `<div class="ax-h"><h2>الحملات</h2><button type="button" class="ax-ln" onclick="openCampModal()">+ حملة جديدة</button></div>
+  ${rows.length?`<div class="ax-grid">${rows.map(r=>`<div class="ax-c ${r.c.active===false?'off':''}">
+    <div class="ax-c-top"><div><b>${esc(r.c.name)}</b><small>${mn(r.c)?esc(mn(r.c)):'بدون موديل'}${r.c.active===false?' · متوقفة':''}</small></div><span class="pill ${r.v.c}">${r.v.t}</span></div>
+    <button type="button" class="ax-st" ${r.c.modelId?`onclick="openCampSales('${r.c.id}')" title="شوف المبيعات"`:'disabled'}>
+      <div><small>المستقطع</small><b class="neg">${money(r.ads)}</b></div>
+      <div><small>الوارد</small><b>${r.c.modelId?money(r.rev):'—'}</b></div>
+      <div><small>الصافي</small><b class="${r.net>=0?'pos':'neg'}">${r.c.modelId&&r.ads?money(r.net):'—'}</b></div>
+    </button>
+    <div class="ax-c-foot"><span class="ax-roas">${r.roas&&r.c.modelId?'العائد <b>×'+(Math.round(r.roas*10)/10)+'</b> · '+r.n+' استقطاع':r.n+' استقطاع'}</span><div><button type="button" class="ax-ic" title="تعديل الحملة" onclick="openCampModal('${r.c.id}')">✏️</button><button type="button" class="ax-add" onclick="openAdQuickModal('${r.c.id}')">+ استقطاع</button></div></div></div>`).join('')}</div>`:'<div class="ax-empty">سوّي أول حملة (مثلاً «حملة القياس الخاص») وبعدها كل استقطاع يجيك من البطاقة تسجله بثواني.</div>'}
   ${free.length?`<div class="ads-note">⚠️ ${free.length} استقطاع (${money(freeSum)}) بدون حملة — اضغط ✏️ عليها بالقائمة تحت واربطها بحملة.</div>`:''}`;
+}
+function openCampSales(cid){
+  const c=adCamps().find(x=>x.id===cid); if(!c||!c.modelId) return;
+  const [f,t]=mRange(partMonth), D=pageData(f,t), m=modelById(c.modelId);
+  const list=D.ps.filter(x=>x.modelId===c.modelId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const rev=list.reduce((a,x)=>a+saleRevenue(x),0), pr=list.reduce((a,x)=>a+saleProfit(x),0), qty=list.reduce((a,x)=>a+num(x.quantity),0);
+  const ads=D.exps.filter(e=>adModelOf(e)===c.modelId).reduce((a,e)=>a+num(e.amount),0);
+  const per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
+  openModal({title:'مبيعات «'+esc(m?m.name:'')+'» — '+per, bodyHtml:`
+    <div class="muted" style="font-size:12.5px;line-height:1.8;margin-bottom:10px">الوارد = مجموع كل مبيعات الصفحة لهذا الموديل بهذي الفترة (الراجع ما ينحسب). العائد = الوارد ÷ المستقطع.</div>
+    ${list.length?`<div class="dr-box">${list.map(x=>`<div class="dr" style="grid-template-columns:52px 1fr auto auto"><span class="dr-d">${esc((x.date||'').slice(5))}</span><div class="dr-n"><b>${num(x.quantity)} قطعة</b><small>ربح ${money(saleProfit(x))}</small></div><b class="dr-a" style="color:var(--positive)">${money(saleRevenue(x))}</b><span></span></div>`).join('')}</div>`:'<div class="np-empty">ما اكو مبيعات لهذا الموديل بهذي الفترة</div>'}
+    <div style="margin-top:12px;display:grid;gap:6px;font-size:13.5px">
+      <div style="display:flex;justify-content:space-between"><span>عدد الطلبات / القطع</span><b>${list.length} / ${qty}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>الوارد</span><b>${money(rev)}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>الربح قبل الاستقطاع</span><b>${money(pr)}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>استقطاعات هذا الموديل</span><b class="neg">− ${money(ads)}</b></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px"><span>الصافي بعد الاستقطاع</span><b style="color:var(--${pr-ads>=0?'positive':'negative'})">${money(pr-ads)}</b></div>
+    </div>`});
 }
 function renderPtAds(){
   const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), P=PS();
   const list=D.exps.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const closed=partMonth!=='ALL' && P.closes.find(c=>c.month===partMonth);
   const prev=partMonth==='ALL'?null:(()=>{ const pm=ymAdd(partMonth,-1); return pageData(pm+'-01',pm+'-31'); })();
-  return `<div class="page-head"><div><h1>استقطاعات الإعلانات</h1><div class="desc">كل استقطاع تسجله أو تعدّله أو تحذفه ينحسب تلقائياً على الشركاء.</div></div><div class="btn-row"><select class="ads-per" onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><button class="btn primary" onclick="openAdQuickModal()">+ استقطاع</button><button class="btn" onclick="currentDetail=null;render();">← رجوع</button></div></div>
-  ${closed?`<div class="ret-al bad" style="margin-top:0"><b>🔒 هذا الشهر مقفل.</b> بعد أي تعديل حدّث الإقفال من صفحة الشراكة.</div>`:''}
-  <div class="ads-sum"><div class="ads-t"><small>${per} — ${list.length} استقطاع</small><b>${money(D.ads)}</b><span>${D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—'}${list.length?' · معدل '+money(D.ads/list.length):''}${prev&&prev.ads?' · '+deltaBadge(D.ads,prev.ads,false):''}</span></div>
-    <div class="ads-p">${D.parts.map(p=>`<div><small>${esc(p.name)} · ${pctTxt(p.pct)}</small><b>${money(p.ads)}</b></div>`).join('')}</div></div>
+  const days=[]; list.forEach(e=>{ const d=e.date||''; let g=days[days.length-1]; if(!g||g.d!==d){ g={d,items:[],sum:0}; days.push(g); } g.items.push(e); g.sum+=num(e.amount); });
+  const dl=d=>{ try{ return new Date(d+'T12:00:00').toLocaleDateString('ar-IQ',{weekday:'long',day:'numeric',month:'long'}); }catch(_){ return d; } };
+  return `<div class="ax-top"><button class="ax-back" onclick="currentDetail=null;render();">← رجوع</button><select class="ads-per" onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>
+  ${closed?`<div class="ret-al bad" style="margin:0 0 12px"><b>🔒 هذا الشهر مقفل.</b> بعد أي تعديل حدّث الإقفال من صفحة الشراكة.</div>`:''}
+  <div class="ax-hero"><div class="ax-hero-t"><span>استقطاعات الإعلانات · ${per}</span><button type="button" onclick="openAdQuickModal()">+ استقطاع</button></div>
+    <div class="ax-big">${money(D.ads)}</div>
+    <div class="ax-sub">${list.length} استقطاع${D.profit>0?' · '+Math.round(D.ads/D.profit*100)+'% من الأرباح':''}${prev&&prev.ads?' · '+deltaBadge(D.ads,prev.ads,false):''}</div>
+    <div class="ax-parts">${D.parts.map(p=>`<div><small>${esc(p.name)}</small><b>${money(p.ads)}</b></div>`).join('')}</div></div>
   ${adCampCards(D)}
-  <div class="ads-h" style="margin-top:22px"><b>🧾 كل الاستقطاعات</b><span class="muted">الأحدث أولاً</span></div>
-  ${list.length?`<div class="dr-box">${list.map(e=>{ const m=adModelOf(e)?modelById(adModelOf(e)):null, cp=e.campaignId?adCamps().find(c=>c.id===e.campaignId):null; return `<div class="dr"><span class="dr-d">${esc((e.date||'').slice(5))}</span><div class="dr-n"><b>${esc(cp?cp.name:(e.notes||'بدون حملة'))}</b>${m?`<small>🎯 ${esc(m.name)}</small>`:''}</div><b class="dr-a">${money(e.amount)}</b><div class="dr-b"><button type="button" class="od-b" title="تعديل" onclick="openAdQuickModal(null,'${e.id}')">✏️</button><button type="button" class="od-b del" title="حذف" onclick="deleteExpense('${e.id}')">🗑</button></div></div>`; }).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو استقطاعات بهذي الفترة</div></div>'}`;
+  <div class="ax-h" style="margin-top:26px"><h2>سجل الاستقطاعات</h2><span class="muted">الأحدث أولاً</span></div>
+  ${days.length?days.map(g=>`<div class="ax-day"><div class="ax-day-h"><span>${esc(dl(g.d))}</span><b>${money(g.sum)}</b></div><div class="ax-day-l">${g.items.map(e=>{ const m=adModelOf(e)?modelById(adModelOf(e)):null, cp=e.campaignId?adCamps().find(c=>c.id===e.campaignId):null; return `<div class="ax-r"><div class="ax-r-n"><b>${esc(cp?cp.name:(e.notes||'بدون حملة'))}</b>${m?`<small>${esc(m.name)}</small>`:''}</div><b class="ax-r-a">${money(e.amount)}</b><div class="ax-r-b"><button type="button" title="تعديل" onclick="openAdQuickModal(null,'${e.id}')">✏️</button><button type="button" title="حذف" onclick="deleteExpense('${e.id}')">🗑</button></div></div>`; }).join('')}</div></div>`).join(''):'<div class="ax-empty">ما اكو استقطاعات بهذي الفترة</div>'}`;
 }
 let ordFilter='ok', ordQ='', ordHi=null, ordLimit=60;
 function renderPtOrders(){
