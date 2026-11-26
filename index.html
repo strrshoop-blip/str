@@ -933,6 +933,25 @@
   @media (max-width:900px){.ps-grid{grid-template-columns:1fr;} .ptk.hero .ptk-v{font-size:28px;}}
 
   .np-x{flex:none;align-self:flex-start;width:26px;height:26px;border-radius:50%;background:transparent;color:var(--text-faint);font-size:13px;border:1px solid transparent;} .np-x:hover{background:var(--surface-3);color:var(--negative);}
+
+  /* ===== v15: black card in day mode, white card in night mode + tidy top bar ===== */
+  :root{--ax-bg:radial-gradient(120% 140% at 100% 0%,#3a3a44 0%,#17171b 55%,#0e0e11 100%);--ax-fg:#fff;--ax-fg2:rgba(255,255,255,.66);--ax-line:rgba(255,255,255,.14);--ax-btn-bg:#fff;--ax-btn-fg:#111;--ax-ring:rgba(255,255,255,.08);}
+  [data-theme="dark"]{--ax-bg:radial-gradient(120% 140% at 100% 0%,#ffffff 0%,#f3f3f5 55%,#e2e2e6 100%);--ax-fg:#0b0b0d;--ax-fg2:rgba(0,0,0,.6);--ax-line:rgba(0,0,0,.13);--ax-btn-bg:#111;--ax-btn-fg:#fff;--ax-ring:rgba(0,0,0,.07);}
+  .ax-hero{background:var(--ax-bg);color:var(--ax-fg);margin-bottom:14px;}
+  .ax-hero::after{border-color:var(--ax-ring);box-shadow:0 0 0 38px var(--ax-ring),0 0 0 76px var(--ax-ring);}
+  .ax-hero-t{color:var(--ax-fg2);} .ax-hero-t button{background:var(--ax-btn-bg);color:var(--ax-btn-fg);}
+  .ax-sub{color:var(--ax-fg2);} .ax-parts{border-top-color:var(--ax-line);} .ax-parts>div+div{border-inline-start-color:var(--ax-line);} .ax-parts small{color:var(--ax-fg2);}
+  .ax-big .neg{color:#ff8a80;} [data-theme="dark"] .ax-big .neg{color:#c0392b;}
+  .ax-id{display:flex;align-items:center;gap:10px;min-width:0;}
+  .ax-av{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;font-family:'Cairo',sans-serif;flex:none;}
+  .ax-rem{font-family:'Cairo',sans-serif;font-size:21px;font-weight:800;margin-inline-start:8px;font-variant-numeric:tabular-nums;}
+  .ax-hero .delta{background:color-mix(in srgb,var(--ax-fg) 14%,transparent) !important;color:var(--ax-fg) !important;}
+  @media (max-width:600px){.ax-big{font-size:34px;} .ax-hero{padding:20px 18px 16px;border-radius:22px;} .ax-grid{grid-template-columns:1fr;}}
+  /* top bar */
+  .topbar .tbt{display:none;} @media (min-width:1100px){.topbar .tbt{display:inline;}}
+  .topbar .theme-btn,.topbar .bell,.topbar .rate-chip{height:40px;border-radius:12px;}
+  @media (max-width:1099px){.topbar .theme-btn,.topbar .bell{width:40px;min-width:40px;padding:0;} .topbar .rate-chip{padding:0 11px;font-size:12px;}}
+  .tb-actions{gap:6px;}
 </style>
 </head>
 <body>
@@ -960,7 +979,7 @@
     <div class="foot">البيانات محفوظة محلياً على هذا الجهاز</div>
   </aside>
 
-  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><button type="button" class="theme-btn" onclick="refreshApp()" title="تحديث الصفحة">🔄<span class="tbt"> تحديث</span></button><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍<span class="tbt"> بحث</span></button><button type="button" class="theme-btn" onclick="openToolsModal()" title="نسخة احتياطية وتصدير">💾</button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="ليلي / نهاري">🌙<span class="tbt"> ليلي</span></button></span></div>
+  <div class="main-col"><div class="topbar no-print"><span class="tb-left"><button type="button" class="sb-toggle" onclick="toggleSidebar()" title="تصغير / تكبير القائمة الجانبية">☰</button><span class="ttl" id="topTitle">ستر · STR</span></span><span class="tb-actions"><button type="button" class="theme-btn" onclick="openGlobalSearch()" title="بحث شامل (اضغط / )">🔍<span class="tbt"> بحث</span></button><span class="bell-wrap"><button type="button" class="bell" onclick="toggleNotif(event)" title="الإشعارات">🔔<i id="bellBadge"></i></button><div class="notif-panel" id="notifPanel"></div></span><button type="button" class="theme-btn" onclick="refreshApp()" title="تحديث الصفحة">🔄<span class="tbt"> تحديث</span></button><button type="button" class="rate-chip" id="rateChip" onclick="openUsdModal()" title="سعر الدولار — اضغط للتحويل والتعديل">💵 —</button><button type="button" class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="ليلي / نهاري">🌙<span class="tbt"> ليلي</span></button></span></div>
   <main id="mainContent"><div style="padding:60px 20px;text-align:center;color:var(--text-faint)">... جارِ تحميل بيانات المعمل ...</div></main></div>
 </div>
 
@@ -1082,7 +1101,7 @@ function tmLabel(r){ if(!r||!r.createdAt) return ''; const d=new Date(r.createdA
 function dtCell(r){ const t=tmLabel(r); return esc(r.date)+(t?`<div class="tm">🕐 ${t}</div>`:''); }
 
 /* ---- دمج ثلاثي: إذا جهاز ثاني كتب قبلك، ندمج تغييراتك وتغييراته بدل ما نرمي عملك ---- */
-let syncBaseJSON = null, conflictRetries = 0;
+let syncBaseJSON = null, conflictRetries = 0, forceSaveNext = false;
 function mergeArrById(b,l,sv){
   const J=JSON.stringify, bm=new Map(b.map(x=>[x.id,x])), lm=new Map(l.map(x=>[x.id,x])), sm=new Map(sv.map(x=>[x.id,x]));
   const out=[];
@@ -1198,6 +1217,7 @@ function showSyncBadge(ok){
   }
   const d = new Date(), p2 = n=>String(n).padStart(2,'0');
   el.textContent = ok==='saving' ? '⏳ جاري الحفظ…' : ('☁️ ' + CLIENT_VERSION + ' · تأكد الحفظ بالسيرفر ' + p2(d.getHours()) + ':' + p2(d.getMinutes()));
+  const si=document.getElementById('syncInfo'); if(si) si.textContent=el.textContent;
 }
 function showSaveBanner(){
   let el = document.getElementById('saveBanner');
@@ -1228,9 +1248,7 @@ function saveState(){
           const s = await tx.get(ref);
           if(s.exists){
             const cd = s.data();
-            const bv = parseInt(String(cd._by||'').split(':')[1].replace(/\D/g,''),10)||0;
-            if(bv > CLIENT_NUM){ const x=new Error('outdated client'); x.code='outdated'; throw x; }
-            if((cd._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
+            if(!forceSaveNext && (cd._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
             Object.keys(cd).forEach(k=>{ if(!(k in packed)) packed[k]=cd[k]; });
           }
           tx.set(ref, packed);
@@ -1242,10 +1260,9 @@ function saveState(){
         if(back.data()._savedAt !== packed._savedAt){
           // لو الكاتب الأخير جهازك نفسه (حفظ أحدث) فهذا طبيعي؛ فقط جهاز ثاني يعتبر تعارض
           const by = String(back.data()._by||'');
-          if(!by.startsWith(DEVICE_ID+':')){ const x=new Error('another device wrote'); x.code='conflict'; throw x; }
           lastSeenRev = back.data()._savedAt;
         }
-        saveFailure = null; conflictRetries = 0; syncBaseJSON = snapNow;
+        saveFailure = null; conflictRetries = 0; forceSaveNext = false; syncBaseJSON = snapNow;
         showSyncBadge(true);
       }catch(e){
         console.error('firestore save failed', e);
@@ -1262,8 +1279,8 @@ function saveState(){
           }catch(e2){ console.error('merge failed', e2); }
           saveFailure = null; pendingSaves--; saveQueued = pendingSaves>0; showSaveBanner(); render();
           conflictRetries++;
-          if(conflictRetries<=4){ toast('🔄 جهاز ثاني غيّر البيانات — دمجت تغييراتك وياها وانحفظت'); saveState(); }
-          else { saveFailure = {code:'conflict', why:'تعارض متكرر مع جهاز ثاني. اضغط «أعد المحاولة» أو حدّث الصفحة'}; showSaveBanner(); }
+          if(conflictRetries<=4){ saveState(); }
+          else { forceSaveNext = true; conflictRetries = 0; saveState(); }
           return;
         }
         const code = (e && (e.code||e.message)) || 'unknown';
@@ -1576,6 +1593,7 @@ const PAGES = [
 ];
 let currentPage = 'dashboard';
 let currentDetail = null;
+try{ currentPage = localStorage.getItem('str_page') || 'dashboard'; if(currentPage==='partnership') currentDetail = localStorage.getItem('str_detail') || null; }catch(e){}
 
 function buildNav(){
   const navList = document.getElementById('navList');
@@ -1623,6 +1641,8 @@ function navigate(page){
 }
 let _lastViewKey='';
 function render(){
+  if(!PAGES.some(p=>p.id===currentPage) && !['returns','soldmodels','debtlog','contract','debts','customerdebts','tailors','cutters','hoodaris','social','materials'].includes(currentPage)) currentPage='dashboard';
+  try{ localStorage.setItem('str_page',currentPage); localStorage.setItem('str_detail',(currentPage==='partnership'&&currentDetail)?currentDetail:''); }catch(e){}
   { const k=currentPage+'|'+currentDetail+'|'+(typeof modelsTab!=='undefined'?modelsTab:''); if(k!==_lastViewKey){ _lastViewKey=k; try{ window.scrollTo(0,0); }catch(e){} } }
   buildNav();
   const main = document.getElementById('mainContent');
@@ -5627,8 +5647,9 @@ function ptTopStats(D,PD){
   const k=(cls,ic,l,v,sub,d,click,vc)=>`<div class="ptk ${cls}" ${click?`onclick="${click}"`:''}><div class="ptk-h"><span>${l}</span><i>${ic}</i></div><b class="ptk-v ${vc||''}">${v}</b><div class="ptk-s">${sub}</div>${d?`<div class="ptk-d">${d}</div>`:''}</div>`;
   const mg=D.revenue>0?Math.round(D.profit/D.revenue*1000)/10:0;
   const eC=T.list.length?k('','👤','مستحقات الموظفين',money(T.mDue),`${T.mPieces} قطعة مفرد · مسدد ${money(T.paid)} · متبقي ${money(T.remaining)}`,'',"currentDetail='emps';render();window.scrollTo(0,0)"):'';
-  return `<div class="pt-kpis">
-    ${k('hero','📊','صافي الأرباح للتوزيع',money(D.net),'بعد الإعلانات'+((P.empDeduct&&D.wage)?' وأجور الموظفين':'')+' · على '+P.partners.length+' شركاء',db(D.net,PD&&PD.net,true),"var e=document.getElementById('ptPartners');if(e)e.scrollIntoView({behavior:'smooth'})",D.net<0?'neg':'')}
+  const per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth);
+  const hero=axHero({title:'صافي الأرباح للتوزيع · '+per,btn:partMonth==='ALL'?'':`<button type="button" onclick="printPartnerStatement('${partMonth}')">📄 كشف</button>`,big:`<span class="${D.net<0?'neg':''}">${money(D.net)}</span>`,sub:'بعد الإعلانات'+((P.empDeduct&&D.wage)?' وأجور الموظفين':'')+' · على '+P.partners.length+' شركاء '+db(D.net,PD&&PD.net,true),parts:D.parts.map(p=>({n:esc(p.name)+' · '+pctTxt(p.pct),v:money(p.net)}))});
+  return `${hero}<div class="pt-kpis">
     ${k('','💰','وارد الصفحة',money(D.revenue),D.ordersN+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
     ${k('','🧾','الطلبات الواصلة',D.ordersN,'من '+D.ordersAll+' طلب كلي'+(D.retOrders?' · '+D.retOrders+' راجع':' · بدون رواجع'),db(D.ordersN,PD&&PD.ordersN,true),"openPartnerDetail('orders')")}
     ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
@@ -5848,16 +5869,21 @@ function empStats(E){
   return {E,ordAllN,retOrdAll:rk2.size,ordTotalAll:allSet.size,mOrdN:okM.size,mRetOrd:rkM.size,mRetPcs:retM.reduce((a,r)=>a+num(r.qty),0),mOrdTotal:allM.size,ls,pieces,rate,due,paid,remaining:due-paid,baseM,excl,mPieces,mDue:mPieces*rate,mPaid,months,orders:ls.length,mOrders,carry:due-paid-(mPieces*rate-mPaid),rMonth:rMonth,rMonthDue:rMonth*rate,rAll:rAll};
 }
 function empsTotal(){ const list=PS().emps.map(e=>empStats(e)); return {list,remaining:list.reduce((a,x)=>a+x.remaining,0),mPieces:list.reduce((a,x)=>a+x.mPieces,0),mDue:list.reduce((a,x)=>a+x.mDue,0),paid:list.reduce((a,x)=>a+x.mPaid,0)}; }
+function axAv(n){ const c=['#111','#2563eb','#c58a00','#0d9488','#c2410c','#7c3aed'], t=String(n||'?').trim(); let h=0; for(const ch of t) h=(h*31+ch.charCodeAt(0))%997; return `<span class="ax-av" style="background:${c[h%c.length]}">${esc(t.charAt(0)||'?')}</span>`; }
+function axHero(o){ return `<div class="ax-hero"><div class="ax-hero-t"><span>${o.title}</span>${o.btn||''}</div><div class="ax-big">${o.big}</div><div class="ax-sub">${o.sub||''}</div>${(o.parts&&o.parts.length)?`<div class="ax-parts">${o.parts.map(p=>`<div><small>${p.n}</small><b>${p.v}</b></div>`).join('')}</div>`:''}</div>`; }
 function renderEmployeesPage(){
-  const T=empsTotal();
-  return `<div class="page-head"><div><h1>موظفو الصفحة</h1><div class="desc">كل موظف يستحق أجرة على قطع المفرد اللي تنباع عبر الصفحة من تاريخ بداية حسابه. حساب منفصل، ما يُخصم من أرباح الشركاء.</div></div><div class="btn-row"><button class="btn primary" onclick="openEmpEditModal()">+ إضافة موظف</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
-  <div class="grid stats">${statCard('إجمالي المتبقي للموظفين',money(T.remaining),T.remaining>0?'neg':'pos',T.list.length+' موظف',true)}${statCard('قطع هذا الشهر',T.mPieces+' قطعة','accent','يبدأ من صفر كل شهر')}${statCard('مستحق هذا الشهر',money(T.mDue),'')}${statCard('مسدد هذا الشهر',money(T.paid),'pos')}</div>
-  <div class="section-title"><span class="ic">👤</span> الموظفون</div>
-  <div class="grid stats">${T.list.length?T.list.map(S=>`<div class="pcard" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)">
-    <div class="pn"><span>${esc(S.E.name)}</span><span class="pill retail">${money(S.rate)} للقطعة</span></div>
-    <div class="big ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</div><div style="font-size:12px;color:var(--text-faint);margin-bottom:6px;">المتبقي له${Math.round(S.carry)!==0?' (يشمل '+money(S.carry)+' من أشهر سابقة)':''}</div>
-    <div class="pr"><span>قطع هذا الشهر</span><b>${S.mPieces}</b></div><div class="pr"><span>مستحق هذا الشهر</span><b>${money(S.mDue)}</b></div><div class="pr"><span>مسدد هذا الشهر</span><b class="pos">${money(S.mPaid)}</b></div>${S.rMonth?`<div class="pr"><span>راجع هذا الشهر (مخصوم)</span><b class="neg">−${S.rMonth} قطعة · ${money(S.rMonthDue)}</b></div>`:''}<div class="pr"><span>موعد التسليم</span><b>${esc(empPayInfo(S.E).label)}</b></div><div class="pr"><span>القادم</span><b>${esc(empPayInfo(S.E).next)}</b></div><div class="pr"><span>يبدأ حسابه من</span><b>${esc(S.E.from||'—')}</b></div>
-    <div class="btn-row" style="margin-top:12px;" onclick="event.stopPropagation()"><button class="btn sm primary" onclick="openEmpPayModal('${S.E.id}')">تسديد</button><button class="btn sm" onclick="openEmpEditModal('${S.E.id}')">تعديل</button><button class="btn sm" onclick="resetEmp('${S.E.id}')">تصفير</button><button class="btn sm danger" onclick="deleteEmp('${S.E.id}')">حذف</button></div></div>`).join(''):'<div class="pcard" onclick="openEmpEditModal()"><div class="pn"><span>👤 إضافة موظف</span></div><div class="desc" style="margin-top:10px;color:var(--text-faint)">ما اكو موظفين بعد.</div></div>'}</div>`;
+  const T=empsTotal(), cm=thisMonth();
+  const hero=axHero({title:'مستحقات الموظفين · '+monthLabelAr(cm),btn:'<button type="button" onclick="openEmpEditModal()">+ موظف</button>',big:money(T.remaining),sub:`${T.list.length} موظف · قطع هذا الشهر ${T.mPieces} · مستحق ${money(T.mDue)} · مسدد ${money(T.paid)}`,parts:T.list.map(S=>({n:esc(S.E.name),v:money(S.remaining)}))});
+  const card=S=>{ const I=empPayInfo(S.E); return `<div class="ax-c" style="cursor:pointer" onclick="currentDetail='emp:${S.E.id}';render();window.scrollTo(0,0)">
+    <div class="ax-c-top"><div class="ax-id">${axAv(S.E.name)}<div><b>${esc(S.E.name)}</b><small>${money(S.rate)} للقطعة · ${esc(I.label)}</small></div></div><span class="pill ${S.remaining>0?'wholesale':'retail'}">${S.remaining>0?'عليه مستحق':'مسدد'}</span></div>
+    <div class="ax-st" style="cursor:default"><div><small>قطع الشهر</small><b>${S.mPieces}</b></div><div><small>مستحق الشهر</small><b>${money(S.mDue)}</b></div><div><small>مسدد الشهر</small><b class="pos">${money(S.mPaid)}</b></div></div>
+    ${S.rMonth?`<div class="ax-roas">↩️ راجع هذا الشهر (مخصوم): <b class="neg">−${S.rMonth} قطعة · ${money(S.rMonthDue)}</b></div>`:''}
+    <div class="ax-roas">القادم: <b>${esc(I.next)}</b> · يبدأ حسابه من <b>${esc(S.E.from||'—')}</b>${Math.round(S.carry)!==0?' · يشمل '+money(S.carry)+' من أشهر سابقة':''}</div>
+    <div class="ax-c-foot" onclick="event.stopPropagation()"><div><span class="ax-roas">المتبقي له</span><b class="ax-rem ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</b></div><div><button type="button" class="ax-add" onclick="openEmpPayModal('${S.E.id}')">تسديد</button><button type="button" class="ax-ic" title="تعديل" onclick="openEmpEditModal('${S.E.id}')">✏️</button><button type="button" class="ax-ic" title="تصفير الحساب" onclick="resetEmp('${S.E.id}')">🧹</button><button type="button" class="ax-ic" title="حذف" onclick="deleteEmp('${S.E.id}')">🗑</button></div></div></div>`; };
+  return `<div class="page-head"><div><h1>موظفو الصفحة</h1><div class="desc">كل موظف يستحق أجرة على قطع المفرد اللي تنباع عبر الصفحة من تاريخ بداية حسابه. حساب منفصل، ما يُخصم من أرباح الشركاء.</div></div><div class="btn-row"><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
+  ${hero}
+  <div class="ax-h"><h2>👤 الموظفون</h2></div>
+  <div class="ax-grid">${T.list.length?T.list.map(card).join(''):'<div class="ax-empty">ما اكو موظفين بعد. اضغط «+ موظف» من البطاقة السوداء.</div>'}</div>`;
 }
 function renderEmployeeDetail(id){
   const S=empStats(id); if(!S){ currentDetail='emps'; return renderEmployeesPage(); }
@@ -5968,6 +5994,9 @@ function renderSettings(){
 
   ${usdSettingsCard()}
   ${userNameCard()}
+
+  <div class="section-title">💾 النسخ الاحتياطي والتصدير</div>
+  <div class="card" style="max-width:520px;"><div class="hint" style="margin:0 0 10px;">حفظ نسخة من كل بياناتك، أو استيرادها، أو تصدير ملفات Excel.</div><div class="btn-row"><button type="button" class="btn primary" onclick="openToolsModal()">💾 فتح النسخ الاحتياطي والتصدير</button></div><div class="hint" id="syncInfo" style="margin-top:10px;">${esc((document.getElementById('syncBadge')||{}).textContent||'')}</div></div>
 
   <div class="section-title">🔒 رمز الحماية (PIN)</div>
   <div class="card" style="max-width:420px;">
@@ -7050,10 +7079,11 @@ function printResetSnap(i){
     totals:[{label:'الوارد',value:money(sn.revenue)},{label:'الأرباح',value:money(sn.profit)},{label:'الإعلانات',value:money(sn.ads)},{label:'صافي للتوزيع',value:money(sn.net),strong:true}],
     footer:'سجل التصفيرات — ستر'});
 }
+function clearResetHistory(){ confirmDelete('مسح سجل التصفيرات كله؟ الأرقام الحالية تبقى مثل ما هي، لكن ما تكدر ترجع التصفيرات القديمة بعدها.',()=>{ PS().archive=[]; saveState(); closeModal(); render(); toast('تم مسح سجل التصفيرات'); }); }
 function openResetHistory(){
   const P=PS(), list=(P.archive||[]).map((a,i)=>({a,i})).reverse();
-  openModal({title:'📜 سجل التصفيرات',bodyHtml: list.length? list.map(({a,i})=>`<details class="card" style="margin-bottom:10px;padding:12px;"><summary style="cursor:pointer;font-weight:800;">تصفير ${esc(a.at)}${a.snap?` — صافي ${money(a.snap.net)} · وارد ${money(a.snap.revenue)}`:''}</summary>
-      <div style="margin-top:10px;">${a.snap?snapHtml(a.snap)+`<div class="btn-row" style="margin-top:10px;"><button class="btn sm" onclick="printResetSnap(${i})">🖨 صورة الأرقام</button></div>`:'<div class="muted">هذا التصفير قديم، ما انحفظت أرقامه. المحفوظ: '+(a.closes||[]).length+' إقفال شهري، '+(a.pays||[]).length+' استلام.</div>'}</div></details>`).join('') : '<div class="notes-empty">ماكو تصفيرات سابقة</div>',
+  openModal({title:'📜 سجل التصفيرات',bodyHtml: (list.length? list.map(({a,i})=>`<details class="card" style="margin-bottom:10px;padding:12px;"><summary style="cursor:pointer;font-weight:800;">تصفير ${esc(a.at)}${a.snap?` — صافي ${money(a.snap.net)} · وارد ${money(a.snap.revenue)}`:''}</summary>
+      <div style="margin-top:10px;">${a.snap?snapHtml(a.snap)+`<div class="btn-row" style="margin-top:10px;"><button class="btn sm" onclick="printResetSnap(${i})">🖨 صورة الأرقام</button></div>`:'<div class="muted">هذا التصفير قديم، ما انحفظت أرقامه. المحفوظ: '+(a.closes||[]).length+' إقفال شهري، '+(a.pays||[]).length+' استلام.</div>'}</div></details>`).join('') : '<div class="notes-empty">ماكو تصفيرات سابقة</div>') + (list.length?'<div class="btn-row" style="margin-top:6px;"><button type="button" class="btn danger" onclick="clearResetHistory()">🗑 مسح سجل التصفيرات كله</button></div><div class="hint">الأرقام الحالية ما تتأثر. المسح يحذف فقط نسخ الأرقام القديمة المحفوظة بالسجل.</div>':''),
     });
   const m=document.querySelector('#modalRoot .modal'); if(m) m.style.maxWidth='760px';
 }
