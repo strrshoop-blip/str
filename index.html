@@ -1227,7 +1227,7 @@ function showSaveBanner(){
     el.style.cssText = 'position:fixed;top:0;right:0;left:0;z-index:9999;background:#7a2e1f;color:#fff;padding:10px 16px;font-size:13.5px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;';
     document.body.appendChild(el);
   }
-  el.innerHTML = '<span>⚠️ آخر تغييراتك ما انحفظت بالسحابة ('+esc(saveFailure.code)+') — '+esc(saveFailure.why)+' — لا تغلقين الصفحة.</span><span><button class="btn sm" style="min-height:30px" onclick="saveState()">إعادة المحاولة</button> <button class="btn sm ghost" style="min-height:30px" onclick="saveFailure=null;showSaveBanner()">إخفاء</button></span>';
+  el.innerHTML = '<span>⚠️ آخر تغييراتك ما انحفظت بالسحابة ('+esc(saveFailure.code)+') — '+esc(saveFailure.why)+' — لا تغلقين الصفحة.</span><span>'+(saveFailure.code==='wipe-guard'?'<button class="btn sm danger" style="min-height:30px" onclick="window._allowShrink=true;saveState()">حفظ رغم ذلك</button> ':'')+'<button class="btn sm" style="min-height:30px" onclick="saveState()">إعادة المحاولة</button> <button class="btn sm ghost" style="min-height:30px" onclick="saveFailure=null;showSaveBanner()">إخفاء</button></span>';
 }
 function saveState(){
   if(firebaseReady){
@@ -1249,6 +1249,7 @@ function saveState(){
           if(s.exists){
             const cd = s.data();
             if(!forceSaveNext && (cd._savedAt||null) !== lastSeenRev){ const x=new Error('conflict'); x.code='conflict'; throw x; }
+            if(!window._allowShrink){ const wt=o=>Object.keys(o).filter(k=>Array.isArray(o[k])&&k!=='auditLog').reduce((a,k)=>a+o[k].length,0)+(((o.partnership||{}).closes)||[]).length; const wc=wt(cd), wn=wt(packed); if(wc>=15 && wn<wc*0.5){ const x=new Error('wipe-guard'); x.code='wipe-guard'; window._wipeInfo={cloud:wc,local:wn}; throw x; } }
             Object.keys(cd).forEach(k=>{ if(!(k in packed)) packed[k]=cd[k]; });
           }
           tx.set(ref, packed);
@@ -1262,7 +1263,7 @@ function saveState(){
           const by = String(back.data()._by||'');
           lastSeenRev = back.data()._savedAt;
         }
-        saveFailure = null; conflictRetries = 0; forceSaveNext = false; syncBaseJSON = snapNow;
+        saveFailure = null; conflictRetries = 0; forceSaveNext = false; syncBaseJSON = snapNow; window._allowShrink = false; try{ dailySnapshot(packed).catch(e=>console.error('snapshot failed',e)); }catch(e){}
         showSyncBadge(true);
       }catch(e){
         console.error('firestore save failed', e);
@@ -1285,7 +1286,8 @@ function saveState(){
         }
         const code = (e && (e.code||e.message)) || 'unknown';
         const err = lastImageError || e;
-        const why = (e && e.code==='outdated') ? 'نسخة التطبيق عندك قديمة وجهاز ثاني يستخدم نسخة أحدث — حدّث الصفحة (سكّر التطبيق وافتحه من جديد) حتى ما تضيع بيانات مثل المرتجعات'
+        const why = (e && e.code==='wipe-guard') ? ('تم منع الحفظ لحماية بياناتك: النسخة اللي تحاول تحفظها فيها '+((window._wipeInfo||{}).local)+' سجل فقط، بينما الموجود بالسحابة '+((window._wipeInfo||{}).cloud)+' سجل. هذا يشبه مسح بيانات. إذا مقصود (حذفت أو استوردت نسخة أصغر) اضغط «حفظ رغم ذلك»، وإذا مو مقصود حدّث الصفحة ولا تحفظ')
+                  : (e && e.code==='outdated') ? 'نسخة التطبيق عندك قديمة وجهاز ثاني يستخدم نسخة أحدث — حدّث الصفحة (سكّر التطبيق وافتحه من جديد) حتى ما تضيع بيانات مثل المرتجعات'
                   : (e && e.code==='timeout') ? 'Firebase ما رد خلال 12 ثانية، غالباً شي يحجب الاتصال (إضافة حجب إعلانات أو برنامج حماية أو شبكة تمنع firestore.googleapis.com). جربي متصفح ثاني أو عطّلي الإضافات'
                   : (e && e.code==='verify-failed') ? 'انكتب التغيير بس السيرفر رجّع نسخة ثانية، احتمال جهاز ثاني يكتب فوقه. سكّري الموقع على كل الأجهزة الثانية'
                   : (err && err.code==='permission-denied') ? 'صلاحيات Firestore ما تسمح بالحفظ، افتحي Rules وخلي allow read, write: if request.auth != null; على كل المستندات'
@@ -6151,6 +6153,7 @@ function doImportBackup(file){
   reader.readAsText(file);
 }
 async function resetAllData(){
+  { const w=window.prompt('لحذف كل البيانات نهائياً اكتب كلمة: حذف'); if(String(w||'').trim()!=='حذف'){ toast('لم يتم الحذف'); return; } try{ downloadBlob(JSON.stringify(state,null,2),'نسخة_قبل_الحذف_'+todayISO()+'.json','application/json'); }catch(e){} }
   askConfirm('سيتم حذف جميع البيانات نهائياً. هل أنت متأكد؟', ()=>{
     askConfirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟', async ()=>{
       toast('جاري حذف جميع البيانات...');
@@ -7266,7 +7269,7 @@ async function rcLoadDocs(){
 function rcRender(auto){
   const best=_rcDocs.reduce((m,d)=>Math.max(m,rcInfo(d.data).sales),0);
   const rows=_rcDocs.map(d=>{ const i=rcInfo(d.data), cur=d.id==='main2', isBest=i.sales>0&&i.sales===best;
-    return `<div class="rcx-card ${isBest?'best':''}"><div class="rcx-t"><b>${esc(d.id)}</b>${cur?'<span class="rcx-tag cur">المستند الحالي للتطبيق</span>':''}${isBest?'<span class="rcx-tag ok">فيه أكبر عدد مبيعات</span>':''}</div>
+    return `<div class="rcx-card ${isBest?'best':''}"><div class="rcx-t"><b>${esc(d.id)}</b>${cur?'<span class="rcx-tag cur">المستند الحالي للتطبيق</span>':''}${isBest?'<span class="rcx-tag ok">فيه أكبر عدد مبيعات</span>':''}${d.id.startsWith('snap_')?'<span class="rcx-tag cur">لقطة يومية تلقائية</span>':''}</div>
       <div class="rcx-g"><div><small>المبيعات</small><b>${i.sales}</b></div><div><small>مبيعات الصفحة</small><b>${i.page}</b></div><div><small>آخر بيع</small><b>${esc(i.last)}</b></div><div><small>المصاريف</small><b>${i.expenses}</b></div><div><small>الموديلات</small><b>${i.models}</b></div><div><small>الديون</small><b>${i.debts}</b></div><div><small>العمال</small><b>${i.workers}</b></div><div><small>إقفالات الشراكة</small><b>${i.closes}</b></div></div>
       <div class="rcx-m">الشركاء: ${esc(i.pn)}<br>آخر حفظ: ${esc(rcWhen(d.data))} · الحجم ${i.size} KB</div>
       <div class="rcx-b"><button class="rcx-btn" onclick="rcDl('${esc(d.id)}')">تحميل نسخة</button>${cur?'':`<button class="rcx-btn pri" onclick="rcRestore('${esc(d.id)}','merge')">استرجاع مع إبقاء الجديد</button><button class="rcx-btn" onclick="rcRestore('${esc(d.id)}','replace')">استبدال كامل</button>`}</div></div>`; }).join('');
@@ -7307,6 +7310,22 @@ async function openRecovery(auto){
   el.innerHTML=css+`<div class="rcx-w"><h1>استرجاع البيانات</h1><p>${auto?'لاحظت أن البيانات الحالية فارغة بينما توجد نسخة قديمة فيها بيانات. ':''}هذي كل النسخ الموجودة على Firebase. اختر النسخة اللي فيها أكبر عدد مبيعات وأحدث تاريخ، واضغط «استرجاع مع إبقاء الجديد». ينزل ملف نسخة احتياطية تلقائياً قبل أي تغيير، ولا يتغير شي قبل ما تضغط وتأكد.</p><div id="rcStatus">جاري قراءة النسخ...</div><div class="rcx-list"></div><div class="rcx-b"><button class="rcx-btn pri" id="rcOpen" style="display:none" onclick="rcOpenApp()">فتح التطبيق</button><button class="rcx-btn" onclick="rcClose(true)">تجاهل وفتح التطبيق الحالي</button></div></div>`;
   document.body.appendChild(el);
   try{ _rcDocs=await rcLoadDocs(); document.getElementById('rcStatus').textContent=''; rcRender(auto); }catch(e){ console.error(e); document.getElementById('rcStatus').innerHTML='<b style="color:var(--negative)">تعذر قراءة النسخ:</b> '+esc(e.code||e.message||''); }
+}
+
+/* ===== حماية: لقطة يومية على السحابة (تُحفظ آخر 7 أيام) ===== */
+async function dailySnapshot(packed){
+  const day=todayISO(); let done=null; try{ done=localStorage.getItem('str_snap_day'); }catch(e){}
+  if(done===day) return;
+  const w=Object.keys(packed).filter(k=>Array.isArray(packed[k])&&k!=='auditLog').reduce((a,k)=>a+packed[k].length,0);
+  if(w<5) return; /* ما ناخذ لقطة من نسخة فارغة */
+  const ref=db.doc('erp_state/snap_'+day), ex=await ref.get();
+  if(!ex.exists){ const c=JSON.parse(JSON.stringify(packed)); c._snapOf=FIRESTORE_DOC; c._snapAt=Date.now(); await ref.set(c); }
+  try{ localStorage.setItem('str_snap_day',day); }catch(e){}
+  try{
+    const cut=new Date(Date.now()-7*86400000), cutId='snap_'+cut.getFullYear()+'-'+String(cut.getMonth()+1).padStart(2,'0')+'-'+String(cut.getDate()).padStart(2,'0');
+    const FP=firebase.firestore.FieldPath.documentId(), olds=await db.collection('erp_state').where(FP,'>=','snap_').where(FP,'<',cutId).get();
+    olds.forEach(d=>{ db.doc('erp_state/'+d.id).delete().catch(()=>{}); });
+  }catch(e){ console.error('snap cleanup failed',e); }
 }
 
 /* =========================================================
@@ -7372,6 +7391,7 @@ function openNovRestore(){
   enhanceInputs(); updateRateChip(); refreshUsdRate(false);
   setTheme(document.documentElement.getAttribute('data-theme')||'light');
   startSbClock(); refreshBell(); setInterval(refreshBell,6000);
+  try{ const lb=localStorage.getItem('str_lastbackup'); const ds=lb?Math.floor((Date.now()-new Date(lb.slice(0,10)).getTime())/86400000):999; if(ds>=7 && !rcForce && sessionStorage.getItem('str_bk_nag')!==todayISO() && (state.sales||[]).length){ sessionStorage.setItem('str_bk_nag',todayISO()); setTimeout(()=>toast('⚠️ '+(lb?('مرّ '+ds+' يوم على آخر نسخة احتياطية'):'ما نزّلت نسخة احتياطية لحد الآن')+' — نزّل نسخة من زر 💾 حتى ما تضيع بياناتك'),3000); } }catch(e){}
   if(rcForce){ openRecovery(false); }
   else if(/#restore-nov/.test(location.hash)){ openNovRestore(); }
   else if(firebaseReady && !window._loadFailed && !(state.sales||[]).length){ try{ const lg=await db.doc(LEGACY_FIRESTORE_DOC).get(); if(lg.exists && (lg.data().sales||[]).length){ window._loadFailed=true; openRecovery(true); } }catch(e){} }
