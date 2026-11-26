@@ -7237,7 +7237,81 @@ document.addEventListener('keydown', e=>{
 /* =========================================================
    INIT
 ========================================================= */
+/* =========================================================
+   أداة استرجاع البيانات — تقرأ نسخ erp_state من Firebase وترجّع أيّ وحدة منها
+========================================================= */
+let _rcDocs=[], _rcBusy=false;
+function rcInfo(d){
+  const A=k=>Array.isArray(d[k])?d[k]:[]; const sales=A('sales');
+  const last=sales.map(s=>s.date||'').filter(Boolean).sort().pop()||'—';
+  const P=d.partnership||{};
+  return {sales:sales.length, page:sales.filter(s=>(s.channel||'shop')==='page').length, expenses:A('expenses').length, models:A('models').length,
+    debts:A('debts').length+A('customerDebts').length, workers:A('tailors').length+A('cutters').length+A('hoodaris').length, last,
+    closes:(P.closes||[]).length, pn:(P.partners||[]).map(p=>p.name).join('، ')||'—', size:Math.round(JSON.stringify(d).length/1024)};
+}
+function rcWhen(d){ const m=String(d._savedAt||'').match(/^(\d{12,})/); if(!m) return '—'; const t=new Date(Number(m[1])); return isNaN(t)?'—':t.toLocaleString('ar-IQ',{dateStyle:'medium',timeStyle:'short'}); }
+function rcDownload(name,data){ try{ const b=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name+'.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }catch(e){ console.error(e); } }
+async function rcLoadDocs(){
+  await firebaseUserReady;
+  const out=[]; let ids=[];
+  try{
+    const FP=firebase.firestore.FieldPath.documentId(), col=db.collection('erp_state');
+    const [a,b]=await Promise.all([col.where(FP,'<','img_').get(), col.where(FP,'>','img_\uf8ff').get()]);
+    a.forEach(d=>ids.push(d.id)); b.forEach(d=>ids.push(d.id));
+  }catch(e){ console.error('list failed',e); }
+  ['main','main2'].forEach(x=>{ if(!ids.includes(x)) ids.push(x); });
+  for(const id of ids){ try{ const s=await db.doc('erp_state/'+id).get(); if(s.exists) out.push({id,data:s.data()}); }catch(e){ console.error(id,e); } }
+  return out;
+}
+function rcRender(auto){
+  const best=_rcDocs.reduce((m,d)=>Math.max(m,rcInfo(d.data).sales),0);
+  const rows=_rcDocs.map(d=>{ const i=rcInfo(d.data), cur=d.id==='main2', isBest=i.sales>0&&i.sales===best;
+    return `<div class="rcx-card ${isBest?'best':''}"><div class="rcx-t"><b>${esc(d.id)}</b>${cur?'<span class="rcx-tag cur">المستند الحالي للتطبيق</span>':''}${isBest?'<span class="rcx-tag ok">فيه أكبر عدد مبيعات</span>':''}</div>
+      <div class="rcx-g"><div><small>المبيعات</small><b>${i.sales}</b></div><div><small>مبيعات الصفحة</small><b>${i.page}</b></div><div><small>آخر بيع</small><b>${esc(i.last)}</b></div><div><small>المصاريف</small><b>${i.expenses}</b></div><div><small>الموديلات</small><b>${i.models}</b></div><div><small>الديون</small><b>${i.debts}</b></div><div><small>العمال</small><b>${i.workers}</b></div><div><small>إقفالات الشراكة</small><b>${i.closes}</b></div></div>
+      <div class="rcx-m">الشركاء: ${esc(i.pn)}<br>آخر حفظ: ${esc(rcWhen(d.data))} · الحجم ${i.size} KB</div>
+      <div class="rcx-b"><button class="rcx-btn" onclick="rcDl('${esc(d.id)}')">تحميل نسخة</button>${cur?'':`<button class="rcx-btn pri" onclick="rcRestore('${esc(d.id)}','merge')">استرجاع مع إبقاء الجديد</button><button class="rcx-btn" onclick="rcRestore('${esc(d.id)}','replace')">استبدال كامل</button>`}</div></div>`; }).join('');
+  const el=document.getElementById('rcRoot'); if(!el) return;
+  el.querySelector('.rcx-list').innerHTML=rows||'<div class="rcx-m">ما لقيت أي نسخة.</div>';
+}
+function rcDl(id){ const d=_rcDocs.find(x=>x.id===id); if(d) rcDownload('str-'+id+'-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-'),d.data); }
+async function rcRestore(srcId,mode){
+  if(_rcBusy) return; const src=_rcDocs.find(x=>x.id===srcId), cur=_rcDocs.find(x=>x.id==='main2'); if(!src) return;
+  const si=rcInfo(src.data), ci=cur?rcInfo(cur.data):null;
+  const msg='سيتم استرجاع بيانات «'+srcId+'» ('+si.sales+' عملية بيع، آخر بيع '+si.last+') إلى المستند الحالي.'+(ci?'\nالمستند الحالي فيه '+ci.sales+' عملية بيع، وتنزل منه نسخة احتياطية تلقائياً قبل أي تغيير.':'')+'\nمتأكد؟';
+  if(!window.confirm(msg)) return;
+  _rcBusy=true; const st=document.getElementById('rcStatus'); st.textContent='جاري الاسترجاع...';
+  try{
+    if(cur) rcDownload('str-main2-قبل-الاسترجاع',cur.data);
+    const out=JSON.parse(JSON.stringify(src.data)), isArr=a=>Array.isArray(a)&&a.every(x=>x&&typeof x==='object'&&x.id!==undefined);
+    if(mode==='merge' && cur){
+      Object.keys(cur.data).forEach(k=>{ const a=out[k], b=cur.data[k];
+        if(a===undefined){ out[k]=JSON.parse(JSON.stringify(b)); return; }
+        if(isArr(a)&&isArr(b)){ const ids=new Set(a.map(x=>x.id)); b.forEach(x=>{ if(!ids.has(x.id)) a.push(JSON.parse(JSON.stringify(x))); }); }
+        else if(k==='saleSeq') out[k]=Math.max(num(a),num(b)); });
+    }
+    out._savedAt=Date.now()+'-rc'+Math.random().toString(36).slice(2,6); out._by=DEVICE_ID+':recover'; out._ts=true;
+    await db.doc(FIRESTORE_DOC).set(out);
+    const back=await db.doc(FIRESTORE_DOC).get({source:'server'}); const bi=rcInfo(back.data());
+    st.innerHTML='<b style="color:var(--positive)">تم الاسترجاع.</b> المستند الحالي صار فيه '+bi.sales+' عملية بيع. اضغط «فتح التطبيق».';
+    _rcDocs=await rcLoadDocs(); rcRender();
+    document.getElementById('rcOpen').style.display='inline-flex';
+  }catch(e){ console.error(e); st.innerHTML='<b style="color:var(--negative)">فشل الاسترجاع:</b> '+esc(e.code||e.message||'خطأ'); }
+  _rcBusy=false;
+}
+function rcClose(unblock){ const el=document.getElementById('rcRoot'); if(el) el.remove(); if(unblock){ window._loadFailed=false; } }
+function rcOpenApp(){ location.href=location.href.split('#')[0].split('?')[0]; }
+async function openRecovery(auto){
+  if(document.getElementById('rcRoot')) return;
+  const css=`<style>#rcRoot{position:fixed;inset:0;z-index:100000;background:var(--bg);color:var(--text);overflow:auto;direction:rtl;font-family:'Cairo',sans-serif;padding:18px;}#rcRoot .rcx-w{max-width:900px;margin:0 auto;}#rcRoot h1{font-size:22px;margin:6px 0 8px;}#rcRoot p{color:var(--text-dim);line-height:1.8;font-size:14px;margin:0 0 12px;}.rcx-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px;}.rcx-card.best{border-color:var(--positive);}.rcx-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:16px;margin-bottom:10px;}.rcx-tag{font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--surface-3);}.rcx-tag.ok{color:var(--positive);}.rcx-tag.cur{color:var(--info);}.rcx-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}.rcx-g>div{background:var(--surface-2);border-radius:10px;padding:8px 10px;}.rcx-g small{display:block;font-size:11px;color:var(--text-faint);}.rcx-g b{font-size:15px;font-variant-numeric:tabular-nums;}.rcx-m{font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.8;}.rcx-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}.rcx-btn{font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}.rcx-btn.pri{background:var(--text);color:var(--bg);border-color:var(--text);}#rcStatus{min-height:22px;margin:10px 0;font-size:14px;}</style>`;
+  const el=document.createElement('div'); el.id='rcRoot';
+  el.innerHTML=css+`<div class="rcx-w"><h1>استرجاع البيانات</h1><p>${auto?'لاحظت أن البيانات الحالية فارغة بينما توجد نسخة قديمة فيها بيانات. ':''}هذي كل النسخ الموجودة على Firebase. اختر النسخة اللي فيها أكبر عدد مبيعات وأحدث تاريخ، واضغط «استرجاع مع إبقاء الجديد». ينزل ملف نسخة احتياطية تلقائياً قبل أي تغيير، ولا يتغير شي قبل ما تضغط وتأكد.</p><div id="rcStatus">جاري قراءة النسخ...</div><div class="rcx-list"></div><div class="rcx-b"><button class="rcx-btn pri" id="rcOpen" style="display:none" onclick="rcOpenApp()">فتح التطبيق</button><button class="rcx-btn" onclick="rcClose(true)">تجاهل وفتح التطبيق الحالي</button></div></div>`;
+  document.body.appendChild(el);
+  try{ _rcDocs=await rcLoadDocs(); document.getElementById('rcStatus').textContent=''; rcRender(auto); }catch(e){ console.error(e); document.getElementById('rcStatus').innerHTML='<b style="color:var(--negative)">تعذر قراءة النسخ:</b> '+esc(e.code||e.message||''); }
+}
+
 (async function init(){
+  const rcForce=/#recover/.test(location.hash)||/[?&]recover=1/.test(location.search);
+  if(rcForce) window._loadFailed=true; /* يمنع أي حفظ أثناء الاسترجاع */
   state = await loadStateAsync(); tsMigrate(); try{ syncBaseJSON = JSON.stringify(state); }catch(e){}
   if(window._needsFirstSave){ setTimeout(()=>saveState(), 600); }
   const foot = document.querySelector('.sidebar .foot');
@@ -7252,6 +7326,8 @@ document.addEventListener('keydown', e=>{
   enhanceInputs(); updateRateChip(); refreshUsdRate(false);
   setTheme(document.documentElement.getAttribute('data-theme')||'light');
   startSbClock(); refreshBell(); setInterval(refreshBell,6000);
+  if(rcForce){ openRecovery(false); }
+  else if(firebaseReady && !window._loadFailed && !(state.sales||[]).length){ try{ const lg=await db.doc(LEGACY_FIRESTORE_DOC).get(); if(lg.exists && (lg.data().sales||[]).length){ window._loadFailed=true; openRecovery(true); } }catch(e){} }
 })();
 </script>
 </body>
