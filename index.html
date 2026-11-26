@@ -4852,7 +4852,6 @@ function openPartnerManage(){
     ${pm!=='ALL'?it('🖨','كشف الشهر',monthLabelAr(pm)+' · صورة',`printPartnerStatement('${pm}')`):''}
     ${it(P.empDeduct?'✅':'⬜','خصم أجور الموظفين من الصافي',P.empDeduct?'مفعّل — الشركاء يتقاسمونها بالنسب':'غير مفعّل — للعلم فقط','togglePtEmpDeduct()')}
     ${(P.archive&&P.archive.length)?it('🗂','سجل التصفيرات',P.archive.length+' تصفير سابق','openResetHistory()')+it('↩','استرجاع آخر تصفير','','restorePartnerReset()'):''}
-    ${(P.resetAt||(P.resetSkip&&P.resetSkip.length))?it('♻️','إلغاء حد التصفير','يرجّع كل المبيعات والإعلانات للحساب (بدون ما يلمس الإقفالات)','undoResetLimit()'):''}
     ${it('🗑','تصفير أرقام الشراكة','تبدأ الأرقام من صفر، وتنحفظ القديمة بالسجل','openPartnerResetModal()','neg')}</div>`,onSave(){ closeModal(); }});
   const b=document.getElementById('modalSaveBtn'); if(b) b.textContent='إغلاق';
 }
@@ -7080,7 +7079,6 @@ function printResetSnap(i){
     totals:[{label:'الوارد',value:money(sn.revenue)},{label:'الأرباح',value:money(sn.profit)},{label:'الإعلانات',value:money(sn.ads)},{label:'صافي للتوزيع',value:money(sn.net),strong:true}],
     footer:'سجل التصفيرات — ستر'});
 }
-function undoResetLimit(){ confirmDelete('إلغاء حد التصفير: كل المبيعات والإعلانات المسجلة ترجع تنحسب بالشراكة (حتى اللي قبل التصفير). الإقفالات والتسديدات الحالية ما تتأثر. متابعة؟',()=>{ const P=PS(); P.resetAt=null; P.resetSkip=[]; saveState(); closeModal(); render(); toast('تم إلغاء حد التصفير — رجعت كل الأرقام'); }); }
 function clearResetHistory(){ confirmDelete('مسح سجل التصفيرات كله؟ الأرقام الحالية تبقى مثل ما هي، لكن ما تكدر ترجع التصفيرات القديمة بعدها.',()=>{ PS().archive=[]; saveState(); closeModal(); render(); toast('تم مسح سجل التصفيرات'); }); }
 function openResetHistory(){
   const P=PS(), list=(P.archive||[]).map((a,i)=>({a,i})).reverse();
@@ -7239,7 +7237,127 @@ document.addEventListener('keydown', e=>{
 /* =========================================================
    INIT
 ========================================================= */
+/* =========================================================
+   أداة استرجاع البيانات — تقرأ نسخ erp_state من Firebase وترجّع أيّ وحدة منها
+========================================================= */
+let _rcDocs=[], _rcBusy=false;
+function rcInfo(d){
+  const A=k=>Array.isArray(d[k])?d[k]:[]; const sales=A('sales');
+  const last=sales.map(s=>s.date||'').filter(Boolean).sort().pop()||'—';
+  const P=d.partnership||{};
+  return {sales:sales.length, page:sales.filter(s=>(s.channel||'shop')==='page').length, expenses:A('expenses').length, models:A('models').length,
+    debts:A('debts').length+A('customerDebts').length, workers:A('tailors').length+A('cutters').length+A('hoodaris').length, last,
+    closes:(P.closes||[]).length, pn:(P.partners||[]).map(p=>p.name).join('، ')||'—', size:Math.round(JSON.stringify(d).length/1024)};
+}
+function rcWhen(d){ const m=String(d._savedAt||'').match(/^(\d{12,})/); if(!m) return '—'; const t=new Date(Number(m[1])); return isNaN(t)?'—':t.toLocaleString('ar-IQ',{dateStyle:'medium',timeStyle:'short'}); }
+function rcDownload(name,data){ try{ const b=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name+'.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }catch(e){ console.error(e); } }
+async function rcLoadDocs(){
+  await firebaseUserReady;
+  const out=[]; let ids=[];
+  try{
+    const FP=firebase.firestore.FieldPath.documentId(), col=db.collection('erp_state');
+    const [a,b]=await Promise.all([col.where(FP,'<','img_').get(), col.where(FP,'>','img_\uf8ff').get()]);
+    a.forEach(d=>ids.push(d.id)); b.forEach(d=>ids.push(d.id));
+  }catch(e){ console.error('list failed',e); }
+  ['main','main2'].forEach(x=>{ if(!ids.includes(x)) ids.push(x); });
+  for(const id of ids){ try{ const s=await db.doc('erp_state/'+id).get(); if(s.exists) out.push({id,data:s.data()}); }catch(e){ console.error(id,e); } }
+  return out;
+}
+function rcRender(auto){
+  const best=_rcDocs.reduce((m,d)=>Math.max(m,rcInfo(d.data).sales),0);
+  const rows=_rcDocs.map(d=>{ const i=rcInfo(d.data), cur=d.id==='main2', isBest=i.sales>0&&i.sales===best;
+    return `<div class="rcx-card ${isBest?'best':''}"><div class="rcx-t"><b>${esc(d.id)}</b>${cur?'<span class="rcx-tag cur">المستند الحالي للتطبيق</span>':''}${isBest?'<span class="rcx-tag ok">فيه أكبر عدد مبيعات</span>':''}</div>
+      <div class="rcx-g"><div><small>المبيعات</small><b>${i.sales}</b></div><div><small>مبيعات الصفحة</small><b>${i.page}</b></div><div><small>آخر بيع</small><b>${esc(i.last)}</b></div><div><small>المصاريف</small><b>${i.expenses}</b></div><div><small>الموديلات</small><b>${i.models}</b></div><div><small>الديون</small><b>${i.debts}</b></div><div><small>العمال</small><b>${i.workers}</b></div><div><small>إقفالات الشراكة</small><b>${i.closes}</b></div></div>
+      <div class="rcx-m">الشركاء: ${esc(i.pn)}<br>آخر حفظ: ${esc(rcWhen(d.data))} · الحجم ${i.size} KB</div>
+      <div class="rcx-b"><button class="rcx-btn" onclick="rcDl('${esc(d.id)}')">تحميل نسخة</button>${cur?'':`<button class="rcx-btn pri" onclick="rcRestore('${esc(d.id)}','merge')">استرجاع مع إبقاء الجديد</button><button class="rcx-btn" onclick="rcRestore('${esc(d.id)}','replace')">استبدال كامل</button>`}</div></div>`; }).join('');
+  const el=document.getElementById('rcRoot'); if(!el) return;
+  el.querySelector('.rcx-list').innerHTML=rows||'<div class="rcx-m">ما لقيت أي نسخة.</div>';
+}
+function rcDl(id){ const d=_rcDocs.find(x=>x.id===id); if(d) rcDownload('str-'+id+'-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-'),d.data); }
+async function rcRestore(srcId,mode){
+  if(_rcBusy) return; const src=_rcDocs.find(x=>x.id===srcId), cur=_rcDocs.find(x=>x.id==='main2'); if(!src) return;
+  const si=rcInfo(src.data), ci=cur?rcInfo(cur.data):null;
+  const msg='سيتم استرجاع بيانات «'+srcId+'» ('+si.sales+' عملية بيع، آخر بيع '+si.last+') إلى المستند الحالي.'+(ci?'\nالمستند الحالي فيه '+ci.sales+' عملية بيع، وتنزل منه نسخة احتياطية تلقائياً قبل أي تغيير.':'')+'\nمتأكد؟';
+  if(!window.confirm(msg)) return;
+  _rcBusy=true; const st=document.getElementById('rcStatus'); st.textContent='جاري الاسترجاع...';
+  try{
+    if(cur) rcDownload('str-main2-قبل-الاسترجاع',cur.data);
+    const out=JSON.parse(JSON.stringify(src.data)), isArr=a=>Array.isArray(a)&&a.every(x=>x&&typeof x==='object'&&x.id!==undefined);
+    if(mode==='merge' && cur){
+      Object.keys(cur.data).forEach(k=>{ const a=out[k], b=cur.data[k];
+        if(a===undefined){ out[k]=JSON.parse(JSON.stringify(b)); return; }
+        if(isArr(a)&&isArr(b)){ const ids=new Set(a.map(x=>x.id)); b.forEach(x=>{ if(!ids.has(x.id)) a.push(JSON.parse(JSON.stringify(x))); }); }
+        else if(k==='saleSeq') out[k]=Math.max(num(a),num(b)); });
+    }
+    out._savedAt=Date.now()+'-rc'+Math.random().toString(36).slice(2,6); out._by=DEVICE_ID+':recover'; out._ts=true;
+    await db.doc(FIRESTORE_DOC).set(out);
+    const back=await db.doc(FIRESTORE_DOC).get({source:'server'}); const bi=rcInfo(back.data());
+    st.innerHTML='<b style="color:var(--positive)">تم الاسترجاع.</b> المستند الحالي صار فيه '+bi.sales+' عملية بيع. اضغط «فتح التطبيق».';
+    _rcDocs=await rcLoadDocs(); rcRender();
+    document.getElementById('rcOpen').style.display='inline-flex';
+  }catch(e){ console.error(e); st.innerHTML='<b style="color:var(--negative)">فشل الاسترجاع:</b> '+esc(e.code||e.message||'خطأ'); }
+  _rcBusy=false;
+}
+function rcClose(unblock){ const el=document.getElementById('rcRoot'); if(el) el.remove(); if(unblock){ window._loadFailed=false; } }
+function rcOpenApp(){ location.href=location.href.split('#')[0].split('?')[0]; }
+async function openRecovery(auto){
+  if(document.getElementById('rcRoot')) return;
+  const css=`<style>#rcRoot{position:fixed;inset:0;z-index:100000;background:var(--bg);color:var(--text);overflow:auto;direction:rtl;font-family:'Cairo',sans-serif;padding:18px;}#rcRoot .rcx-w{max-width:900px;margin:0 auto;}#rcRoot h1{font-size:22px;margin:6px 0 8px;}#rcRoot p{color:var(--text-dim);line-height:1.8;font-size:14px;margin:0 0 12px;}.rcx-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px;}.rcx-card.best{border-color:var(--positive);}.rcx-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:16px;margin-bottom:10px;}.rcx-tag{font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--surface-3);}.rcx-tag.ok{color:var(--positive);}.rcx-tag.cur{color:var(--info);}.rcx-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}.rcx-g>div{background:var(--surface-2);border-radius:10px;padding:8px 10px;}.rcx-g small{display:block;font-size:11px;color:var(--text-faint);}.rcx-g b{font-size:15px;font-variant-numeric:tabular-nums;}.rcx-m{font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.8;}.rcx-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}.rcx-btn{font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}.rcx-btn.pri{background:var(--text);color:var(--bg);border-color:var(--text);}#rcStatus{min-height:22px;margin:10px 0;font-size:14px;}</style>`;
+  const el=document.createElement('div'); el.id='rcRoot';
+  el.innerHTML=css+`<div class="rcx-w"><h1>استرجاع البيانات</h1><p>${auto?'لاحظت أن البيانات الحالية فارغة بينما توجد نسخة قديمة فيها بيانات. ':''}هذي كل النسخ الموجودة على Firebase. اختر النسخة اللي فيها أكبر عدد مبيعات وأحدث تاريخ، واضغط «استرجاع مع إبقاء الجديد». ينزل ملف نسخة احتياطية تلقائياً قبل أي تغيير، ولا يتغير شي قبل ما تضغط وتأكد.</p><div id="rcStatus">جاري قراءة النسخ...</div><div class="rcx-list"></div><div class="rcx-b"><button class="rcx-btn pri" id="rcOpen" style="display:none" onclick="rcOpenApp()">فتح التطبيق</button><button class="rcx-btn" onclick="rcClose(true)">تجاهل وفتح التطبيق الحالي</button></div></div>`;
+  document.body.appendChild(el);
+  try{ _rcDocs=await rcLoadDocs(); document.getElementById('rcStatus').textContent=''; rcRender(auto); }catch(e){ console.error(e); document.getElementById('rcStatus').innerHTML='<b style="color:var(--negative)">تعذر قراءة النسخ:</b> '+esc(e.code||e.message||''); }
+}
+
+/* =========================================================
+   استعادة أرقام نوفمبر 2026 من لقطات الشاشة (تُفتح بـ #restore-nov)
+========================================================= */
+const NOV_SALES=[['2026-11-15',420000,12],['2026-11-17',215000,6],['2026-11-18',415000,12],['2026-11-19',245000,7],['2026-11-20',315000,9],['2026-11-21',170000,5],['2026-11-22',880000,25],['2026-11-23',160000,4],['2026-11-24',35000,1]];
+const NOV_PROFIT=1195000, NOV_AD_NAME='قياس خاص ديل كلوش';
+const NOV_ADS=[['2026-11-26',78000],['2026-11-22',78000],['2026-11-20',78000],['2026-11-18',78728],['2026-11-15',33000]];
+const NOV_PARTNERS=[['سيد احمد',25],['حسن الفتلاوي',37.5],['أمجد الربيعي',37.5]];
+function novBuild(lastAdDate){
+  const tot=NOV_SALES.reduce((s,x)=>s+x[1],0); let acc=0;
+  const sales=NOV_SALES.map((x,i)=>{ const d=x[0], rev=x[1], q=x[2];
+    const pr=(i===NOV_SALES.length-1)?NOV_PROFIT-acc:Math.round(rev*NOV_PROFIT/tot); acc+=pr;
+    const price=rev/q;
+    return {id:'rst-s-'+d,date:d,channel:'page',customerType:'retail',customerName:'مبيعات '+d.slice(8)+' نوفمبر (مستعادة)',orderId:'rst-o-'+d,quantity:q,unitPrice:price,costSnapshot:price-pr/q,productLabel:'مبيعات مستعادة من لقطة شاشة',restored:true}; });
+  const ads=NOV_ADS.map((a,i)=>({id:'rst-ad-'+i,type:'إعلانات',amount:a[1],date:(i===NOV_ADS.length-1&&lastAdDate)?lastAdDate:a[0],notes:NOV_AD_NAME,channel:'page',source:'profit',modelId:null,campaignId:null,restored:true}));
+  return {sales,ads};
+}
+function novApply(){
+  if(window._loadFailed){ toast('ما انحمّلت بياناتك من السحابة، حدّث الصفحة أولاً'); return; }
+  const dEl=document.getElementById('nvAdDate'), b=novBuild(dEl&&dEl.value||null), P=PS();
+  b.sales.forEach(s=>{ if(!state.sales.some(x=>x.id===s.id)) state.sales.push(s); });
+  b.ads.forEach(a=>{ if(!state.expenses.some(x=>x.id===a.id)) state.expenses.push(a); });
+  NOV_PARTNERS.forEach((p,i)=>{ if(P.partners[i]){ P.partners[i].name=p[0]; P.partners[i].pct=p[1]; } });
+  P.empDeduct=true;
+  P.resetAt='2026-11-15'; if(P.contract) P.contract.start='2026-11-15'; /* بداية الشراكة: أكتوبر يطلع من حسابات الشركاء */
+  saveState(); const el=document.getElementById('nvRoot'); if(el) el.remove();
+  try{ history.replaceState(null,'',location.href.split('#')[0]); }catch(e){}
+  currentDetail=null; navigate('partnership'); toast('تمت استعادة أرقام نوفمبر');
+}
+function openNovRestore(){
+  if(document.getElementById('nvRoot')) return;
+  const rev=NOV_SALES.reduce((s,x)=>s+x[1],0), pcs=NOV_SALES.reduce((s,x)=>s+x[2],0), ads=NOV_ADS.reduce((s,x)=>s+x[1],0), wage=NOV_SALES.filter(x=>x[0]>='2026-11-19').reduce((s,x)=>s+x[2],0)*1000, net=NOV_PROFIT-ads-wage;
+  const exist=(state.sales||[]).filter(s=>(s.channel||'shop')==='page'&&String(s.date).startsWith('2026-11')&&!s.restored).length;
+  const m=v=>money(v);
+  const el=document.createElement('div'); el.id='nvRoot';
+  el.innerHTML=`<style>#nvRoot{position:fixed;inset:0;z-index:100000;background:var(--bg);color:var(--text);overflow:auto;direction:rtl;font-family:'Cairo',sans-serif;padding:18px}#nvRoot .w{max-width:760px;margin:0 auto}#nvRoot h1{font-size:22px;margin:6px 0 8px}#nvRoot p{color:var(--text-dim);line-height:1.9;font-size:14px;margin:0 0 12px}#nvRoot .c{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}#nvRoot table{width:100%;border-collapse:collapse;font-size:13.5px}#nvRoot td,#nvRoot th{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}#nvRoot th{color:var(--text-faint);font-weight:600;font-size:12px}#nvRoot .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}#nvRoot .g div{background:var(--surface-2);border-radius:10px;padding:8px 10px}#nvRoot small{display:block;color:var(--text-faint);font-size:11px}#nvRoot .b{font:inherit;font-weight:700;padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}#nvRoot .b.p{background:var(--text);color:var(--bg);border-color:var(--text)}#nvRoot input{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}</style>
+  <div class="w"><h1>استعادة أرقام نوفمبر من لقطاتك</h1>
+  <p>هذي الأرقام مأخوذة من صورك اللي صوّرتها قبل الضياع. تُضاف كسجلات ملخّصة (مبيعات كل يوم بسطر واحد) وتطابق أرقام صورك بالضبط. تفاصيل الطلبات الأصلية (الزبائن والموديلات) ما تنرجع من الصور، وتقدر تحذف أي سطر مستعاد أو تعدّله لاحقاً.</p>
+  ${exist?`<div class="c" style="border-color:var(--warn)">تنبيه: يوجد حالياً ${exist} عملية بيع بصفحة نوفمبر مُدخلة يدوياً. الاستعادة ستُضاف فوقها، فإذا أعدت إدخالها حذفتها أولاً أو لا تكمل.</div>`:''}
+  <div class="c"><div class="g"><div><small>وارد الصفحة</small><b>${m(rev)}</b></div><div><small>الأرباح قبل الإعلانات</small><b>${m(NOV_PROFIT)}</b></div><div><small>الإعلانات</small><b>${m(ads)}</b></div><div><small>أجور الموظف (${wage/1000} قطعة)</small><b>${m(wage)}</b></div><div><small>صافي للتوزيع</small><b>${m(net)}</b></div></div></div>
+  <div class="c"><b>الوارد اليومي</b><table><tr><th>التاريخ</th><th>المبلغ</th><th>القطع (تقديري)</th></tr>${NOV_SALES.map(x=>`<tr><td>${x[0]}</td><td>${m(x[1])}</td><td>${x[2]}</td></tr>`).join('')}</table></div>
+  <div class="c"><b>الإعلانات (${NOV_AD_NAME})</b><table><tr><th>التاريخ</th><th>المبلغ</th></tr>${NOV_ADS.map((x,i)=>`<tr><td>${i===NOV_ADS.length-1?`<input type="date" id="nvAdDate" value="${x[0]}">`:x[0]}</td><td>${m(x[1])}</td></tr>`).join('')}</table><p style="margin-top:10px;font-size:12.5px">الإعلان الأخير (${m(NOV_ADS[NOV_ADS.length-1][1])}) ما ظهر تاريخه بصورتك. حطيت 15 نوفمبر، عدّله هنا إذا تعرف التاريخ الصحيح.</p></div>
+  <div class="c"><b>الشراكة</b><p style="margin:8px 0 0">${NOV_PARTNERS.map(p=>p[0]+' '+p[1]+'%').join(' · ')}. الأسماء تنرجع، وأجور الموظفين تنخصم من الصافي.<br><b>بداية الشراكة تنضبط على 15/11/2026:</b> مبيعات أكتوبر وما قبلها تبقى بالمبيعات والتقارير، بس ما تدخل بحسابات الشركاء، ويختفي طلب «إقفال أكتوبر».</p></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="b p" onclick="novApply()">إضافة أرقام نوفمبر للتطبيق</button><button class="b" onclick="document.getElementById('nvRoot').remove();history.replaceState(null,'',location.href.split('#')[0]);">إلغاء</button></div></div>`;
+  document.body.appendChild(el);
+}
+
 (async function init(){
+  const rcForce=/#recover/.test(location.hash)||/[?&]recover=1/.test(location.search);
+  if(rcForce) window._loadFailed=true; /* يمنع أي حفظ أثناء الاسترجاع */
   state = await loadStateAsync(); tsMigrate(); try{ syncBaseJSON = JSON.stringify(state); }catch(e){}
   if(window._needsFirstSave){ setTimeout(()=>saveState(), 600); }
   const foot = document.querySelector('.sidebar .foot');
@@ -7254,6 +7372,9 @@ document.addEventListener('keydown', e=>{
   enhanceInputs(); updateRateChip(); refreshUsdRate(false);
   setTheme(document.documentElement.getAttribute('data-theme')||'light');
   startSbClock(); refreshBell(); setInterval(refreshBell,6000);
+  if(rcForce){ openRecovery(false); }
+  else if(/#restore-nov/.test(location.hash)){ openNovRestore(); }
+  else if(firebaseReady && !window._loadFailed && !(state.sales||[]).length){ try{ const lg=await db.doc(LEGACY_FIRESTORE_DOC).get(); if(lg.exists && (lg.data().sales||[]).length){ window._loadFailed=true; openRecovery(true); } }catch(e){} }
 })();
 </script>
 </body>
