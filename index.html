@@ -808,6 +808,10 @@
   .ro-mode{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;} .ro-mode label{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;}
   .ro-l{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:12px;margin-bottom:6px;background:var(--surface-2);} .ro-l.off{opacity:.45;} .ro-q{display:flex;align-items:center;gap:6px;} .ro-q input{width:64px;padding:6px 8px;} .ro-l label{display:flex;align-items:center;gap:8px;}
   @media (max-width:600px){.ro-l{grid-template-columns:1fr auto;} .ro-q{grid-column:1/-1;}}
+  .cp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;} .cp{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;} .cp.off{opacity:.78;background:var(--surface-2);}
+  .cp-h{display:flex;align-items:center;gap:8px;} .cp-h b{font-size:15.5px;flex:1;} .cp-m{font-size:12.5px;color:var(--text-dim);} .cp-a small{display:block;font-size:11.5px;color:var(--text-faint);} .cp-a b{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;color:var(--negative);font-variant-numeric:tabular-nums;}
+  .cp-s{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;} .cp-s>div{background:var(--surface-2);border-radius:10px;padding:7px 9px;} .cp-s small{display:block;font-size:10.5px;color:var(--text-faint);} .cp-s b{font-size:13px;font-variant-numeric:tabular-nums;} .cp-s b.pos{color:var(--positive);} .cp-s b.neg{color:var(--negative);}
+  .cp-f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;}
   .ad-parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;} .ad-parts>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;} .ad-parts small{display:block;font-size:11.5px;color:var(--text-faint);} .ad-parts b{font-family:'Cairo',sans-serif;font-size:19px;color:var(--negative);font-variant-numeric:tabular-nums;}
   .ad-list{display:flex;flex-direction:column;gap:8px;} .ad-it{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px 14px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 16px;} .ad-i{width:40px;height:40px;border-radius:12px;background:var(--surface-3);display:grid;place-items:center;font-size:18px;} .ad-m b{font-size:14.5px;} .ad-tg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;font-size:12px;color:var(--text-faint);} .ad-a{text-align:end;} .ad-a b{display:block;font-family:'Cairo',sans-serif;font-size:18px;color:var(--negative);font-variant-numeric:tabular-nums;} .ad-a small{font-size:11px;color:var(--text-faint);}
   @media (max-width:700px){.ad-it{grid-template-columns:auto 1fr auto;} .ad-it .od-act{grid-column:1/-1;} .ad-it .od-act .od-b{flex:1;padding:10px 6px;} .ad-it .od-act .od-b.del{flex:none;padding-inline:18px;}}
@@ -4850,7 +4854,7 @@ function openWhy(kind){
     const best=ms.filter(o=>o.id).sort((a,b)=>b.profit-a.profit)[0];
     if(tone!=='good'){ fx('قلل الصرف بالأيام الي ما تجيب مبيعات.'); if(best) fx('ركّز الإعلان على أربح موديل: «'+esc(best.name)+'».','فتح الموديل',"openModelDetail('"+best.id+"')"); fx('حدد حد يومي للإعلان وراقبه.','تعديل حد الإعلانات','openGoalModal()'); }
     else fx('استمر على نفس الوتيرة وراقب كلفة الطلب الواحد.');
-    fx('شوف كل إعلانات الفترة.','عرض الإعلانات',"openPartnerDetail('ads')"); fx('سجل إعلان جديد.','+ إعلان',"openExpenseModal(null,'page','إعلانات')");
+    fx('شوف كل إعلانات الفترة.','عرض الإعلانات',"openPartnerDetail('ads')"); fx('سجل استقطاع جديد.','+ استقطاع',"openAdQuickModal()");
   } else if(kind==='wage'){
     title='👤 أجور الموظفين';
     const share=pct(D.wage,rev), rpp=M.r.pcs?M.r.profit/M.r.pcs:0, rate=(P.emps||[]).length?num(P.emps[0].rate):0;
@@ -4986,7 +4990,7 @@ function renderPartnership(){
   const closeBtn=partMonth==='ALL'?'':`<button class="btn primary" onclick="closePartnerMonth('${partMonth}')">${closed?'🔄 تحديث إقفال الشهر':'🔒 إقفال الشهر وتوزيع الأرباح'}</button>`;
   return `<div class="page-head"><div><h1>نظام الشراكة</h1><div class="desc">مبيعات الصفحة وإعلاناتها فقط — تتحدث الأرقام تلقائياً. مصاريف الصفحة الثانية (كارتات وغيرها) ما تدخل بالشراكة، فقط الإعلانات تتقاسمونها بالنسب.</div></div>
     <div class="toolbar" style="margin:0;"><div class="field-inline"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div></div></div>
-  <div class="pt-bar"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="openPartnerManage()">⚙️ إدارة الشراكة</button></div>
+  <div class="pt-bar"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button><button class="btn primary" onclick="openAdQuickModal()">+ استقطاع إعلان</button><button class="btn" onclick="openPartnerManage()">⚙️ إدارة الشراكة</button></div>
   ${ptCloseBannerHtml()}
   ${ptTopStats(D,PD)}
   ${goalCardHtml(D)}
@@ -5550,7 +5554,7 @@ function ptRetAlertHtml(D){
 }
 function ptModelProfitHtml(D){
   const g={}; D.ps.forEach(x=>{ const k=x.modelId||('x:'+saleProductLabel(x)), m=x.modelId?modelById(x.modelId):null; const o=g[k]=g[k]||{id:x.modelId||null,name:m?m.name:saleProductLabel(x),img:m&&m.images&&m.images[0],qty:0,rev:0,profit:0,direct:0}; o.qty+=num(x.quantity); o.rev+=saleRevenue(x); o.profit+=saleProfit(x); });
-  let direct=0; D.exps.forEach(e=>{ if(e.modelId){ const k=e.modelId, m=modelById(k); const o=g[k]=g[k]||{id:k,name:m?m.name:'موديل محذوف',img:m&&m.images&&m.images[0],qty:0,rev:0,profit:0,direct:0}; o.direct+=num(e.amount); direct+=num(e.amount); } });
+  let direct=0; D.exps.forEach(e=>{ const em=adModelOf(e); if(em){ const k=em, m=modelById(k); const o=g[k]=g[k]||{id:k,name:m?m.name:'موديل محذوف',img:m&&m.images&&m.images[0],qty:0,rev:0,profit:0,direct:0}; o.direct+=num(e.amount); direct+=num(e.amount); } });
   const rows=Object.values(g); if(!rows.length) return '<div class="notes-empty">لا توجد مبيعات بهذي الفترة</div>';
   const general=Math.max(0,D.ads-direct), totRev=rows.reduce((a,o)=>a+o.rev,0)||1;
   rows.forEach(o=>{ o.share=general*o.rev/totRev; o.adsT=o.direct+o.share; o.net=o.profit-o.adsT; o.roas=o.adsT>0?o.rev/o.adsT:null; o.mg=o.rev?o.net/o.rev*100:0;
@@ -5581,22 +5585,77 @@ function ptTopStats(D,PD){
     ${k('','💰','وارد الصفحة',money(D.revenue),D.ordersN+' طلب · '+D.pieces+' قطعة',db(D.revenue,PD&&PD.revenue,true),'openPageSalesModal()')}
     ${k('','🧾','الطلبات الواصلة',D.ordersN,'من '+D.ordersAll+' طلب كلي'+(D.retOrders?' · '+D.retOrders+' راجع':' · بدون رواجع'),db(D.ordersN,PD&&PD.ordersN,true),"openPartnerDetail('orders')")}
     ${k('','📈','الأرباح قبل الإعلانات',money(D.profit),'هامش '+mg+'%',db(D.profit,PD&&PD.profit,true),'',D.profit<0?'neg':'pos')}
-    ${k('','📣','تكاليف الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),"openPartnerDetail('ads')",'neg')}
+    ${k('','📣','استقطاعات الإعلانات',money(D.ads),D.profit>0?Math.round(D.ads/D.profit*100)+'% من الأرباح':'—',db(D.ads,PD&&PD.ads,false),"openPartnerDetail('ads')",'neg')}
     ${eC}
   </div>`;
+}
+function adCamps(){ const P=PS(); if(!Array.isArray(P.campaigns)) P.campaigns=[]; return P.campaigns; }
+function adModelOf(e){ if(e.campaignId){ const c=adCamps().find(x=>x.id===e.campaignId); if(c) return c.modelId||null; } return e.modelId||null; }
+function lastAd(campId){ const L=state.expenses.filter(e=>e.type==='إعلانات'&&(e.channel||'page')==='page'), by=campId?L.filter(e=>e.campaignId===campId):[]; return (by.length?by:L).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')))[0]||null; }
+function modelOptsHtml(sel){ return '<option value="">بدون موديل</option>'+state.models.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar')).map(m=>`<option value="${m.id}" ${sel===m.id?'selected':''}>${esc(m.name)}</option>`).join(''); }
+function adSameFill(){ const c=document.getElementById('ad_c').value, l=lastAd(c&&c!=='__new'?c:null), b=document.getElementById('adSame'); if(!b) return; if(l){ b.style.display=''; b.textContent='↺ نفس المبلغ السابق ('+money(l.amount)+')'; b.dataset.v=l.amount; } else b.style.display='none'; document.getElementById('ad_nb').style.display=c==='__new'?'':'none'; }
+function adSameClick(){ const b=document.getElementById('adSame'); const i=document.getElementById('ad_amt'); i.value=b.dataset.v; i.dispatchEvent(new Event('input',{bubbles:true})); i.focus(); }
+function openAdQuickModal(campId,editId){
+  const camps=adCamps(), item=editId?state.expenses.find(e=>e.id===editId):null, l0=item||lastAd(campId||null);
+  const sel=item?(item.campaignId||''):(campId||(l0&&l0.campaignId)||(camps.length?camps[0].id:'__new'));
+  openModal({title:item?'✏️ تعديل استقطاع':'➕ استقطاع جديد',bodyHtml:`
+    <div class="form-row"><label>الحملة</label><select id="ad_c" onchange="adSameFill()">${item?'<option value="">بدون حملة</option>':''}${camps.map(c=>`<option value="${c.id}" ${sel===c.id?'selected':''}>${esc(c.name)}${c.active===false?' (متوقفة)':''}</option>`).join('')}<option value="__new" ${sel==='__new'?'selected':''}>＋ حملة جديدة…</option></select></div>
+    <div id="ad_nb" style="display:none" class="form-grid2"><div class="form-row"><label>اسم الحملة</label><input type="text" id="ad_nn" placeholder="مثال: حملة القياس الخاص"></div><div class="form-row"><label>الموديل (اختياري)</label><select id="ad_nm">${modelOptsHtml('')}</select></div></div>
+    <div class="form-grid2"><div class="form-row"><label>المبلغ المستقطع (دينار)</label><input type="number" id="ad_amt" data-fmt value="${item?item.amount:''}" autofocus></div><div class="form-row"><label>التاريخ</label><input type="date" id="ad_d" value="${item?.date||todayISO()}"></div></div>
+    <button type="button" class="btn sm" id="adSame" onclick="adSameClick()" style="display:none"></button>
+    <div class="hint" style="margin-top:8px">المصدر والموديل ينتقلون تلقائياً من الحملة وآخر استقطاع.</div>`,
+  onSave(){
+    const amount=num(document.getElementById('ad_amt').value); if(!amount) return toast('اكتب المبلغ');
+    let cid=document.getElementById('ad_c').value, camp=null;
+    if(cid==='__new'){ const nm=document.getElementById('ad_nn').value.trim(); if(!nm) return toast('اكتب اسم الحملة'); camp={id:uid(),name:nm,modelId:document.getElementById('ad_nm').value||null,active:true}; camps.push(camp); cid=camp.id; }
+    else camp=camps.find(c=>c.id===cid)||null;
+    const d=document.getElementById('ad_d').value||todayISO();
+    if(item){ Object.assign(item,{amount,date:d,campaignId:cid||null,modelId:camp?camp.modelId:item.modelId||null,notes:camp?camp.name:item.notes}); }
+    else { const l=lastAd(camp?camp.id:null); state.expenses.push({id:uid(),type:'إعلانات',amount,date:d,notes:camp?camp.name:'',channel:'page',source:(l&&l.source)||'profit',modelId:camp?camp.modelId:null,campaignId:cid||null}); }
+    saveState(); closeModal(); render(); toast('تم تسجيل الاستقطاع');
+  }});
+  const sb=document.getElementById('modalSaveBtn'); if(sb) sb.textContent='حفظ';
+  adSameFill();
+}
+function openCampModal(id){
+  const c=id?adCamps().find(x=>x.id===id):null;
+  openModal({title:c?'✏️ تعديل الحملة':'🎯 حملة جديدة',bodyHtml:`<div class="form-row"><label>اسم الحملة</label><input type="text" id="cm_n" value="${esc(c?c.name:'')}" placeholder="مثال: حملة القياس الخاص"></div>
+    <div class="form-row"><label>الموديل المرتبط بها</label><select id="cm_m">${modelOptsHtml(c?c.modelId:'')}</select><div class="hint">الوارد اللي يجيبه هذا الموديل من الصفحة ينحسب لهذي الحملة.</div></div>
+    <div class="form-row"><label><input type="checkbox" id="cm_a" ${!c||c.active!==false?'checked':''}> الحملة شغالة</label></div>
+    ${c?`<button type="button" class="btn danger sm" onclick="deleteCamp('${c.id}')">🗑 حذف الحملة (الاستقطاعات تبقى)</button>`:''}`,
+  onSave(){ const nm=document.getElementById('cm_n').value.trim(); if(!nm) return toast('اكتب اسم الحملة'); const o={name:nm,modelId:document.getElementById('cm_m').value||null,active:document.getElementById('cm_a').checked};
+    if(c){ Object.assign(c,o); state.expenses.forEach(e=>{ if(e.campaignId===c.id){ e.modelId=o.modelId; e.notes=o.name; } }); } else adCamps().push({id:uid(),...o});
+    saveState(); closeModal(); render(); toast('تم الحفظ'); }});
+}
+function deleteCamp(id){ confirmDelete('حذف الحملة؟ الاستقطاعات المسجلة تبقى وتنحسب، بس تصير بدون حملة.',()=>{ const c=adCamps().find(x=>x.id===id); state.expenses.forEach(e=>{ if(e.campaignId===id){ e.modelId=c?c.modelId:e.modelId; e.campaignId=null; } }); PS().campaigns=adCamps().filter(x=>x.id!==id); saveState(); closeModal(); render(); toast('تم حذف الحملة'); }); }
+function adCampCards(D){
+  const camps=adCamps(), ms={}; D.ps.forEach(x=>{ if(!x.modelId) return; const o=ms[x.modelId]=ms[x.modelId]||{rev:0,profit:0,qty:0}; o.rev+=saleRevenue(x); o.profit+=saleProfit(x); o.qty+=num(x.quantity); });
+  const byM={}; D.exps.forEach(e=>{ const m=adModelOf(e); if(m) byM[m]=(byM[m]||0)+num(e.amount); });
+  const rows=camps.map(c=>{ const mine=D.exps.filter(e=>e.campaignId===c.id), ads=mine.reduce((a,e)=>a+num(e.amount),0), M=c.modelId&&ms[c.modelId], sh=(c.modelId&&byM[c.modelId])?ads/byM[c.modelId]:1; const rev=M?M.rev*sh:0, profit=M?M.profit*sh:0, qty=M?M.qty*sh:0;
+    let v; if(!c.modelId) v={c:'wholesale',t:'اربطها بموديل حتى تتقيّم'}; else if(!ads) v={c:'wholesale',t:'ما اكو استقطاع بهذي الفترة'}; else if(!rev) v={c:'neg',t:'صرف بدون مبيعات'}; else if(profit-ads<0) v={c:'neg',t:'خسارة بعد الاستقطاع'}; else if(ads>profit*0.5) v={c:'wholesale',t:'تاكل أغلب الأرباح'}; else v={c:'retail',t:'تستاهل ✓'};
+    return {c,ads,n:mine.length,rev,profit,qty,net:profit-ads,roas:ads?rev/ads:null,v}; }).sort((a,b)=>(b.c.active!==false)-(a.c.active!==false)||b.ads-a.ads);
+  const free=D.exps.filter(e=>!e.campaignId||!camps.find(c=>c.id===e.campaignId)), freeSum=free.reduce((a,e)=>a+num(e.amount),0);
+  return `<div class="section-title"><span class="ic">🎯</span> الحملات <span class="muted" style="font-size:12px;font-weight:500">كل حملة بمجموع استقطاعاتها وشنو جابت</span><button type="button" class="btn sm primary" style="margin-inline-start:auto" onclick="openCampModal()">+ حملة جديدة</button></div>
+  ${rows.length||free.length?`<div class="cp-grid">${rows.map(r=>`<div class="cp ${r.c.active===false?'off':''}"><div class="cp-h"><b>${esc(r.c.name)}</b>${r.c.active===false?'<span class="pill wholesale">متوقفة</span>':''}<button type="button" class="od-x" title="تعديل الحملة" onclick="openCampModal('${r.c.id}')">✏️</button></div>
+    <div class="cp-m">${r.c.modelId&&modelById(r.c.modelId)?'🎯 '+esc(modelById(r.c.modelId).name):'<span class="muted">بدون موديل</span>'}</div>
+    <div class="cp-a"><small>المستقطع بهذي الفترة · ${r.n} استقطاع</small><b>${money(r.ads)}</b></div>
+    <div class="cp-s"><div><small>الوارد الجابته</small><b>${r.c.modelId?money(r.rev):'—'}</b></div><div><small>الربح بعد الاستقطاع</small><b class="${r.net>=0?'pos':'neg'}">${r.c.modelId&&r.ads?money(r.net):'—'}</b></div><div><small>العائد</small><b>${r.roas&&r.c.modelId?'×'+(Math.round(r.roas*10)/10):'—'}</b></div></div>
+    <div class="cp-f"><span class="pill ${r.v.c}">${r.v.t}</span><button type="button" class="od-b pri" onclick="openAdQuickModal('${r.c.id}')">＋ استقطاع</button></div></div>`).join('')}
+    ${free.length?`<div class="cp off"><div class="cp-h"><b>بدون حملة</b></div><div class="cp-m"><span class="muted">استقطاعات قديمة أو غير مربوطة</span></div><div class="cp-a"><small>${free.length} استقطاع</small><b>${money(freeSum)}</b></div><div class="hint">اضغط «تعديل» على أي استقطاع تحتها واختار له حملة.</div></div>`:''}</div>`:'<div class="card"><div class="np-empty">سوّي أول حملة (مثلاً «حملة القياس الخاص») وبعدها كل استقطاع يجيك من البطاقة تسجله بثواني.</div></div>'}`;
 }
 function renderPtAds(){
   const [f,t]=mRange(partMonth), D=pageData(f,t), per=partMonth==='ALL'?'كل الفترات':monthLabelAr(partMonth), P=PS();
   const list=D.exps.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const closed=partMonth!=='ALL' && P.closes.find(c=>c.month===partMonth);
   const prev=partMonth==='ALL'?null:(()=>{ const pm=ymAdd(partMonth,-1); return pageData(pm+'-01',pm+'-31'); })();
-  return `<div class="page-head"><div><h1>إعلانات الصفحة</h1><div class="desc">${per} — كل إعلان تعدّله أو تحذفه ينحسب تلقائياً: حصص الشركاء والأرباح ترجع لحالها.</div></div><div class="btn-row"><button class="btn primary" onclick="openExpenseModal(null,'page','إعلانات')">+ إعلان</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
+  return `<div class="page-head"><div><h1>استقطاعات الإعلانات</h1><div class="desc">${per} — كل استقطاع من البطاقة تسجله أو تعدّله أو تحذفه ينحسب تلقائياً: حصص الشركاء والأرباح ترجع لحالها.</div></div><div class="btn-row"><button class="btn primary" onclick="openAdQuickModal()">+ استقطاع</button><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
   ${closed?`<div class="ret-al bad" style="margin-top:0"><b>🔒 هذا الشهر مقفل.</b> بعد أي تعديل أو حذف افتح الشهر وحدّث الإقفال حتى تنحسب الأرقام للشركاء.</div>`:''}
-  <div class="kt-row"><div style="display:contents">${kpiT('📣','إجمالي الإعلانات',money(D.ads),list.length+' إعلان',prev?deltaBadge(D.ads,prev.ads,false):'','','neg')}${kpiT('📊','معدل الإعلان',money(list.length?D.ads/list.length:0),'للإعلان الواحد')}${kpiT('📈','من الأرباح',(D.profit>0?Math.round(D.ads/D.profit*100):0)+'%','الأرباح قبل الإعلانات '+money(D.profit))}</div></div>
-  <div class="section-title"><span class="ic">👥</span> مساهمة الشركاء بالإعلانات</div>
+  <div class="kt-row"><div style="display:contents">${kpiT('📣','إجمالي الاستقطاعات',money(D.ads),list.length+' استقطاع',prev?deltaBadge(D.ads,prev.ads,false):'','','neg')}${kpiT('📊','معدل الاستقطاع',money(list.length?D.ads/list.length:0),'للاستقطاع الواحد')}${kpiT('📈','من الأرباح',(D.profit>0?Math.round(D.ads/D.profit*100):0)+'%','الأرباح قبل الإعلانات '+money(D.profit))}</div></div>
+  ${adCampCards(D)}
+  <div class="section-title"><span class="ic">👥</span> مساهمة الشركاء بالاستقطاعات</div>
   <div class="ad-parts">${D.parts.map(p=>`<div><small>${esc(p.name)} · ${pctTxt(p.pct)}</small><b>${money(p.ads)}</b></div>`).join('')}</div>
-  <div class="section-title"><span class="ic">🧾</span> كل الإعلانات <span class="muted" style="font-size:12px;font-weight:500">الأحدث أولاً</span></div>
-  ${list.length?`<div class="ad-list">${list.map(e=>{ const m=e.modelId?modelById(e.modelId):null; return `<div class="ad-it"><div class="ad-i">📣</div><div class="ad-m"><b>${esc(e.notes||'إعلان')}</b><div class="ad-tg"><span>${esc(e.date)}</span>${m?`<span class="pill retail">🎯 ${esc(m.name)}</span>`:'<span class="pill wholesale">عام للصفحة</span>'}${e.source?`<span class="muted">${e.source==='capital'?'من رأس المال':e.source==='profit'?'من الأرباح':'مصدر آخر'}</span>`:''}</div></div><div class="ad-a"><b>${money(e.amount)}</b>${D.ads?`<small>${Math.round(num(e.amount)/D.ads*100)}% من الإعلانات</small>`:''}</div><div class="od-act"><button type="button" class="od-b pri" onclick="openExpenseModal('${e.id}')"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف" onclick="deleteExpense('${e.id}')"><i>🗑</i></button></div></div>`; }).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو إعلانات بهذي الفترة</div></div>'}
+  <div class="section-title"><span class="ic">🧾</span> كل الاستقطاعات <span class="muted" style="font-size:12px;font-weight:500">الأحدث أولاً</span></div>
+  ${list.length?`<div class="ad-list">${list.map(e=>{ const m=adModelOf(e)?modelById(adModelOf(e)):null, cp=e.campaignId?adCamps().find(c=>c.id===e.campaignId):null; return `<div class="ad-it"><div class="ad-i">📣</div><div class="ad-m"><b>${esc(cp?cp.name:(e.notes||'استقطاع إعلان'))}</b><div class="ad-tg"><span>${esc(e.date)}</span>${m?`<span class="pill retail">🎯 ${esc(m.name)}</span>`:'<span class="pill wholesale">عام للصفحة</span>'}${e.source?`<span class="muted">${e.source==='capital'?'من رأس المال':e.source==='profit'?'من الأرباح':'مصدر آخر'}</span>`:''}</div></div><div class="ad-a"><b>${money(e.amount)}</b>${D.ads?`<small>${Math.round(num(e.amount)/D.ads*100)}% من الاستقطاعات</small>`:''}</div><div class="od-act"><button type="button" class="od-b pri" onclick="openAdQuickModal(null,'${e.id}')"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف" onclick="deleteExpense('${e.id}')"><i>🗑</i></button></div></div>`; }).join('')}</div>`:'<div class="card"><div class="np-empty">ما اكو استقطاعات بهذي الفترة</div></div>'}
   <div class="field-inline" style="margin:14px 0"><label>الفترة</label><select onchange="partMonth=this.value;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select></div>`;
 }
 let ordFilter='ok', ordQ='', ordHi=null, ordLimit=60;
