@@ -172,6 +172,21 @@
   .st-item.wide{grid-column:1/-1;}
   .st-item.danger{border-color:color-mix(in srgb,var(--negative) 40%,var(--border));}
   .st-info{display:flex;flex-direction:column;gap:2px;}
+  .ac-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:16px 0 8px;}
+  .ac-bar .field-inline{display:flex;flex-direction:column;gap:4px;} .ac-bar label{font-size:12px;color:var(--text-faint);}
+  .ac-bar select,.ac-bar input{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 12px;font:inherit;font-size:13.5px;color:var(--text);}
+  .ac-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px;}
+  .ac-chips button{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer;}
+  .ac-chips button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+  .ac-chips small{opacity:.7;margin-right:3px;}
+  .ac-tl{padding:12px 16px 12px 16px;display:flex;gap:12px;align-items:flex-start;border-top:1px solid var(--border);} .ac-tl:first-child{border-top:0;}
+  .ac-dot{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-size:15px;flex:none;background:var(--surface-2);}
+  .ac-dot.add{background:color-mix(in srgb,var(--positive) 16%,transparent);} .ac-dot.del{background:color-mix(in srgb,var(--negative) 16%,transparent);} .ac-dot.edit{background:color-mix(in srgb,var(--info) 16%,transparent);}
+  .ac-mid{flex:1;min-width:0;} .ac-mid b{font-size:14.5px;} .ac-mid .ac-d{color:var(--text-dim);font-size:13px;margin-top:2px;word-break:break-word;}
+  .ac-side{text-align:left;flex:none;font-size:12px;color:var(--text-faint);display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+  .ac-dev{display:inline-flex;gap:5px;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--text);font-weight:600;cursor:pointer;}
+  .ac-panel{margin:6px 0 20px;}
+  @media(max-width:640px){.ac-tl{flex-wrap:wrap}.ac-side{flex-direction:row;align-items:center;width:100%;justify-content:space-between;padding-right:46px}}
   .st-item .section-title::after{display:none;}
   .st-item input[type=password],.st-item input[type=number],.st-item input[type=text]{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:11px 14px;font:inherit;color:var(--text);box-sizing:border-box;}
   .st-grid{align-items:stretch;}
@@ -1062,7 +1077,7 @@ const STORAGE_KEY = 'setr_erp_state_v1';
    أول مرة ينقل الموقع بياناتك من main إلى main2 تلقائياً */
 const FIRESTORE_DOC = 'erp_state/main2';
 const LEGACY_FIRESTORE_DOC = 'erp_state/main';
-const BUILD_ID='b20261128b'; const CLIENT_VERSION = 'v8'; const CLIENT_NUM = 8;
+const BUILD_ID='b20261128c'; const CLIENT_VERSION = 'v8'; const CLIENT_NUM = 8;
 const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('str_device'); if(!d){ d = Math.random().toString(36).slice(2,7); localStorage.setItem('str_device', d); } return d; }catch(e){ return 'dev'; } })();
 let lastSeenRev = null;
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
@@ -1625,7 +1640,7 @@ const PAGES = [
   {id:'debtshub', label:'الديون', icon:'📒'},
   {id:'workers', label:'عمال المعمل', icon:'👷'},
   {id:'notes', label:'الملاحظات', icon:'📝'},
-  {id:'safety', label:'النسخ والأمان', icon:'🛡️'},
+  {id:'safety', label:'سجل الحركات', icon:'📋'},
   {id:'settings', label:'الإعدادات', icon:'⚙️'},
 ];
 let homeTab='over';
@@ -5989,7 +6004,7 @@ function renderSettings(){
 
   ${stGroup('النسخ والحماية','بياناتك بأمان وبأكثر من مكان',[
     stItem(autoBackupCard()),
-    stItem(`<div class="section-title">💾 النسخ اليدوي والتصدير</div><div class="card"><div class="hint" style="margin:0 0 12px;">نزّل نسخة من كل بياناتك، أو استوردها، أو صدّر ملفات Excel.</div><div class="btn-row"><button type="button" class="btn primary" onclick="openToolsModal()">فتح النسخ والتصدير</button><button type="button" class="btn" onclick="navigate('safety')">🛡️ النسخ والأمان</button></div><div class="hint" id="syncInfo" style="margin-top:12px;">${syn}</div></div>`),
+    stItem(backupCenterCard(),'wide'),
     stItem(`<div class="section-title">🔒 رمز الحماية (PIN)</div><div class="card"><div class="desc" style="margin-bottom:10px;">${state.settings.pin?'🟢 رمز الحماية مفعّل.':'⚪ ما اكو رمز حماية — أي شخص يفتح المتصفح يدخل مباشرة.'}</div><div class="form-row"><label>رمز جديد (اتركه فارغاً للإزالة)</label><input type="password" id="s_pin" maxlength="8" placeholder="مثال: 1234"></div><div class="btn-row" style="margin-top:12px;"><button class="btn primary" onclick="savePin()">حفظ الرمز</button></div></div>`)
   ])}
 
@@ -6812,31 +6827,69 @@ function integrityIssues(){
 let safeLogTab='sales';
 const LOG_GROUPS=[['sales','🛒 المبيعات',['بيع','مرتجع']],['debts','💳 الديون',['دين علينا','دين زبون','تسديد دين','تحصيل دين']],['partner','🤝 الشراكة وسوالفها',['إقفال شراكة','استلام شريك','تعديل حساب شريك','تسديد موظف','حالة الشراكة','نسب الشركاء','هدف الشراكة']],['other','📋 أخرى (مصاريف، عمال)',null]];
 function logGroupOf(c){ for(const g of LOG_GROUPS){ if(g[2]&&g[2].includes(c)) return g[0]; } return 'other'; }
-function renderSafety(){
-  const I=integrityIssues(), ALL=(state.opsLog||[]).slice().reverse();
-  const cnt={}; LOG_GROUPS.forEach(g=>cnt[g[0]]=0); ALL.forEach(e=>cnt[logGroupOf(e.c)]++);
-  if(!LOG_GROUPS.some(g=>g[0]===safeLogTab)) safeLogTab='sales';
-  const L=ALL.filter(e=>logGroupOf(e.c)===safeLogTab).slice(0,150);
-  const colr={'إضافة':'pos','تعديل':'','حذف':'neg','تغيير':''};
-  const ic=k=>k==='bad'?'⛔':k==='warn'?'⚠️':'ℹ️';
+function backupCenterCard(){
   const lastSnap=(()=>{ try{ const t=Number(localStorage.getItem('str_snap_t')||0); return t?new Date(t).toLocaleString('ar-IQ',{dateStyle:'medium',timeStyle:'short'}):'لسه'; }catch(e){ return '—'; } })();
-  const okSave=!saveFailure && !saveQueued;
-  return `<div class="page-head"><div><h1>النسخ والأمان</h1><div class="desc">بياناتك تنحفظ بثلاث طبقات: السحابة، ولقطات تلقائية كل 3 ساعات، ونسخ على جهازك. كل شي هنا تحت سيطرتك.</div></div></div>
-  <div class="bk-st ${okSave?'':'warn'}"><i></i><div><b>${okSave?'كل شي محفوظ ومتزامن':'اكو تغييرات قيد الحفظ'}</b><div class="muted" style="font-size:12.5px">النسخة ${esc(CLIENT_VERSION)} · آخر لقطة سحابية: ${esc(lastSnap)}${(()=>{ try{ return localStorage.getItem('str_lastbackup')?' · آخر ملف نزّلته: '+esc(localStorage.getItem('str_lastbackup')):''; }catch(e){ return ''; } })()}</div></div></div>
+  const okSave=!saveFailure && !saveQueued, lb=lastBackupLabel();
+  return `<div class="section-title">🛡️ مركز النسخ الاحتياطي</div>
+  <div class="bk-st ${okSave?'':'warn'}" style="margin-bottom:14px"><i></i><div><b>${okSave?'كل شي محفوظ ومتزامن':'اكو تغييرات قيد الحفظ'}</b><div class="muted" style="font-size:12.5px">النسخة ${esc(CLIENT_VERSION)} · آخر لقطة سحابية: ${esc(lastSnap)}${lb?' · آخر ملف نزّلته: '+esc(lb):''}</div></div></div>
   <div class="bk-g">
-    <div class="bk-c"><b>☁️ لقطة سحابية الآن</b><small>تنحفظ تلقائياً كل 3 ساعات (آخر 40 لقطة). خذ وحدة يدوياً قبل أي تعديل كبير.</small><div class="btn-row"><button class="btn primary" onclick="bkSnapNow()">خذ لقطة الآن</button><button class="btn" onclick="openRecovery()">استرجاع من السحابة</button></div></div>
-    <div class="bk-c"><b>💾 نسخ على جهازك</b><small>آخر 8 نسخ تنحفظ تلقائياً على هذا الجهاز نفسه، تنفع إذا انقطع الإنترنت.</small><div class="btn-row"><button class="btn" onclick="bkLocalModal()">عرض واسترجاع</button></div></div>
+    <div class="bk-c"><b>☁️ لقطات سحابية</b><small>تنحفظ تلقائياً كل 3 ساعات (آخر 40 لقطة). خذ وحدة يدوياً قبل أي تعديل كبير.</small><div class="btn-row"><button class="btn primary" onclick="bkSnapNow()">خذ لقطة الآن</button><button class="btn" onclick="openRecovery()">استرجاع من السحابة</button></div></div>
+    <div class="bk-c"><b>💾 نسخ على هذا الجهاز</b><small>آخر 8 نسخ تنحفظ تلقائياً على الجهاز نفسه، تنفع إذا انقطع الإنترنت.</small><div class="btn-row"><button class="btn" onclick="bkLocalModal()">عرض واسترجاع</button></div></div>
     <div class="bk-c"><b>⬇ ملف نسخة احتياطية</b><small>نزّل ملف JSON واحتفظ به خارج النظام. يُنصح مرة بالأسبوع.</small><div class="btn-row"><button class="btn primary" onclick="backupNow()">تنزيل نسخة</button><label class="btn" style="cursor:pointer">استيراد<input type="file" accept="application/json" style="display:none" onchange="importBackup(event)"></label></div></div>
-  </div>
-  <div class="section-title"><span class="ic">🩺</span> فحص سلامة البيانات ${I.length?`<span class="muted" style="font-size:12px;font-weight:500">${I.reduce((a,x)=>a+x.n,0)} ملاحظة</span>`:''}</div>
-  ${I.length?I.map((x,xi)=>`<details class="sf-iss ${x.kind}" ${xi===0?'open':''}><summary><span class="np-ic">${ic(x.kind)}</span><b>${esc(x.t)}</b><em>${x.n}</em></summary>
+    <div class="bk-c"><b>📊 تصدير Excel</b><small>صدّر المبيعات والأرقام لملفات Excel.</small><div class="btn-row"><button class="btn" onclick="openToolsModal()">فتح التصدير</button></div></div>
+  </div>`;
+}
+let actF={period:'week',dev:'ALL',act:'ALL',grp:'ALL',q:'',panel:null};
+function isoLocal(d){ return ymOfDate(d)+'-'+pad2(d.getDate()); }
+function actDevInfo(name){ const D=(state.settings&&state.settings.devices)||{}; const k=Object.keys(D).find(x=>D[x].name===name); return k?D[k]:null; }
+function actRows(){
+  const now=new Date(), today=isoLocal(now), wk=isoLocal(new Date(now.getTime()-6*864e5)), mo=today.slice(0,7);
+  return (state.opsLog||[]).slice().reverse().filter(e=>{
+    const d=isoLocal(new Date(e.t));
+    if(actF.period==='today'&&d!==today) return false; if(actF.period==='week'&&d<wk) return false; if(actF.period==='month'&&d.slice(0,7)!==mo) return false;
+    return true; });
+}
+function actFiltered(base){
+  const q=actF.q.trim().toLowerCase();
+  return base.filter(e=>(actF.dev==='ALL'||(e.by||'—')===actF.dev)&&(actF.act==='ALL'||e.a===actF.act)&&(actF.grp==='ALL'||logGroupOf(e.c)===actF.grp)&&(!q||((e.c||'')+' '+(e.d||'')+' '+(e.by||'')).toLowerCase().includes(q)));
+}
+function exportActCSV(){
+  const rows=actFiltered(actRows());
+  downloadBlob(toCSV(['الوقت','الجهاز','العملية','النوع','التفاصيل'],rows.map(e=>[new Date(e.t).toLocaleString('en-GB'),e.by||'—',e.a,e.c,e.d||''])),'سجل_الحركات.csv','text/csv;charset=utf-8;');
+}
+function renderSafety(){
+  const I=integrityIssues(), BASE=actRows(), rows=actFiltered(BASE), nIss=I.reduce((a,x)=>a+x.n,0), nTrash=(state.trash||[]).length;
+  const today=isoLocal(new Date()), tAll=(state.opsLog||[]).filter(e=>isoLocal(new Date(e.t))===today);
+  const cA=a=>tAll.filter(e=>e.a===a).length;
+  const byDev={}; tAll.forEach(e=>{ const k=e.by||'—'; byDev[k]=(byDev[k]||0)+1; }); window._acDevs=Object.entries(byDev).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const hero=axHero({title:'حركات اليوم',big:tAll.length+' حركة',sub:tAll.length?`${cA('إضافة')} إضافة · ${cA('تعديل')} تعديل · ${cA('حذف')} حذف`:'ما صارت حركات اليوم',
+    parts:window._acDevs.slice(0,4).map((k,i)=>({n:'💻 '+(k==='—'?'بدون اسم جهاز':k),v:byDev[k]+' حركة',click:`actF.dev=window._acDevs[${i}];actF.period='today';render()`}))});
+  const devSet=new Set(); (state.opsLog||[]).forEach(e=>devSet.add(e.by||'—')); Object.values((state.settings&&state.settings.devices)||{}).forEach(d=>d.name&&devSet.add(d.name));
+  const ic=k=>k==='bad'?'⛔':k==='warn'?'⚠️':'ℹ️';
+  const cnt=a=>BASE.filter(e=>a==='ALL'||e.a===a).length;
+  const dot=a=>a==='إضافة'?['add','➕']:a==='حذف'?['del','🗑']:['edit','✏️'];
+  const days=[]; rows.slice(0,400).forEach(e=>{ const d=isoLocal(new Date(e.t)); let g=days[days.length-1]; if(!g||g.d!==d){ g={d,items:[]}; days.push(g); } g.items.push(e); });
+  const yest=isoLocal(new Date(Date.now()-864e5));
+  const dl=d=>{ let t=''; try{ t=new Date(d+'T12:00:00').toLocaleDateString('ar-IQ',{weekday:'long',day:'numeric',month:'long'}); }catch(_){ t=d; } return (d===today?'اليوم · ':d===yest?'أمس · ':'')+t; };
+  const per=[['today','اليوم'],['week','آخر 7 أيام'],['month','هذا الشهر'],['all','الكل']];
+  const tile=(k,ico,t,n,warn)=>`<button type="button" class="btn ${actF.panel===k?'primary':''}" onclick="actF.panel=actF.panel==='${k}'?null:'${k}';render()">${ico} ${t}${n?` <b style="margin-right:4px">${n}</b>`:''}</button>`;
+  return `<div class="page-head"><div><h1>سجل الحركات</h1><div class="desc">كل إضافة وتعديل وحذف يتسجل هنا: شنو صار، ومتى، ومن أي جهاز.</div></div></div>
+  ${hero}
+  <div class="btn-row" style="margin:14px 0 4px">${tile('trash','🗑','سلة المحذوفات',nTrash)}${tile('integrity','🩺','فحص سلامة البيانات',nIss)}<button type="button" class="btn" onclick="exportActCSV()">⬇ تصدير الحركات</button></div>
+  ${actF.panel==='trash'?`<div class="ac-panel">${trashHtml()}</div>`:''}
+  ${actF.panel==='integrity'?`<div class="ac-panel">${I.length?I.map((x,xi)=>`<details class="sf-iss ${x.kind}" ${xi===0?'open':''}><summary><span class="np-ic">${ic(x.kind)}</span><b>${esc(x.t)}</b><em>${x.n}</em></summary>
     <div class="sf-hint">${esc(x.hint||'')}</div>
     ${x.items.slice(0,60).map(it=>`<div class="sf-row"><span class="sf-t">${esc(it.txt)}</span><div class="btn-row">${it.edit?`<button class="btn sm primary" onclick="${it.edit}">${it.editLbl||'فتح / تعديل'}</button>`:''}${it.hist?`<button class="btn sm" onclick="${it.hist}">السجل</button>`:''}${it.del?`<button class="btn sm danger" onclick="${it.del}">${it.delLbl||'حذف'}</button>`:''}</div></div>`).join('')}
-    ${x.items.length>60?`<div class="muted" style="padding:6px 0">… و${x.items.length-60} غيرها</div>`:''}</details>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}
-  ${trashHtml()}<div class="section-title"><span class="ic">🕒</span> سجل العمليات <span class="muted" style="font-size:12px;font-weight:500">كل إضافة وتعديل وحذف</span></div>
-  <div class="tabs" style="margin-bottom:12px">${LOG_GROUPS.map(g=>`<button type="button" class="${safeLogTab===g[0]?'on':''}" onclick="safeLogTab='${g[0]}';render();">${g[1]} <small>(${cnt[g[0]]})</small></button>`).join('')}</div>
-  <div class="table-wrap"><table><thead><tr><th>الوقت</th><th>العملية</th><th>النوع</th><th>التفاصيل</th></tr></thead><tbody>
-  ${L.length?L.map(e=>`<tr><td class="muted">${new Date(e.t).toLocaleString('ar-IQ',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td class="${colr[e.a]||''}"><b>${e.a}</b></td><td>${esc(e.c)}</td><td class="muted">${esc(e.d)}${e.by?` <span class="pill retail" style="font-size:10.5px">${esc(e.by)}</span>`:''}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">ما اكو عمليات بهذا القسم — كل تغيير تسويه ينكتب هنا</td></tr>'}</tbody></table></div>`;
+    ${x.items.length>60?`<div class="muted" style="padding:6px 0">… و${x.items.length-60} غيرها</div>`:''}</details>`).join(''):'<div class="card"><div class="np-empty">✅ ما لقيت أي مشكلة ببياناتك</div></div>'}</div>`:''}
+  <div class="ac-bar">
+    <div class="field-inline"><label>الفترة</label><select onchange="actF.period=this.value;render()">${per.map(p=>`<option value="${p[0]}" ${actF.period===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select></div>
+    <div class="field-inline"><label>الجهاز</label><select onchange="actF.dev=this.value;render()"><option value="ALL">كل الأجهزة</option>${[...devSet].map(n=>{ const i=actDevInfo(n); return `<option value="${esc(n)}" ${actF.dev===n?'selected':''}>${esc(n)}${i&&i.plat?' — '+esc(i.plat):''}</option>`; }).join('')}</select></div>
+    <div class="field-inline"><label>القسم</label><select onchange="actF.grp=this.value;render()"><option value="ALL">كل الأقسام</option>${LOG_GROUPS.map(g=>`<option value="${g[0]}" ${actF.grp===g[0]?'selected':''}>${g[1]}</option>`).join('')}</select></div>
+    <div class="field-inline" style="flex:1;min-width:160px"><label>بحث</label><input type="text" placeholder="اسم، مبلغ، موديل…" value="${esc(actF.q)}" oninput="actF.q=this.value;clearTimeout(window._acT);window._acT=setTimeout(()=>{render();const i=document.getElementById('ac_q');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},350)" id="ac_q" style="width:100%"></div>
+  </div>
+  <div class="ac-chips">${['ALL','إضافة','تعديل','حذف'].map(a=>`<button type="button" class="${actF.act===a?'on':''}" onclick="actF.act='${a}';render()">${a==='ALL'?'الكل':a}<small>${cnt(a)}</small></button>`).join('')}${(actF.dev!=='ALL'||actF.act!=='ALL'||actF.grp!=='ALL'||actF.q)?`<button type="button" onclick="actF.dev='ALL';actF.act='ALL';actF.grp='ALL';actF.q='';render()">✕ مسح الفلاتر</button>`:''}</div>
+  ${days.length?days.map(g=>`<div class="ax-day"><div class="ax-day-h"><span>${esc(dl(g.d))}</span><b>${g.items.length} حركة</b></div><div class="ax-day-l">${g.items.map(e=>{ const [dc,di]=dot(e.a), inf=e.by?actDevInfo(e.by):null; return `<div class="ac-tl"><div class="ac-dot ${dc}">${di}</div><div class="ac-mid"><b>${esc(e.a)} · ${esc(e.c)}</b><div class="ac-d">${esc(e.d||'')}</div></div><div class="ac-side"><span>${new Date(e.t).toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit'})}</span>${e.by?`<span class="ac-dev" title="${esc(inf?(inf.plat||''):'')}" onclick="actF.dev='${esc(e.by).replace(/'/g,'')}';render()">💻 ${esc(e.by)}</span>`:'<span title="قبل تفعيل أسماء الأجهزة">—</span>'}</div></div>`; }).join('')}</div></div>`).join(''):'<div class="ax-empty">ما اكو حركات بهذي الفلاتر</div>'}
+  ${rows.length>400?`<div class="muted" style="text-align:center;padding:10px">يعرض آخر 400 حركة — ضيّق الفلتر أو صدّر الكل</div>`:''}`;
 }
 
 function renderReturns(){
