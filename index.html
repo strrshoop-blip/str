@@ -979,6 +979,9 @@
   .bkf-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface-3);} .bkf-chip.ok{color:var(--positive);} .bkf-chip.warn{color:var(--warn);} .bkf-chip.bad{color:var(--negative);}
   .bkf-note{font-size:11.5px;color:var(--text-faint);line-height:1.7;}
   .ax-rem{white-space:nowrap;} .ax-c-foot{flex-wrap:wrap;}
+  .ep-big{display:grid;grid-template-columns:1fr 1fr;gap:12px;} .ep-b{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px 22px;box-shadow:var(--card-shadow);} .ep-b small{display:block;font-size:13px;color:var(--text-dim);} .ep-b b{display:block;font-family:'Cairo',sans-serif;font-size:42px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap;} .ep-b b.neg{color:var(--negative);} .ep-b b.pos{color:var(--positive);} .ep-b em{font-style:normal;font-size:12px;color:var(--text-faint);}
+  .ep-two{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border-radius:16px;padding:12px 6px;} .ep-two>div{padding:0 12px;} .ep-two>div+div{border-inline-start:1px solid var(--border);} .ep-two small{display:block;font-size:11.5px;color:var(--text-faint);} .ep-two b{font-family:'Cairo',sans-serif;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap;} .ep-two b.neg{color:var(--negative);} .ep-two b.pos{color:var(--positive);}
+  @media (max-width:560px){.ep-b b{font-size:32px;} .ep-b{padding:16px;}}
 </style>
 </head>
 <body>
@@ -5917,58 +5920,46 @@ function axAv(n){ const c=['#111','#2563eb','#c58a00','#0d9488','#c2410c','#7c3a
 function axHero(o){ return `<div class="ax-hero"><div class="ax-hero-t"><span>${o.title}</span>${o.btn||''}</div><div class="ax-big">${o.big}</div><div class="ax-sub">${o.sub||''}</div>${(o.parts&&o.parts.length)?`<div class="ax-parts">${o.parts.map(p=>`<div${p.click?` class="ax-tile" role="button" tabindex="0" onclick="${p.click}"`:''}><small>${p.n}</small><b>${p.v}</b>${p.s?`<em>${p.s}</em>`:''}</div>`).join('')}</div>`:''}</div>`; }
 function renderEmployeesPage(){
   const T=empsTotal(), go=id=>`currentDetail='emp:${id}';render();window.scrollTo(0,0)`;
-  const hero=axHero({title:'مستحقات الموظفين',btn:'<button type="button" onclick="openEmpEditModal()">+ موظف</button>',big:money(T.remaining),sub:`${T.list.length} موظف · المتبقي الكلي لهم · قطع الفترات الحالية ${T.pPieces} · مستحقها ${money(T.pDue)}`,parts:T.list.map(S=>({n:esc(S.E.name),v:money(S.remaining),s:esc(S.I.label),click:go(S.E.id)}))});
-  const card=S=>{ const un=S.unit, per=S.per, I=S.I; return `<div class="ax-c" style="cursor:pointer" onclick="${go(S.E.id)}">
-    <div class="ax-c-top"><div class="ax-id">${axAv(S.E.name)}<div><b>${esc(S.E.name)}</b><small>${money(S.rate)} للقطعة · ${esc(I.label)}</small></div></div><span class="pill ${S.remaining>0?'wholesale':'retail'}">${S.remaining>0?'عليه مستحق':'مسدد'}</span></div>
-    <div class="ax-st" style="cursor:default"><div><small>قطع ${un}</small><b>${per.pieces}</b></div><div><small>مستحق ${un}</small><b>${money(per.due)}</b></div><div><small>مسدد ${un}</small><b class="pos">${money(per.paid)}</b></div></div>
-    <div class="ax-roas">📅 ${un} الحالي: <b>${empD(per.from)} → اليوم</b> · التسليم القادم: <b>${esc(I.next)}</b></div>
-    ${per.retPcs?`<div class="ax-roas">↩️ راجع هذا ${un} (مخصوم): <b class="neg">−${per.retPcs} قطعة</b></div>`:''}
-    ${Math.round(S.carryP)!==0?`<div class="ax-roas">يشمل <b>${money(S.carryP)}</b> من فترات سابقة</div>`:''}
-    <div class="ax-c-foot" onclick="event.stopPropagation()"><div><span class="ax-roas">المتبقي له</span><b class="ax-rem ${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</b></div><div><button type="button" class="ax-add" onclick="openEmpPayModal('${S.E.id}')">تسديد</button><button type="button" class="ax-ic" title="تحكم وتصفير" onclick="openEmpControlModal('${S.E.id}')">⚙️</button><button type="button" class="ax-ic" title="تعديل" onclick="openEmpEditModal('${S.E.id}')">✏️</button><button type="button" class="ax-ic" title="حذف" onclick="deleteEmp('${S.E.id}')">🗑</button></div></div></div>`; };
-  return `<div class="page-head"><div><h1>موظفو الصفحة</h1><div class="desc">كل موظف يستحق أجرة على قطع المفرد اللي تنباع عبر الصفحة. القطع والمستحق تنعرض أسبوعي أو شهري حسب موعد تسليم كل موظف، وانت تتحكم بالتصفير.</div></div><div class="btn-row"><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
+  const hero=axHero({title:'مستحقات الموظفين',btn:'<button type="button" onclick="openEmpEditModal()">+ موظف</button>',big:money(T.remaining),sub:`${T.list.length} موظف · إجمالي المبلغ المستحق لهم`,parts:T.list.map(S=>({n:esc(S.E.name),v:money(S.remaining),s:S.pieces+' قطعة',click:go(S.E.id)}))});
+  const card=S=>`<div class="ax-c" style="cursor:pointer" onclick="${go(S.E.id)}">
+    <div class="ax-c-top"><div class="ax-id">${axAv(S.E.name)}<div><b>${esc(S.E.name)}</b><small>${money(S.rate)} للقطعة · ${esc(S.I.label)}</small></div></div></div>
+    <div class="ep-two"><div><small>عدد القطع</small><b>${S.pieces}</b></div><div><small>المبلغ</small><b class="${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</b></div></div>
+    <div class="ax-c-foot" onclick="event.stopPropagation()"><div><button type="button" class="ax-add" onclick="openEmpPayModal('${S.E.id}')">تسديد</button></div><div><button type="button" class="ax-ic" title="تصفير وتعديل" onclick="openEmpControlModal('${S.E.id}')">⚙️</button><button type="button" class="ax-ic" title="تعديل" onclick="openEmpEditModal('${S.E.id}')">✏️</button><button type="button" class="ax-ic" title="حذف" onclick="deleteEmp('${S.E.id}')">🗑</button></div></div></div>`;
+  return `<div class="page-head"><div><h1>موظفو الصفحة</h1><div class="desc">لكل موظف: عدد القطع والمبلغ المستحق. أي تسديد تسجله يصفّر الاثنين ويبدأ حساب جديد.</div></div><div class="btn-row"><button class="btn" onclick="currentDetail=null;render();">← رجوع للشراكة</button></div></div>
   ${hero}
   <div class="ax-h"><h2>👤 الموظفون</h2></div>
   <div class="ax-grid">${T.list.length?T.list.map(card).join(''):'<div class="ax-empty">ما اكو موظفين بعد. اضغط «+ موظف» من البطاقة السوداء.</div>'}</div>`;
 }
 function renderEmployeeDetail(id){
   const S=empStats(id); if(!S){ currentDetail='emps'; return renderEmployeesPage(); }
-  const E=S.E, un=S.unit, per=S.per, pv=S.prev, rng=p=>empD(p.from)+' → '+(p.i===0?'اليوم':empD(p.to));
-  const pays=(E.pays||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)), cuts=(E.cuts||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)), arch=(E.archive||[]).slice().reverse();
-  const ls=S.ls.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
-  return `<div class="page-head"><div><h1>${esc(E.name)} <span class="pill retail">موظف</span> <span class="pill wholesale">${money(S.rate)} للقطعة</span></h1><div class="desc">يستحق أجرة على كل قطعة مفرد تنباع عبر الصفحة. حساب منفصل — ما يُخصم من أرباح الشركاء.</div></div><button class="btn" onclick="currentDetail='emps';render();">← رجوع للموظفين</button></div>
-  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openEmpPayModal('${E.id}')">+ تسديد مبلغ</button><button class="btn" onclick="openEmpControlModal('${E.id}')">⚙️ تحكم وتصفير</button><button class="btn" onclick="openEmpEditModal('${E.id}')">✏️ تعديل الاسم والأجرة والموعد</button><button class="btn danger" onclick="deleteEmp('${E.id}')">🗑 حذف الحساب</button></div>
-  <div class="grid stats">${statCard('المتبقي له',money(S.remaining),S.remaining>0?'neg':'pos',Math.round(S.carryP)!==0?'يشمل '+money(S.carryP)+' من فترات سابقة':'المستحق − المسدد − التصفير',true)}${statCard('قطع '+un,per.pieces+' قطعة','accent',rng(per)+' · '+per.orders+' طلب')}${statCard('مستحق '+un,money(per.due),'',per.pieces+' × '+money(S.rate))}${statCard('مسدد '+un,money(per.paid),'pos')}</div>
-  <div class="grid stats" style="margin-top:10px">${pv?statCard('قطع '+un+' الماضي',pv.pieces+' قطعة','',rng(pv)):statCard('قطع '+un+' الماضي','—','','لسه ما اكو فترة سابقة')}${pv?statCard('متبقي '+un+' الماضي',money(pv.due-pv.paid-pv.cut),(pv.due-pv.paid-pv.cut)>0?'neg':'pos','المستحق − المسدد'):statCard('متبقي '+un+' الماضي','—','','')}${statCard('رواجع '+un+' الحالي',per.retPcs+' قطعة',per.retPcs?'neg':'',per.retPcs?'ما تنحسب بأجرته':'ما اكو رواجع')}${statCard('كل طلباته',S.ordAllN+' طلب','','منذ بداية حسابه · '+S.rAll+' قطعة راجعة')}</div>
-  <div class="rule-box" style="margin:10px 0 0;">📅 موعد تسليم الراتب: <b>${esc(empPayText(E))}</b> — ${un} يبدأ من يوم التسليم، ويجيك إشعار 🔔 قبل الموعد بيوم.</div>
-  <div class="hint" style="margin:8px 0 0;">يبدأ حسابه من ${esc(E.from||'—')} — المبيعات قبل هذا التاريخ ما تنحسب له.${S.excl?` · ${S.excl} بيع جملة بالصفحة ما يحسب له (الأجرة على المفرد فقط)`:''}</div>
-  <div class="section-title"><span class="ic">🗓</span> ${un==='الشهر'?'الأشهر':'الأسابيع'} <span class="muted" style="font-size:12px;font-weight:500">حسب موعد تسليمه</span></div>
-  <div class="table-wrap"><table><thead><tr><th>الفترة</th><th>القطع</th><th>المستحق</th><th>المسدد</th><th>تصفير</th><th>المتبقي</th></tr></thead><tbody>
-  ${S.periods.filter(p=>p.i===0||p.pieces||p.paid||p.cut||p.adj).slice(0,12).map(p=>{ const r=p.due-p.paid-p.cut; return `<tr class="${p.i===0?'ep-cur':''}"><td><b>${empD(p.from)} → ${p.i===0?'اليوم':empD(p.to)}</b> ${p.i===0?'<span class="pill retail">الحالي</span>':''}${p.adj?` <span class="muted">(تعديل ${p.adj>0?'+':''}${p.adj})</span>`:''}</td><td class="num">${p.pieces}</td><td class="num">${money(p.due)}</td><td class="num pos">${money(p.paid)}</td><td class="num">${p.cut?money(p.cut):'—'}</td><td class="num ${r>0?'neg':'pos'}">${money(r)}</td></tr>`; }).join('')}
-  ${Math.round(S.carryP)!==0?`<tr><td colspan="5" class="muted">من فترات أقدم</td><td class="num ${S.carryP>0?'neg':'pos'}">${money(S.carryP)}</td></tr>`:''}</tbody></table></div>
-  <div class="section-title"><span class="ic">💵</span> التسديدات</div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead><tbody>
-  ${pays.length?pays.map(p=>`<tr><td class="muted">${esc(p.date)}${(p.arch||(E.from&&p.date<E.from))?' <span class="pill retail">قبل التصفير</span>':''}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${esc(p.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openEmpPayModal('${E.id}','${p.id}')">تعديل</button><button class="btn sm danger" onclick="deleteEmpPay('${E.id}','${p.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="4">لا توجد تسديدات</td></tr>'}</tbody></table></div>
-  ${cuts.length?`<div class="section-title"><span class="ic">🧹</span> تصفير / تخفيض المستحق</div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المبلغ المصفّر</th><th>ملاحظات</th><th></th></tr></thead><tbody>${cuts.map(c=>`<tr><td class="muted">${esc(c.date)}</td><td class="num">${money(c.amount)}</td><td class="muted">${esc(c.note||'—')}</td><td><button class="btn sm danger" onclick="deleteEmpCut('${E.id}','${c.id}')">إلغاء</button></td></tr>`).join('')}</tbody></table></div>`:''}
-  ${arch.length?`<div class="section-title"><span class="ic">🗂</span> سجل التصفير الكامل <span class="muted" style="font-size:12px;font-weight:500">أرقام قبل كل بداية جديدة</span></div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>القطع</th><th>المستحق</th><th>المسدد</th><th>المتبقي وقتها</th></tr></thead><tbody>${arch.map(x=>`<tr><td class="muted">${esc(x.at)}</td><td class="num">${x.pieces}</td><td class="num">${money(x.due)}</td><td class="num pos">${money(x.paid)}</td><td class="num">${money(x.remaining)}</td></tr>`).join('')}</tbody></table></div>`:''}
-  <div class="section-title"><span class="ic">📦</span> قطع المفرد المحتسبة له (آخر 60)</div>
-  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الموديل</th><th>الزبون</th><th>القطع</th><th>أجرتها</th></tr></thead><tbody>
-  ${ls.length?ls.map(s=>`<tr><td class="muted">${esc(s.date)}</td><td>${esc(saleProductLabel(s))}</td><td>${esc(s.customerName||'—')}</td><td class="num">${num(s.quantity)}</td><td class="num">${money(num(s.quantity)*S.rate)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="5">ما اكو مبيعات مفرد محتسبة</td></tr>'}</tbody></table></div>`;
+  const E=S.E, pays=(E.pays||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)), ls=S.ls.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
+  return `<div class="page-head"><div><h1>${esc(E.name)} <span class="pill wholesale">${money(S.rate)} للقطعة</span></h1><div class="desc">حساب منفصل — ما يُخصم من أرباح الشركاء.</div></div><button class="btn" onclick="currentDetail='emps';render();">← رجوع للموظفين</button></div>
+  <div class="btn-row" style="margin:0 0 14px;"><button class="btn primary" onclick="openEmpPayModal('${E.id}')">💵 تسديد</button><button class="btn" onclick="openEmpControlModal('${E.id}')">⚙️ تصفير وتعديل</button><button class="btn" onclick="openEmpEditModal('${E.id}')">✏️ تعديل</button><button class="btn ghost" onclick="deleteEmp('${E.id}')">🗑 حذف</button></div>
+  <div class="ep-big"><div class="ep-b"><small>عدد القطع</small><b>${S.pieces}</b><em>من ${esc(E.from||'—')} لليوم</em></div><div class="ep-b"><small>المبلغ</small><b class="${S.remaining>0?'neg':'pos'}">${money(S.remaining)}</b><em>${S.pieces} × ${money(S.rate)}</em></div></div>
+  <div class="hint" style="margin:10px 0 0;">عند تسجيل تسديد: القطع والمبلغ يرجعون صفر ويبدأ حساب جديد. موعد التسليم: ${esc(empPayText(E))}</div>
+  <div class="section-title"><span class="ic">📦</span> القطع المحتسبة <span class="muted" style="font-size:12px;font-weight:500">آخر 60</span></div>
+  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الموديل</th><th>الزبون</th><th>القطع</th><th>المبلغ</th></tr></thead><tbody>
+  ${ls.length?ls.map(s=>`<tr><td class="muted">${esc(s.date)}</td><td>${esc(saleProductLabel(s))}</td><td>${esc(s.customerName||'—')}</td><td class="num">${num(s.quantity)}</td><td class="num">${money(num(s.quantity)*S.rate)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="5">ما اكو قطع محتسبة بعد</td></tr>'}</tbody></table></div>
+  <div class="section-title"><span class="ic">🗂</span> سجل التسديدات</div>
+  <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>القطع</th><th>المبلغ</th><th>ملاحظات</th><th></th></tr></thead><tbody>
+  ${pays.length?pays.map(p=>`<tr><td class="muted">${esc(p.date)}</td><td class="num">${p.pieces!=null?p.pieces:'—'}</td><td class="num pos">${money(p.amount)}</td><td class="muted">${esc(p.note||'—')}</td><td><div class="btn-row"><button class="btn sm ghost" onclick="openEmpPayModal('${E.id}','${p.id}')">تعديل</button><button class="btn sm danger" onclick="deleteEmpPay('${E.id}','${p.id}')">حذف</button></div></td></tr>`).join(''):'<tr class="empty-row"><td colspan="5">ما اكو تسديدات</td></tr>'}</tbody></table></div>`;
 }
 function openEmpPayModal(eid,payId){
   const S=empStats(eid); if(!S) return; const E=S.E, it=payId?E.pays.find(x=>x.id===payId):null;
-  openModal({title:(it?'تعديل تسديد — ':'تسديد مبلغ — ')+E.name,bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">المتبقي له الآن: <b>${money(S.remaining)}</b><br>المبلغ اللي تسدده يتسجل بحساب الموظف فقط، وما يُخصم من أرباح الشركاء.</div>
-    <div class="form-grid2"><div class="form-row"><label>المبلغ</label><input type="number" id="f_amount" value="${it?it.amount:(S.remaining>0?S.remaining:'')}"></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${it?.date||todayISO()}"></div></div>
+  openModal({title:(it?'تعديل تسديد — ':'تسديد — ')+esc(E.name),bodyHtml:`${it?'':`<div class="rule-box" style="margin-bottom:12px;">المستحق الآن: <b>${money(S.remaining)}</b> (${S.pieces} قطعة)<br>بعد التسديد القطع والمبلغ يرجعون <b>صفر</b> ويبدأ حساب جديد.</div>`}
+    <div class="form-grid2"><div class="form-row"><label>المبلغ المسدَّد</label><input type="number" id="f_amount" value="${it?it.amount:(S.remaining>0?S.remaining:'')}"></div><div class="form-row"><label>التاريخ</label><input type="date" id="f_date" value="${it?.date||todayISO()}"></div></div>
     <div class="form-row"><label>ملاحظات</label><textarea id="f_notes">${esc(it?.note||'')}</textarea></div>`,
   onSave(){
     const amount=num(document.getElementById('f_amount').value); if(amount<=0) return toast('اكتب مبلغ صحيح');
     const d={amount,date:document.getElementById('f_date').value||todayISO(),note:document.getElementById('f_notes').value.trim()};
-    if(!E.pays) E.pays=[]; if(it) Object.assign(it,d); else E.pays.push({id:uid(),...d});
-    saveState(); closeModal(); render(); toast('تم تسجيل التسديد');
+    if(!E.pays) E.pays=[];
+    if(it){ Object.assign(it,d); saveState(); closeModal(); render(); toast('تم الحفظ'); return; }
+    E.pays.push({id:uid(),...d,pieces:S.pieces,due:S.remaining,arch:true});
+    E.cuts=[]; E.padj={}; empFreshStart(E,true);
+    saveState(); closeModal(); render(); refreshBell(); toast('تم التسديد — القطع والمبلغ رجعوا صفر');
   }});
 }
-function deleteEmpPay(eid,payId){ confirmDelete('حذف هذا التسديد؟',()=>{ const E=empById(eid); E.pays=E.pays.filter(p=>p.id!==payId); saveState(); render(); toast('تم الحذف'); }); }
+function deleteEmpPay(eid,payId){ confirmDelete('حذف سجل هذا التسديد؟ (ما يرجّع القطع والمبلغ)',()=>{ const E=empById(eid); E.pays=E.pays.filter(p=>p.id!==payId); saveState(); render(); toast('تم الحذف'); }); }
 function openEmpEditModal(eid){
   const P=PS(), E=eid?empById(eid):null, pf=E?(E.payFreq||'week'):'week', pd=(E&&E.payDay!=null&&E.payDay!=='')?num(E.payDay):(pf==='week'?4:1);
   const wk=pf==='week'?pd:4, md=pf==='month'?pd:1;
@@ -5993,26 +5984,20 @@ function openEmpEditModal(eid){
 }
 /* ===== تحكم كامل: تعديل قطع الفترة، تصفير المستحق، تصفير كامل ===== */
 function openEmpControlModal(eid){
-  const S=empStats(eid); if(!S) return; const E=S.E, un=S.unit, per=S.per;
-  openModal({title:'⚙️ تحكم وتصفير — '+esc(E.name),bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">قطع ${un} الحالي: <b>${per.pieces}</b> · مستحقه: <b>${money(per.due)}</b><br>المتبقي له الآن (كل الفترات): <b>${money(S.remaining)}</b></div>
-    <div class="ec-sec"><h4>1) قطع ${un} الحالي</h4><p>غيّر عدد القطع يدوياً أو صفّره. القطع الجديدة اللي تنباع بعدها تنضاف عليه عادي، والمستحق ينحسب من العدد الجديد.</p>
-      <div class="ec-row"><input type="number" id="c_pp" min="0" value="${per.pieces}"><button type="button" class="btn primary" onclick="empSetPeriodPieces('${E.id}','set')">حفظ العدد</button><button type="button" class="btn" onclick="empSetPeriodPieces('${E.id}','zero')">تصفير القطع</button></div></div>
-    <div class="ec-sec"><h4>2) تصفير المستحق فقط</h4><p>يخلي المتبقي له يصير المبلغ اللي تحدده (صفر عادةً) بدون ما تمس القطع. يتسجل كـ«تصفير» وليس كتسديد، وتكدر تلغيه.</p>
-      <div class="ec-row"><input type="number" id="c_tg" min="0" value="0"><button type="button" class="btn primary" onclick="empZeroDue('${E.id}')">اجعل المتبقي له هذا المبلغ</button></div></div>
-    <div class="ec-sec"><h4>3) بداية جديدة — تصفير القطع والمستحق معاً</h4><p>كل شي يبدأ من صفر من الآن. الأرقام القديمة (والتسديدات) تنحفظ بسجل التصفير الكامل.</p>
-      <div class="ec-row"><button type="button" class="btn danger" onclick="empResetAll('${E.id}')">🧹 تصفير كامل من الآن</button></div></div>`});
+  const S=empStats(eid); if(!S) return; const E=S.E;
+  openModal({title:'⚙️ تصفير وتعديل — '+esc(E.name),bodyHtml:`<div class="rule-box" style="margin-bottom:12px;">القطع: <b>${S.pieces}</b> · المبلغ: <b>${money(S.remaining)}</b></div>
+    <div class="ec-sec"><h4>1) تعديل عدد القطع</h4><p>اكتب العدد الصحيح أو صفّره. القطع الجديدة اللي تنباع بعدها تنضاف عليه، والمبلغ ينحسب من العدد.</p>
+      <div class="ec-row"><input type="number" id="c_pp" min="0" value="${S.pieces}"><button type="button" class="btn primary" onclick="empSetPieces('${E.id}','set')">حفظ العدد</button><button type="button" class="btn" onclick="empSetPieces('${E.id}','zero')">تصفير القطع</button></div></div>
+    <div class="ec-sec"><h4>2) تصفير المبلغ فقط</h4><p>يخلي المبلغ يصير الرقم اللي تحدده (صفر عادةً) بدون ما تمس القطع.</p>
+      <div class="ec-row"><input type="number" id="c_tg" min="0" value="0"><button type="button" class="btn primary" onclick="empZeroDue('${E.id}')">اجعل المبلغ هذا الرقم</button></div></div>
+    <div class="ec-sec"><h4>3) تصفير القطع والمبلغ معاً</h4><p>الاثنين يرجعون صفر من الآن بدون تسجيل تسديد. الأرقام القديمة تنحفظ بالسجل.</p>
+      <div class="ec-row"><button type="button" class="btn danger" onclick="empResetAll('${E.id}')">🧹 تصفير الكل</button></div></div>`});
   const sb=document.getElementById('modalSaveBtn'); if(sb) sb.style.display='none';
 }
-function empSetPeriodPieces(eid,mode){
-  const S=empStats(eid); if(!S) return; const E=S.E, v=mode==='zero'?0:num(document.getElementById('c_pp').value);
-  if(v<0) return toast('العدد غير صحيح'); if(!E.padj) E.padj={}; E.padj[S.per.key]=v-S.per.base;
-  saveState(); closeModal(); render(); toast(mode==='zero'?'تم تصفير قطع '+S.unit:'تم حفظ عدد القطع');
-}
-function empZeroDue(eid){
-  const S=empStats(eid); if(!S) return; const E=S.E, target=Math.max(0,num(document.getElementById('c_tg').value)), cut=Math.round(S.remaining-target);
-  if(cut<=0) return toast('المتبقي أصلاً '+money(S.remaining)+' — ما اكو شي يتصفّر');
-  if(!E.cuts) E.cuts=[]; E.cuts.push({id:uid(),date:todayISO(),amount:cut,note:target>0?('تخفيض المتبقي إلى '+money(target)):'تصفير المستحق'});
-  saveState(); closeModal(); render(); toast('صار المتبقي له '+money(target));
+function empSetPieces(eid,mode){
+  const S=empStats(eid); if(!S) return; const E=S.E, v=mode==='zero'?0:num(document.getElementById('c_pp').value), tm=thisMonth();
+  if(v<0) return toast('العدد غير صحيح'); if(!E.adjs) E.adjs={}; E.adjs[tm]=v-(S.pieces-num(E.adjs[tm]));
+  saveState(); closeModal(); render(); toast(mode==='zero'?'تم تصفير القطع':'تم حفظ عدد القطع');
 }
 function deleteEmpCut(eid,id){ confirmDelete('إلغاء هذا التصفير؟ يرجع المبلغ للمتبقي له.',()=>{ const E=empById(eid); E.cuts=(E.cuts||[]).filter(c=>c.id!==id); saveState(); render(); toast('تم الإلغاء'); }); }
 function empResetAll(eid){
