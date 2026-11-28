@@ -832,6 +832,10 @@
   .gp-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr)) !important;}
   .gp-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .od-kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px;} .od-kp>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;} .od-kp small{display:block;font-size:11.5px;color:var(--text-faint);} .od-kp b{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;line-height:1.15;} .od-kp em{display:block;font-style:normal;font-size:11px;color:var(--text-faint);margin-top:2px;} .od-kp .ok b{color:var(--positive);} .od-kp .rt b{color:var(--negative);}
+  .ax-insrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0;}
+  .ax-ins{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;} .ax-ins>i{font-style:normal;font-size:22px;width:42px;height:42px;display:grid;place-items:center;background:var(--surface-2);border-radius:13px;flex:none;}
+  .ax-ins small{display:block;color:var(--text-faint);font-size:12px;} .ax-ins b{display:block;font-size:15px;font-family:'Cairo',sans-serif;} .ax-ins em{font-style:normal;color:var(--text-dim);font-size:12px;}
+  .ax-ins.warn{border-color:color-mix(in srgb,var(--warning,#c98a00) 45%,var(--border));} .ax-ins.warn>i{background:color-mix(in srgb,var(--warning,#c98a00) 16%,transparent);}
   .od-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px;} .od-tools select{padding:8px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font:inherit;} .od-tools .search-box{flex:1;min-width:150px;}
   .od-day{display:flex;justify-content:space-between;align-items:center;margin:16px 4px 6px;font-size:13px;} .od-day b{font-size:14px;} .od-day span{color:var(--text-faint);font-size:12px;}
   .od{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:6px 16px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 16px;margin-bottom:8px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s,border-color .2s;} .od::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:4px;background:var(--positive);} .od:hover{box-shadow:var(--card-shadow);border-color:var(--border-strong);} .od.ret{background:var(--surface-2);} .od.ret::before{background:var(--negative);} .od.part::before{background:#c98a00;}
@@ -1077,7 +1081,7 @@ const STORAGE_KEY = 'setr_erp_state_v1';
    أول مرة ينقل الموقع بياناتك من main إلى main2 تلقائياً */
 const FIRESTORE_DOC = 'erp_state/main2';
 const LEGACY_FIRESTORE_DOC = 'erp_state/main';
-const BUILD_ID='b20261128c'; const CLIENT_VERSION = 'v8'; const CLIENT_NUM = 8;
+const BUILD_ID='b20261128e'; const CLIENT_VERSION = 'v8'; const CLIENT_NUM = 8;
 const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('str_device'); if(!d){ d = Math.random().toString(36).slice(2,7); localStorage.setItem('str_device', d); } return d; }catch(e){ return 'dev'; } })();
 let lastSeenRev = null;
 const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
@@ -5762,7 +5766,7 @@ function renderPtOrders(){
   Object.keys(rk).forEach(k=>{ if(!G[k]){ const r=rk[k][0]; rows.push({k,date:r.saleDate||r.date,cust:r.customerName||'',ct:r.customerType,lines:[],rets:rk[k],st:'ret',ca:String(r.createdAt||'')}); } });
   rows.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.ca.localeCompare(a.ca));
   const q=ordQ.trim().toLowerCase();
-  const view=rows.filter(r=>(ordFilter==='all'||(ordFilter==='ok'&&r.st!=='ret')||(ordFilter==='ret'&&r.rets.length))&&(!q||(r.lines.map(saleProductLabel).join(' ')+' '+r.rets.map(x=>x.product).join(' ')).toLowerCase().includes(q)));
+  const view=rows.filter(r=>(ordFilter==='all'||(ordFilter==='ok'&&r.st!=='ret')||(ordFilter==='ret'&&r.rets.length))&&(!q||(r.lines.map(saleProductLabel).join(' ')+' '+r.rets.map(x=>x.product).join(' ')).toLowerCase().includes(q)||(r.cust||'').toLowerCase().includes(q)));
   const nRet=rows.filter(r=>r.rets.length).length, nOk=D.ordersN, nAll=rows.length, shown=view.slice(0,ordLimit);
   const chip=(id,l,n)=>`<button type="button" class="${ordFilter===id?'on':''}" onclick="ordFilter='${id}';ordLimit=60;render();">${l} <small>(${n})</small></button>`;
   const days=[]; shown.forEach(r=>{ let d=days[days.length-1]; if(!d||d.date!==r.date){ d={date:r.date,rows:[]}; days.push(d); } d.rows.push(r); });
@@ -5783,9 +5787,21 @@ function renderPtOrders(){
       ${r.lines.length?`<div class="od-sum"><b>${money(rev)}</b><small>${pcs} قطعة</small></div>
       <div class="od-act"><button type="button" class="od-b" onclick="${one?`quickReturn('${r.lines[0].id}')`:`openReturnOrderModal('${r.k}')`}"><i>↩</i><span>راجع</span></button><button type="button" class="od-b pri" onclick="${edit}"><i>✏️</i><span>تعديل</span></button><button type="button" class="od-b del" title="حذف الطلب" onclick="deleteSale('${r.lines[0].id}')"><i>🗑</i></button></div>`:'<div class="od-sum"><b class="neg">'+money(r.rets.reduce((a,x)=>a+num(x.amount),0))+'</b><small>مرتجع</small></div><div></div>'}</div>`;
   };
-  return `<div class="page-head"><div><h1>${currentPage==='sales'?'المبيعات':'طلبات الصفحة'}</h1><div class="desc">${per} — الأحدث أولاً. كل بيع جديد من الصفحة يظهر هنا مباشرة.</div></div><div class="btn-row"><button class="btn primary" onclick="openOrderModal(null,'page')">+ بيع عبر الصفحة</button>${currentPage==='sales'?'':'<button class="btn" onclick="currentDetail=null;render();">← رجوع للرئيسية</button>'}</div></div>
-  <div class="od-kp"><div><small>الكلية</small><b>${nAll}</b></div><div class="ok"><small>وصلت</small><b>${nOk}</b><em>${D.pieces} قطعة · ${money(D.revenue)}</em></div><div class="rt"><small>راجعة</small><b>${D.retOrders}</b><em>${D.retQty} قطعة · ${money(D.retAmt)}</em></div></div>
-  <div class="od-tools"><select onchange="partMonth=this.value;ordLimit=60;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><div class="tabs">${chip('ok','✓ الواصلة',nOk)}${chip('ret','↩ الراجعة',nRet)}${chip('all','الكل',nAll)}</div><input type="text" class="search-box" placeholder="🔍 بحث باسم الموديل" value="${esc(ordQ)}" oninput="ordQ=this.value;ordLimit=60;render();var e=document.querySelector('.od-tools .search-box');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}"></div>
+  const prevD=partMonth==='ALL'?null:(()=>{ const pm=ymAdd(partMonth,-1); return pageData(pm+'-01',pm+'-31'); })();
+  const avg=D.ordersN?Math.round(D.revenue/D.ordersN):0, retRate=(D.ordersN+D.retOrders)?Math.round(D.retOrders/(D.ordersN+D.retOrders)*100):0;
+  const mdl={}, dy={}; D.ps.forEach(x=>{ const l=saleProductLabel(x); mdl[l]=(mdl[l]||0)+num(x.quantity); dy[x.date]=(dy[x.date]||0)+saleRevenue(x); });
+  const topM=Object.entries(mdl).sort((a,b)=>b[1]-a[1])[0], topD=Object.entries(dy).sort((a,b)=>b[1]-a[1])[0], owed=D.ps.reduce((a,x)=>a+num(x.amountRemaining),0);
+  const ins=[];
+  if(topM) ins.push(`<div class="ax-ins"><i>🏆</i><div><small>أكثر موديل مبيعاً</small><b>${esc(topM[0])}</b><em>${topM[1]} قطعة</em></div></div>`);
+  if(topD) ins.push(`<div class="ax-ins"><i>📅</i><div><small>أفضل يوم</small><b>${esc(dn(topD[0]))} ${esc(topD[0])}</b><em>${money(topD[1])}</em></div></div>`);
+  ins.push(`<div class="ax-ins ${retRate>=15?'warn':''}"><i>${retRate>=15?'⚠️':'↩'}</i><div><small>نسبة الراجع</small><b>${retRate}%</b><em>${D.retOrders} طلب${retRate>=15?' — مرتفعة':''}</em></div></div>`);
+  if(owed>0) ins.push(`<div class="ax-ins warn"><i>💰</i><div><small>متبقي عند الزبائن</small><b>${money(owed)}</b><em>من طلبات هذي الفترة</em></div></div>`);
+  const hero=axHero({title:'مبيعات الصفحة · '+per,btn:`<button type="button" onclick="openOrderModal(null,'page')">+ بيع جديد</button>`,big:money(D.revenue),
+    sub:D.ordersN+' طلب · '+D.pieces+' قطعة'+(prevD&&prevD.revenue?' · '+deltaBadge(D.revenue,prevD.revenue,true)+' عن الشهر السابق':''),
+    parts:[{n:'✓ الطلبات الواصلة',v:String(nOk),s:D.pieces+' قطعة',click:"ordFilter='ok';ordLimit=60;render()"},{n:'↩ الراجعة',v:String(D.retOrders),s:money(D.retAmt),click:"ordFilter='ret';ordLimit=60;render()"},{n:'متوسط الطلب',v:money(avg)},{n:'ربح قبل الإعلانات',v:money(D.profit)}]});
+  return `${hero}
+  <div class="ax-insrow">${ins.join('')}</div>
+  <div class="od-tools"><select onchange="partMonth=this.value;ordLimit=60;render();">${monthOptionsList(partMonth)}<option value="ALL" ${partMonth==='ALL'?'selected':''}>كل الفترات</option></select><div class="tabs">${chip('ok','✓ الواصلة',nOk)}${chip('ret','↩ الراجعة',nRet)}${chip('all','الكل',nAll)}</div><input type="text" class="search-box" placeholder="🔍 بحث بالموديل أو الزبون" value="${esc(ordQ)}" oninput="ordQ=this.value;ordLimit=60;render();var e=document.querySelector('.od-tools .search-box');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}"></div>
   ${days.length?days.map(d=>{ const dv=d.rows.reduce((a,r)=>a+r.lines.reduce((x,y)=>x+saleRevenue(y),0),0); return `<div class="od-day"><b>${dn(d.date)} ${esc(d.date)}</b><span>${d.rows.length} طلب · ${money(dv)}</span></div>${d.rows.map(row).join('')}`; }).join(''):'<div class="card"><div class="np-empty">ما اكو طلبات بهذا العرض</div></div>'}
   ${view.length>ordLimit?`<div style="text-align:center;margin:14px 0"><button class="btn" onclick="ordLimit+=60;render();">عرض المزيد (${view.length-ordLimit})</button></div>`:''}`;
 }
@@ -5985,6 +6001,16 @@ function exportModelReportCSV(){
 /* =========================================================
    SETTINGS
 ========================================================= */
+function resetActivityLog(){
+  const n=(state.opsLog||[]).length+(state.auditLog||[]).length;
+  askConfirm('راح ينمسح سجل الحركات ('+n+' سجل) وتبدي من الصفر، وينزل لك ملف بنسخة منه. بياناتك (مبيعات، ديون، زبائن) ما تتأثر. متابعة؟',()=>{
+    try{ const rows=[...(state.opsLog||[]).map(e=>[new Date(e.t).toLocaleString('en-GB'),e.by||'—',e.a,e.c,e.d||'']),...(state.auditLog||[]).map(e=>[e.t,e.by||'—',e.action,e.kind,e.text||''])];
+      if(rows.length) downloadBlob(toCSV(['الوقت','الجهاز','العملية','النوع','التفاصيل'],rows),'سجل_الحركات_القديم_'+todayISO()+'.csv','text/csv;charset=utf-8;'); }catch(e){ console.error(e); }
+    state.opsLog=[{t:new Date().toISOString(),a:'تغيير',c:'نظام',d:'تم تصفير سجل الحركات',by:auditBy()}]; state.auditLog=[];
+    actF={period:'m:'+thisMonth(),dev:'ALL',act:'ALL',grp:'ALL',q:'',panel:null}; window._allowShrink=true;
+    saveState(); render(); toast('✅ تم تصفير السجل — نزل ملف بالقديم');
+  },{title:'تصفير سجل الحركات',yesLabel:'تصفير'});
+}
 function stItem(inner,cls){ return `<div class="st-item ${cls||''}">${inner}</div>`; }
 function stGroup(title,desc,items){ return `<div class="st-group"><div class="st-gh"><h2>${title}</h2><span>${desc}</span></div><div class="st-grid">${items.join('')}</div></div>`; }
 function renderSettings(){
@@ -6013,6 +6039,7 @@ function renderSettings(){
   ])}
 
   ${stGroup('منطقة الخطر','انتبه — ما يمكن التراجع',[
+    stItem(`<div class="section-title">🧹 تصفير سجل الحركات</div><div class="card"><div class="desc" style="margin-bottom:12px;">يمسح كل الحركات القديمة (سجل الحركات وسجل الديون) وتبدي الصفحة من الصفر. <b>ما يمس بياناتك أبداً</b> — مبيعات وديون وزبائن تبقى كلها. قبل المسح ينزّل لك نسخة من السجل القديم كملف Excel.</div><button class="btn" onclick="resetActivityLog()">تصفير السجل</button></div>`),
     stItem(`<div class="section-title">⚠️ حذف كل البيانات</div><div class="card"><div class="desc" style="margin-bottom:12px;">يحذف كل البيانات من هذا الجهاز نهائياً.</div><button class="btn danger" onclick="resetAllData()">حذف جميع البيانات</button></div>`,'danger')
   ])}
   `;
@@ -6388,15 +6415,28 @@ const AUDIT_SPECS = [
 ];
 let _auditSnap = null;
 function deviceName(){ try{ return (localStorage.getItem('str_devname')||'').trim(); }catch(e){ return ''; } }
-function setDeviceName(v){ try{ localStorage.setItem('str_devname',String(v||'').trim()); }catch(e){} devRegistry(true); }
+function setDeviceName(v){ try{ localStorage.setItem('str_devname',String(v||'').trim()); }catch(e){} try{ const st=state.settings||(state.settings={}); if(st.revoked) delete st.revoked[DEVICE_ID]; }catch(e){} devRegistry(true); }
 function devPlat(){ const u=navigator.userAgent||''; const os=/Android/i.test(u)?'أندرويد':/iPhone|iPad/i.test(u)?'آيفون/آيباد':/Windows/i.test(u)?'ويندوز':/Mac/i.test(u)?'ماك':/Linux/i.test(u)?'لينكس':'جهاز'; const br=/Edg\//.test(u)?'Edge':/Chrome\//.test(u)?'Chrome':/Safari\//.test(u)?'Safari':/Firefox\//.test(u)?'Firefox':''; return os+(br?' · '+br:''); }
 function auditBy(){ return deviceName() || ('جهاز ' + DEVICE_ID); }
-function devRegistry(force){ try{ if(!state) return; const st=state.settings||(state.settings={}); st.devices=st.devices||{}; const cur=st.devices[DEVICE_ID]||{}, now=Date.now(), nm=auditBy();
-  if(force||cur.name!==nm||cur.ver!==CLIENT_VERSION||now-(cur.last||0)>10*60*1000){ st.devices[DEVICE_ID]={name:nm,last:now,ver:CLIENT_VERSION,plat:devPlat()}; saveState(); } }catch(e){ console.error('devRegistry',e); } }
-function devPrompt(){
-  openModal({title:'💻 سمّي هذا الجهاز',bodyHtml:`<div class="muted" style="font-size:13px;line-height:1.8;margin-bottom:10px">كل جهاز له اسمه الخاص (مثلاً «حاسبة أحمد» أو «حاسبة المعمل» أو «موبايل أحمد»). كل بيع وتعديل وحذف ينكتب باسم الجهاز اللي سواه، حتى تعرف منين صار الشغل.</div><div class="form-row"><label>اسم هذا الجهاز</label><input type="text" id="dv_n" value="" placeholder="مثال: حاسبة المعمل" autofocus></div>`,onSave(){ const v=document.getElementById('dv_n').value.trim(); if(!v) return toast('اكتب اسم للجهاز'); setDeviceName(v); closeModal(); render(); toast('✅ هذا الجهاز صار باسم «'+v+'»'); }});
+function devRegistry(force,off){ try{ if(!state) return; const st=state.settings||(state.settings={}); st.devices=st.devices||{};
+  if(st.revoked&&st.revoked[DEVICE_ID]){ try{ localStorage.removeItem('str_devname'); }catch(e){} if(st.devices[DEVICE_ID]){ delete st.devices[DEVICE_ID]; saveState(); } if(!window._devPrompting) devPrompt(); return; }
+  const cur=st.devices[DEVICE_ID]||{}, now=Date.now(), nm=auditBy(), on=!off;
+  if(force||off||cur.name!==nm||cur.ver!==CLIENT_VERSION||cur.on!==on||now-(cur.last||0)>110000){ st.devices[DEVICE_ID]={name:nm,last:now,ver:CLIENT_VERSION,plat:devPlat(),on}; saveState(); } }catch(e){ console.error('devRegistry',e); } }
+function deleteDevice(id){
+  if(id===DEVICE_ID) return toast('هذا جهازك الحالي، ما تكدر تحذفه');
+  const d=((state.settings.devices||{})[id])||{};
+  askConfirm('تحذف «'+(d.name||id)+'» من القائمة؟ إذا رجع يفتح النظام يطلب منه يكتب اسم جديد. حركاته القديمة تبقى بالسجل.',()=>{
+    const st=state.settings; st.revoked=st.revoked||{}; st.revoked[id]=Date.now(); if(st.devices) delete st.devices[id]; saveState(); render(); toast('تم حذف الجهاز');
+  },{title:'حذف جهاز',yesLabel:'حذف'});
 }
-function devBoot(){ if(!deviceName()) devPrompt(); else devRegistry(false); setInterval(()=>devRegistry(false),10*60*1000); }
+function devPrompt(){
+  window._devPrompting=true;
+  openModal({title:'💻 سمّي هذا الجهاز',bodyHtml:`<div class="muted" style="font-size:13px;line-height:1.8;margin-bottom:10px">كل جهاز له اسمه الخاص (مثلاً «حاسبة أحمد» أو «حاسبة المعمل» أو «موبايل أحمد»). كل بيع وتعديل وحذف ينكتب باسم الجهاز اللي سواه، حتى تعرف منين صار الشغل.</div><div class="form-row"><label>اسم هذا الجهاز</label><input type="text" id="dv_n" value="" placeholder="مثال: حاسبة المعمل" autofocus></div>`,onSave(){ const v=document.getElementById('dv_n').value.trim(); if(!v) return toast('اكتب اسم للجهاز'); setDeviceName(v); window._devPrompting=false; closeModal(); render(); toast('✅ هذا الجهاز صار باسم «'+v+'»'); }});
+}
+function devBoot(){ if(!deviceName()) devPrompt(); else devRegistry(true);
+  setInterval(()=>{ if(document.visibilityState==='visible') devRegistry(false); },2*60*1000);
+  document.addEventListener('visibilitychange',()=>{ if(!deviceName()) return; if(document.visibilityState==='hidden') devRegistry(true,true); else devRegistry(true); });
+  window.addEventListener('pagehide',()=>{ if(deviceName()) devRegistry(true,true); }); }
 function auditTake(){
   if(!state) return;
   const s = {};
@@ -6485,7 +6525,7 @@ function deviceCard(){
   <div class="card" style="max-width:560px;"><div class="form-row"><label>اسم هذا الجهاز — يظهر بالسجل مع كل عملية</label>
     <input type="text" id="s_devname" value="${esc(deviceName())}" placeholder="مثال: حاسبة أحمد" onchange="setDeviceName(this.value);toast('تم حفظ اسم الجهاز');render()"></div>
     <div class="hint">الاسم يُحفظ على هذا الجهاز فقط، فكل جهاز يكدر يكون له اسم مختلف. إذا فتحت النظام على جهاز جديد يسألك عن اسمه.</div>
-    ${rows.length?`<div style="margin-top:12px">${rows.map(d=>`<div class="sf-row"><span class="sf-t"><b>${esc(d.name||d.id)}</b>${d.id===DEVICE_ID?' <span class="pill retail">هذا الجهاز</span>':''}<br><span class="muted" style="font-size:12px">${esc(d.plat||'')} · ${esc(d.ver||'')} · آخر ظهور ${now-(d.last||0)<15*60*1000?'🟢 هسه':new Date(d.last||0).toLocaleString('ar-IQ',{dateStyle:'medium',timeStyle:'short'})}</span></span></div>`).join('')}</div>`:''}</div>`;
+    ${rows.length?`<div style="margin-top:12px">${rows.map(d=>`<div class="sf-row"><span class="sf-t"><b>${esc(d.name||d.id)}</b>${d.id===DEVICE_ID?' <span class="pill retail">هذا الجهاز</span>':''}<br><span class="muted" style="font-size:12px">${esc(d.plat||'')} · ${esc(d.ver||'')} · آخر ظهور ${(d.on!==false&&now-(d.last||0)<5*60*1000)?'🟢 متصل هسه':'⚫ غير متصل · آخر ظهور '+new Date(d.last||0).toLocaleString('ar-IQ',{dateStyle:'medium',timeStyle:'short'})}</span></span>${d.id!==DEVICE_ID?`<button type="button" class="btn sm danger" onclick="deleteDevice('${d.id}')">حذف</button>`:''}</div>`).join('')}</div>`:''}</div>`;
 }
 function defaultSalePrice(){ const v=num(state.settings&&state.settings.defaultSalePrice); return v>0?v:35000; }
 function salePriceCard(){
@@ -6795,12 +6835,13 @@ function opsSnap(){
 function opsDiff(){
   const cur=opsSnap(); if(!_opsPrev){ _opsPrev=cur; return; }
   const E=[], now=new Date().toISOString(), _by=auditBy();
+  const _cl=x=>{ x.d=String(x.d||'').slice(0,160); };
   cur.forEach((v,k)=>{ const o=_opsPrev.get(k); if(!o) E.push({t:now,a:'إضافة',c:v.c,d:v.txt}); else if(o.sig!==v.sig) E.push({t:now,a:'تعديل',c:v.c,d:v.txt}); });
   _opsPrev.forEach((v,k)=>{ if(!cur.has(k)) E.push({t:now,a:'حذف',c:v.c,d:v.txt}); });
-  _opsPrev=cur; if(!E.length) return; E.forEach(e=>{ e.by=_by; });
+  _opsPrev=cur; if(!E.length) return; E.forEach(e=>{ e.by=_by; _cl(e); });
   const L=state.opsLog||(state.opsLog=[]);
   if(E.length>25) L.push({t:now,a:'تغيير',c:'نظام',d:`تغيير كبير (${E.length} عنصر) — مزامنة أو استيراد`}); else L.push(...E);
-  if(L.length>400) L.splice(0,L.length-400);
+  if(L.length>1500) L.splice(0,L.length-1500);
   try{ const P=state.partnership; if(P&&P.closes) P.closes.forEach(c=>{ const D=pageData(c.month+'-01',c.month+'-31'); const key=c.month+':'+Math.round(D.net); if(Math.round(D.net)!==Math.round(c.net) && !_warnClose[key]){ _warnClose[key]=1; toast(`⚠️ أرقام شهر ${c.month} (مقفل بالشراكة) تغيّرت بعد الإقفال — حدّث الإقفال من نظام الشراكة`); } }); }catch(e){}
 }
 function integrityIssues(){
@@ -6839,14 +6880,14 @@ function backupCenterCard(){
     <div class="bk-c"><b>📊 تصدير Excel</b><small>صدّر المبيعات والأرقام لملفات Excel.</small><div class="btn-row"><button class="btn" onclick="openToolsModal()">فتح التصدير</button></div></div>
   </div>`;
 }
-let actF={period:'week',dev:'ALL',act:'ALL',grp:'ALL',q:'',panel:null};
+let actF={period:'m:'+thisMonth(),dev:'ALL',act:'ALL',grp:'ALL',q:'',panel:null};
 function isoLocal(d){ return ymOfDate(d)+'-'+pad2(d.getDate()); }
 function actDevInfo(name){ const D=(state.settings&&state.settings.devices)||{}; const k=Object.keys(D).find(x=>D[x].name===name); return k?D[k]:null; }
 function actRows(){
   const now=new Date(), today=isoLocal(now), wk=isoLocal(new Date(now.getTime()-6*864e5)), mo=today.slice(0,7);
   return (state.opsLog||[]).slice().reverse().filter(e=>{
     const d=isoLocal(new Date(e.t));
-    if(actF.period==='today'&&d!==today) return false; if(actF.period==='week'&&d<wk) return false; if(actF.period==='month'&&d.slice(0,7)!==mo) return false;
+    if(actF.period==='today'&&d!==today) return false; if(actF.period==='week'&&d<wk) return false; if(actF.period==='month'&&d.slice(0,7)!==mo) return false; if(actF.period.startsWith('m:')&&d.slice(0,7)!==actF.period.slice(2)) return false;
     return true; });
 }
 function actFiltered(base){
@@ -6871,7 +6912,8 @@ function renderSafety(){
   const days=[]; rows.slice(0,400).forEach(e=>{ const d=isoLocal(new Date(e.t)); let g=days[days.length-1]; if(!g||g.d!==d){ g={d,items:[]}; days.push(g); } g.items.push(e); });
   const yest=isoLocal(new Date(Date.now()-864e5));
   const dl=d=>{ let t=''; try{ t=new Date(d+'T12:00:00').toLocaleDateString('ar-IQ',{weekday:'long',day:'numeric',month:'long'}); }catch(_){ t=d; } return (d===today?'اليوم · ':d===yest?'أمس · ':'')+t; };
-  const per=[['today','اليوم'],['week','آخر 7 أيام'],['month','هذا الشهر'],['all','الكل']];
+  const mset=new Set([thisMonth()]); (state.opsLog||[]).forEach(e=>mset.add(isoLocal(new Date(e.t)).slice(0,7)));
+  const per=[['today','اليوم'],['week','آخر 7 أيام'],...[...mset].sort().reverse().map(m=>['m:'+m,monthLabelAr(m)]),['all','كل الأشهر']];
   const tile=(k,ico,t,n,warn)=>`<button type="button" class="btn ${actF.panel===k?'primary':''}" onclick="actF.panel=actF.panel==='${k}'?null:'${k}';render()">${ico} ${t}${n?` <b style="margin-right:4px">${n}</b>`:''}</button>`;
   return `<div class="page-head"><div><h1>سجل الحركات</h1><div class="desc">كل إضافة وتعديل وحذف يتسجل هنا: شنو صار، ومتى، ومن أي جهاز.</div></div></div>
   ${hero}
@@ -7464,6 +7506,7 @@ const AB={ dir:null, t:null, busy:false, ok:false,
       const ws=weekStartOf(day), we=weekEndOf(ws), wn=Math.floor((Number(ws.slice(8))-1)/7)+1, wm=ws.slice(0,7);
       const wdir=wm===mon?mdir:await this.dir.getDirectoryHandle(wm,{create:true});
       await wr(wdir,'ملخص أسبوع '+wn+'.html',summaryHtml('ملخص أسبوع '+wn+' — '+monthLabelAr(wm),ws,we));
+      try{ const lg=(state.opsLog||[]).filter(e=>isoLocal(new Date(e.t)).slice(0,7)===mon).map(e=>[new Date(e.t).toLocaleString('en-GB'),e.by||'—',e.a,e.c,e.d||'']); if(lg.length) await wr(mdir,'سجل الحركات '+mon+'.csv',toCSV(['الوقت','الجهاز','العملية','النوع','التفاصيل'],lg)); }catch(e){ console.error(e); }
       await wr(mdir,'ملخص شهر '+mon+'.html',summaryHtml('ملخص شهر '+monthLabelAr(mon),mon+'-01',mon+'-31'));
       try{ const pm=ymAdd(mon,-1), pd=await this.dir.getDirectoryHandle(pm); try{ await pd.getFileHandle('ملخص شهر '+pm+'.html'); }catch(e){ await wr(pd,'ملخص شهر '+pm+'.html',summaryHtml('ملخص شهر '+monthLabelAr(pm),pm+'-01',pm+'-31')); } }catch(e){}
       if(!guard) this.setSt('✔ آخر نسخة '+new Date().toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit'}),'ok');
